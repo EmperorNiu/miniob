@@ -83,11 +83,16 @@ RC DiskBufferPool::open_file(const char *file_name, int *file_id)
 {
   int fd, i;
   // This part isn't gentle, the better method is using LRU queue.
+
+
   for (i = 0; i < MAX_OPEN_FILE; i++) {
     if (open_list_[i]) {
       if (!strcmp(open_list_[i]->file_name, file_name)) {
         *file_id = i;
         LOG_INFO("%s has already been opened.", file_name);
+        auto item = lru_map[i];
+        lru_list.splice(lru_list.begin(),lru_list,item);
+        lru_map[i] = lru_list.begin();
         return RC::SUCCESS;
       }
     }
@@ -96,8 +101,11 @@ RC DiskBufferPool::open_file(const char *file_name, int *file_id)
   while (i < MAX_OPEN_FILE && open_list_[i++])
     ;
   if (i >= MAX_OPEN_FILE && open_list_[i - 1]) {
-    LOG_ERROR("Failed to open file %s, because too much files has been opened.", file_name);
-    return RC::BUFFERPOOL_OPEN_TOO_MANY_FILES;
+      i = lru_list.back();
+      lru_map.erase(i);
+      lru_list.pop_back();
+//    LOG_ERROR("Failed to open file %s, because too much files has been opened.", file_name);
+//    return RC::BUFFERPOOL_OPEN_TOO_MANY_FILES;
   }
 
   if ((fd = open(file_name, O_RDWR)) < 0) {
@@ -144,6 +152,8 @@ RC DiskBufferPool::open_file(const char *file_name, int *file_id)
   file_handle->file_sub_header = (BPFileSubHeader *)file_handle->hdr_page->data;
   open_list_[i - 1] = file_handle;
   *file_id = i - 1;
+  lru_list.push_front(i);
+  lru_map[i] = lru_list.begin();
   LOG_INFO("Successfully open %s. file_id=%d, hdr_frame=%p", file_name, *file_id, file_handle->hdr_frame);
   return RC::SUCCESS;
 }

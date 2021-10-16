@@ -21,6 +21,9 @@ See the Mulan PSL v2 for more details. */
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <list>
+#include <pair>
+#include <unordered_map>
 
 #include <vector>
 
@@ -207,6 +210,8 @@ protected:
 private:
   BPManager bp_manager_;
   BPFileHandle *open_list_[MAX_OPEN_FILE] = {nullptr};
+  std::list<int> lru_list;
+  std::unordered_map<int, std::list<int>::iterator> lru_map;
 };
 
 DiskBufferPool *theGlobalDiskBufferPool();
