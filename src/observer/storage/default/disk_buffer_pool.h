@@ -22,7 +22,6 @@ See the Mulan PSL v2 for more details. */
 #include <sys/stat.h>
 #include <time.h>
 #include <list>
-#include <pair>
 #include <unordered_map>
 
 #include <vector>
