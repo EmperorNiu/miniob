@@ -1,16 +1,4 @@
 /Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_DEPENDS_USE_COMPILER=FALSE -G "CodeBlocks - Unix Makefiles" /Users/niuyuean/miniob
--- The C compiler identification is AppleClang 13.0.0.13000029
--- The CXX compiler identification is AppleClang 13.0.0.13000029
--- Detecting C compiler ABI info
--- Detecting C compiler ABI info - done
--- Check for working C compiler: /Library/Developer/CommandLineTools/usr/bin/cc - skipped
--- Detecting C compile features
--- Detecting C compile features - done
--- Detecting CXX compiler ABI info
--- Detecting CXX compiler ABI info - done
--- Check for working CXX compiler: /Library/Developer/CommandLineTools/usr/bin/c++ - skipped
--- Detecting CXX compile features
--- Detecting CXX compile features - done
 -- This is SOURCE dir 
 -- This is BINARY dir 
 -- This is Project source dir /Users/niuyuean/miniob
@@ -133,6 +121,7 @@ Use /Users/niuyuean/miniob/src/observer/event/execution_plan_event.cpp
 Use /Users/niuyuean/miniob/src/observer/event/session_event.cpp
 Use /Users/niuyuean/miniob/src/observer/event/sql_event.cpp
 Use /Users/niuyuean/miniob/src/observer/event/storage_event.cpp
+Use /Users/niuyuean/miniob/src/observer/handler/handler.cpp
 Use /Users/niuyuean/miniob/src/observer/init.cpp
 Use /Users/niuyuean/miniob/src/observer/main.cpp
 Use /Users/niuyuean/miniob/src/observer/net/server.cpp
@@ -174,19 +163,23 @@ Begin to build unitest
 -- This is PROJECT_BINARY_DIR dir /Users/niuyuean/miniob/cmake-build-debug/unitest
 -- This is PROJECT_SOURCE_DIR dir /Users/niuyuean/miniob/unitest
  -Wall -DCMAKE_EXPORT_COMPILE_COMMANDS=1  -O2 -g 
-CMake Error at unitest/CMakeLists.txt:29 (find_package):
-  Could not find a package configuration file provided by "GTest" with any of
-  the following names:
-
-    GTestConfig.cmake
-    gtest-config.cmake
-
-  Add the installation prefix of "GTest" to CMAKE_PREFIX_PATH or set
-  "GTest_DIR" to a directory containing one of the above files.  If "GTest"
-  provides a separate development package or SDK, be sure it has been
-  installed.
-
-
--- Configuring incomplete, errors occurred!
-See also "/Users/niuyuean/miniob/cmake-build-debug/CMakeFiles/CMakeOutput.log".
-See also "/Users/niuyuean/miniob/cmake-build-debug/CMakeFiles/CMakeError.log".
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+Build bitmap_test according to /Users/niuyuean/miniob/unitest/bitmap_test.cpp
+Build bp_manager_test according to /Users/niuyuean/miniob/unitest/bp_manager_test.cpp
+Build log_test according to /Users/niuyuean/miniob/unitest/log_test.cpp
+Build md5_test according to /Users/niuyuean/miniob/unitest/md5_test.cpp
+Build path_test according to /Users/niuyuean/miniob/unitest/path_test.cpp
+Build pidfile_test according to /Users/niuyuean/miniob/unitest/pidfile_test.cpp
+Build rc_test according to /Users/niuyuean/miniob/unitest/rc_test.cpp
+Begin to build test
+-- This is PROJECT_BINARY_DIR dir /Users/niuyuean/miniob/cmake-build-debug/test
+-- This is PROJECT_SOURCE_DIR dir /Users/niuyuean/miniob/test
+ -Wall -DCMAKE_EXPORT_COMPILE_COMMANDS=1  -O2 -g 
+Build client_performance_test according to /Users/niuyuean/miniob/test/client_performance_test.cpp
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /Users/niuyuean/miniob/cmake-build-debug

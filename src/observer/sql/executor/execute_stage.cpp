@@ -120,7 +120,7 @@ void ExecuteStage::handle_request(common::StageEvent *event) {
     return;
   }
   exe_event->push_callback(cb);
-
+  // 以下空缺内容大部分实在在 default_storage_stage.cpp 文件中
   switch (sql->flag) {
     case SCF_SELECT: { // select
       do_select(current_db, sql, exe_event->sql_event()->session_event());
@@ -132,6 +132,11 @@ void ExecuteStage::handle_request(common::StageEvent *event) {
     case SCF_UPDATE:
     case SCF_DELETE:
     case SCF_CREATE_TABLE:
+//    case SCF_CREATE_TABLE: {
+//        do_create_table(current_db, sql, exe_event->sql_event()->session_event());
+//        exe_event->done_immediate();
+//    }
+//    break;
     case SCF_SHOW_TABLES:
     case SCF_DESC_TABLE:
     case SCF_DROP_TABLE:
@@ -262,6 +267,29 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
   std::stringstream ss;
   if (tuple_sets.size() > 1) {
     // 本次查询了多张表，需要做join操作
+    TupleSet tuple_result = std::move(tuple_sets[0]);
+    TupleSet tuple_result_ = std::move(tuple_sets[0]);
+    int size = tuple_result.size();
+//    tuple_result.set_schema(tuple_sets[0].get_schema());
+    for (int i = 0; i < tuple_sets.size()-1; ++i) {
+      tuple_result.append_schema(tuple_sets[i+1].get_schema());
+      tuple_result_.append_schema(tuple_sets[i+1].get_schema());
+      for (int j = 0; j < size; ++j) {
+        for (int k = 0; k < tuple_sets[i+1].size(); ++k) {
+//          Tuple t1 = Tuple(tuple_sets[i].get(j));
+          Tuple t1 = Tuple(tuple_result_.get(j));
+          Tuple t2 = tuple_sets[i+1].get(k);
+          for (int l = 0; l < t2.values().size(); ++l) {
+            t1.add(t2.values()[l]);
+          }
+          tuple_result.add(std::move(t1));
+        }
+      }
+      size = tuple_result.size();
+      tuple_result_ = std::move(tuple_result);
+      tuple_result.tuple_clear();
+    }
+    tuple_result_.print(ss);
   } else {
     // 当前只查询一张表，直接返回结果即可
     tuple_sets.front().print(ss);
@@ -274,6 +302,10 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
   end_trx_if_need(session, trx, true);
   return rc;
 }
+
+// 创建表
+//RC ExecuteStage::do_create_table(const char *db, Query *sql, SessionEvent *session_event) {
+//}
 
 bool match_table(const Selects &selects, const char *table_name_in_condition, const char *table_name_to_match) {
   if (table_name_in_condition != nullptr) {

@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details. */
 #ifndef __OBSERVER_STORAGE_COMMON_RECORD_MANAGER_H_
 #define __OBSERVER_STORAGE_COMMON_RECORD_MANAGER_H_
 
+//#include <sql/parser/parse_defs.h>
 #include "storage/default/disk_buffer_pool.h"
 
 typedef int SlotNum;

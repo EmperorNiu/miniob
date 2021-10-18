@@ -71,6 +71,27 @@ RC Db::create_table(const char *table_name, int attribute_count, const AttrInfo 
   return RC::SUCCESS;
 }
 
+RC Db::drop_table(const char *table_name) {
+  // check table_name exist
+  if (opened_tables_.count(table_name) == 0) {
+    return RC::SCHEMA_TABLE_NOT_EXIST;
+  }
+  std::string data_file_path = table_data_file(path_.c_str(), table_name);
+  std::string table_file_path = table_meta_file(path_.c_str(), table_name);
+  // nya：错误处理
+  std::remove(data_file_path.c_str());
+  std::remove(table_file_path.c_str());
+//  if (!std::remove(data_file_path.c_str())) {
+//    return RC::IOERR_DELETE;
+//  }
+//  if (!std::remove(table_file_path.c_str())) {
+//    return RC::IOERR_DELETE;
+//  }
+  // 删除 opened_tables_ 中的对应内容
+  opened_tables_.erase(table_name);
+  return RC::SUCCESS;
+}
+
 Table *Db::find_table(const char *table_name) const {
   std::unordered_map<std::string, Table *>::const_iterator iter = opened_tables_.find(table_name);
   if (iter != opened_tables_.end()) {

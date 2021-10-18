@@ -286,6 +286,16 @@ RC Table::make_record(int value_num, const Value *values, char * &record_out) {
   return RC::SUCCESS;
 }
 
+RC Table::change_record(const char *attribute, const Value *v, Record *record) {
+  const int normal_field_start_index = table_meta_.sys_field_num();
+  for (int i = 0; i < table_meta_.field_num(); i++) {
+    const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
+    if (*(field->name()) == *attribute){
+      memcpy(record->data + field->offset(), v->data, field->len());
+    }
+  }
+}
+
 RC Table::init_record_handler(const char *base_dir) {
   std::string data_file = std::string(base_dir) + "/" + table_meta_.name() + TABLE_DATA_SUFFIX;
   if (nullptr == data_buffer_pool_) {
@@ -519,9 +529,72 @@ RC Table::create_index(Trx *trx, const char *index_name, const char *attribute_n
   return rc;
 }
 
-RC Table::update_record(Trx *trx, const char *attribute_name, const Value *value, int condition_num, const Condition conditions[], int *updated_count) {
-  return RC::GENERIC_ERROR;
+class RecordUpdater {
+public:
+    RecordUpdater(Table &table, Trx *trx, const char *attribute, const Value *v) : table_(table),
+        trx_(trx), attribute_name_(attribute), value_(v){
+    }
+
+    RC update_record(Record *record) {
+      RC rc = RC::SUCCESS;
+      rc = table_.update_record(trx_, record, attribute_name_, value_);
+      if (rc == RC::SUCCESS) {
+        updated_count_++;
+      }
+      return rc;
+    }
+
+    int updated_count() const {
+      return updated_count_;
+    }
+
+private:
+    Table & table_;
+    Trx *trx_;
+    int updated_count_ = 0;
+    const char *attribute_name_;
+    const Value *value_;
+
+};
+
+static RC record_reader_update_adapter(Record *record, void *context) {
+  RecordUpdater &record_deleter = *(RecordUpdater *)context;
+  return record_deleter.update_record(record);
 }
+
+RC Table::update_record(Trx *trx, const char *attribute_name, const Value *value, int condition_num, const Condition conditions[], int *updated_count) {
+  RC rc;
+  CompositeConditionFilter condition_filter;
+  rc = condition_filter.init(*this, conditions, condition_num);
+  if (rc != RC::SUCCESS) {
+    return rc;
+  }
+  RecordUpdater updater(*this, trx, attribute_name, value);
+//  Record rc_new = Record();
+  rc = scan_record(trx, &condition_filter, -1, &updater, record_reader_update_adapter);
+  if (updated_count != nullptr) {
+    *updated_count = updater.updated_count();
+  }
+  return rc;
+}
+
+RC Table::update_record(Trx *trx, Record *record, const char *attribute_name, const Value *value) {
+  RC rc = RC::SUCCESS;
+//  if (trx != nullptr) {
+//    rc = trx->update_record(this, record);
+//  } else {
+//  rc = delete_entry_of_indexes(record->data, record->rid, false);
+//  if (rc != RC::SUCCESS) {
+//    LOG_ERROR("Failed to delete indexes of record (rid=%d.%d). rc=%d:%s",
+//              record->rid.page_num, record->rid.slot_num, rc, strrc(rc));
+//  } else {
+//  }
+//  }
+  change_record(attribute_name, value, record);
+  rc = record_handler_->update_record(record);
+  return rc;
+}
+
 
 class RecordDeleter {
 public:

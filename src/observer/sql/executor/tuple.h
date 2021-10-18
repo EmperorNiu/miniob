@@ -125,12 +125,14 @@ public:
   ~TupleSet() = default;
 
   void set_schema(const TupleSchema &schema);
+  void append_schema(const TupleSchema &schema);
 
-  const TupleSchema &get_schema() const;
+  const TupleSchema get_schema() const;
 
   void add(Tuple && tuple);
 
   void clear();
+  void tuple_clear();
 
   bool is_empty() const;
   int size() const;

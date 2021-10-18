@@ -25,6 +25,7 @@ struct Record;
 struct RID;
 class Index;
 class IndexScanner;
+class RecordUpdater;
 class RecordDeleter;
 class Trx;
 
@@ -79,6 +80,7 @@ private:
 
   RC insert_record(Trx *trx, Record *record);
   RC delete_record(Trx *trx, Record *record);
+  RC update_record(Trx *trx, Record *record, const char *attribute_name, const Value *value);
 
 private:
   friend class RecordUpdater;
@@ -89,6 +91,7 @@ private:
 private:
   RC init_record_handler(const char *base_dir);
   RC make_record(int value_num, const Value *values, char * &record_out);
+  RC change_record(const char *attribute, const Value *v, Record *record);
 
 private:
   Index *find_index(const char *index_name) const;

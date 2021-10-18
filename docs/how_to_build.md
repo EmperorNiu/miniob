@@ -53,3 +53,10 @@ cd build
 cmake ..
 make
 ```
+
+
+编译dubug模式
+```shell
+cmkae .. -DEBUG=ON
+```
+

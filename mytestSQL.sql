@@ -1,0 +1,18 @@
+create table t(id int, age int);
+drop table t;
+create table t(id int, name int);
+insert into t values(2, 22);
+insert into t values(4, 53);
+select * from t;
+update t set name = 200 where id>1;
+select * from t;
+update set age=20 where id>50;
+create table j1(id int, age int);
+create table j2(id int, age int);
+create table j3(id int, age int);
+insert into j1 values(1, 24);
+insert into j1 values(2, 22);
+insert into j2 values(4, 53);
+insert into j3 values(5, 53);
+select * from j1,j2;
+select * from j1,j2,j3;

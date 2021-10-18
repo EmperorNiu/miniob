@@ -17,8 +17,9 @@ See the Mulan PSL v2 for more details. */
 #include "common/log/log.h"
 
 Tuple::Tuple(const Tuple &other) {
-  LOG_PANIC("Copy constructor of tuple is not supported");
-  exit(1);
+//  LOG_PANIC("Copy constructor of tuple is not supported");
+  values_ = (std::move(other.values_));
+//  exit(1);
 }
 
 Tuple::Tuple(Tuple &&other) noexcept : values_(std::move(other.values_)) {
@@ -162,6 +163,10 @@ void TupleSet::clear() {
   schema_.clear();
 }
 
+void TupleSet::tuple_clear() {
+  tuples_.clear();
+}
+
 void TupleSet::print(std::ostream &os) const {
   if (schema_.fields().empty()) {
     LOG_WARN("Got empty schema");
@@ -186,7 +191,11 @@ void TupleSet::set_schema(const TupleSchema &schema) {
   schema_ = schema;
 }
 
-const TupleSchema &TupleSet::get_schema() const {
+void TupleSet::append_schema(const TupleSchema &schema) {
+  schema_.append(schema);
+}
+
+const TupleSchema TupleSet::get_schema() const {
   return schema_;
 }
 
