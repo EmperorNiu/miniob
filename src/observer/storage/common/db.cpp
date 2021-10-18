@@ -78,7 +78,7 @@ RC Db::drop_table(const char *table_name) {
   }
   std::string data_file_path = table_data_file(path_.c_str(), table_name);
   std::string table_file_path = table_meta_file(path_.c_str(), table_name);
-  // nya：错误处理
+  // nya：错误处理呀
   std::remove(data_file_path.c_str());
   std::remove(table_file_path.c_str());
 //  if (!std::remove(data_file_path.c_str())) {
