@@ -242,7 +242,15 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
     }
     select_nodes.push_back(select_node);
   }
+  std::vector<DefaultConditionFilter *> condition_filters;
+  for (size_t i = 0; i < selects.condition_num; i++) {
+    const Condition &condition = selects.conditions[i];
+    if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
+        condition.left_attr.relation_name != condition.right_attr.relation_name) {
+      DefaultConditionFilter *condition_filter = new DefaultConditionFilter();
 
+    }
+  }
   if (select_nodes.empty()) {
     LOG_ERROR("No table given");
     end_trx_if_need(session, trx, false);
@@ -267,13 +275,13 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
   std::stringstream ss;
   if (tuple_sets.size() > 1) {
     // 本次查询了多张表，需要做join操作
-    TupleSet tuple_result = std::move(tuple_sets[0]);
-    TupleSet tuple_result_ = std::move(tuple_sets[0]);
-    int size = tuple_result.size();
-//    tuple_result.set_schema(tuple_sets[0].get_schema());
+    TupleSet tuple_result;
+    tuple_result.set_schema(tuple_sets[0].get_schema());
+    TupleSet tuple_result_ = TupleSet(std::move(tuple_sets[0]));
+    int size = tuple_result_.size();
     for (int i = 0; i < tuple_sets.size()-1; ++i) {
       tuple_result.append_schema(tuple_sets[i+1].get_schema());
-      tuple_result_.append_schema(tuple_sets[i+1].get_schema());
+//      tuple_result_.append_schema(tuple_sets[i+1].get_schema());
       for (int j = 0; j < size; ++j) {
         for (int k = 0; k < tuple_sets[i+1].size(); ++k) {
 //          Tuple t1 = Tuple(tuple_sets[i].get(j));
@@ -286,9 +294,15 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
         }
       }
       size = tuple_result.size();
-      tuple_result_ = std::move(tuple_result);
+      tuple_result_ = TupleSet(std::move(tuple_result));
       tuple_result.tuple_clear();
     }
+//    for (size_t i = 0; i < selects.condition_num; i++) {
+//      const Condition &condition = selects.conditions[i];
+//      if (condition.left_is_attr == 1 && condition.right_is_attr == 1) {
+//
+//      }
+//    }
     tuple_result_.print(ss);
   } else {
     // 当前只查询一张表，直接返回结果即可

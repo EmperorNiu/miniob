@@ -1,7 +1,4 @@
-deps/
 build/
 cmake-build-debug/
-test/
-unitest/
 .idea
 .DS_Store

@@ -9,10 +9,10 @@ please refer to docs/how_to_build.md
 
 # 如何启动
 
-## 启动 observer
+## 启动 obclient
 
 ```shell
-./bin/observer -f ../etc/observer.ini 
+./bin/obclient
 ```
 
 ## 启动 obserber
