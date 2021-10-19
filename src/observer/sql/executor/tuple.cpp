@@ -243,6 +243,15 @@ void TupleRecordConverter::add_record(const char *record) {
         tuple.add(s, strlen(s));
       }
       break;
+    case DATES:{
+        int value = *(int*)(record + field_meta->offset());
+        int y = value/10000;
+        int m = (value-y*10000)/100;
+        int d = value-y*10000-m*100;
+        char s[20];
+        int n = sprintf(s, "%d-%02d-%02d", y, m, d);
+        tuple.add(s,strlen(s));
+    }
       default: {
         LOG_PANIC("Unsupported field type. type=%d", field_meta->type());
       }
