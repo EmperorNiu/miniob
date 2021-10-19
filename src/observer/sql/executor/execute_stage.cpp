@@ -242,7 +242,15 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
     }
     select_nodes.push_back(select_node);
   }
+  std::vector<DefaultConditionFilter *> condition_filters;
+  for (size_t i = 0; i < selects.condition_num; i++) {
+    const Condition &condition = selects.conditions[i];
+    if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
+        condition.left_attr.relation_name != condition.right_attr.relation_name) {
+      DefaultConditionFilter *condition_filter = new DefaultConditionFilter();
 
+    }
+  }
   if (select_nodes.empty()) {
     LOG_ERROR("No table given");
     end_trx_if_need(session, trx, false);
