@@ -289,6 +289,12 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
       tuple_result_ = TupleSet(std::move(tuple_result));
       tuple_result.tuple_clear();
     }
+//    for (size_t i = 0; i < selects.condition_num; i++) {
+//      const Condition &condition = selects.conditions[i];
+//      if (condition.left_is_attr == 1 && condition.right_is_attr == 1) {
+//
+//      }
+//    }
     tuple_result_.print(ss);
   } else {
     // 当前只查询一张表，直接返回结果即可
