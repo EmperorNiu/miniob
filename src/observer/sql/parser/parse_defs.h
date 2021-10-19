@@ -39,6 +39,13 @@ typedef enum {
   NO_OP
 } CompOp;
 
+//typedef enum {
+//    MAX,
+//    MIN,
+//    COUNT,
+//    AVG,
+//} AggregateOp;
+
 //属性值类型
 typedef enum { UNDEFINED, CHARS, INTS, FLOATS } AttrType;
 

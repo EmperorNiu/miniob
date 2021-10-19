@@ -68,6 +68,10 @@ ParserContext *get_context(yyscan_t scanner)
         TABLES
         INDEX
         SELECT
+        MAX
+        MIN
+        COUNT
+        AVG
         DESC
         SHOW
         SYNC
