@@ -159,4 +159,5 @@ private:
   TupleSet &tuple_set_;
 };
 
+
 #endif //__OBSERVER_SQL_EXECUTOR_TUPLE_H_

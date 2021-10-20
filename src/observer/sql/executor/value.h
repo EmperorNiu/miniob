@@ -20,6 +20,7 @@ See the Mulan PSL v2 for more details. */
 #include <string>
 #include <ostream>
 
+
 class TupleValue {
 public:
   TupleValue() = default;
@@ -54,7 +55,10 @@ public:
   }
 
   void to_string(std::ostream &os) const override {
-    os << value_;
+    char buffer [12];
+    sprintf(buffer,"%.2f",value_);
+    FloatValue::morphNumericString(buffer,2);
+    os << buffer;
   }
 
   int compare(const TupleValue &other) const override {
@@ -67,6 +71,30 @@ public:
       return -1;
     }
     return 0;
+  }
+
+  void morphNumericString (char *s, int n) const{
+    char *p;
+    int count;
+
+    p = strchr (s,'.');         // Find decimal point, if any.
+    if (p != NULL) {
+      count = n;              // Adjust for more or less decimals.
+      while (count >= 0) {    // Maximum decimals allowed.
+        count--;
+        if (*p == '\0')    // If there's less than desired.
+          break;
+        p++;               // Next character.
+      }
+
+      *p-- = '\0';            // Truncate string.
+      while (*p == '0')       // Remove trailing zeros.
+        *p-- = '\0';
+
+      if (*p == '.') {        // If all decimals were zeros, remove ".".
+        *p = '\0';
+      }
+    }
   }
 private:
   float value_;
@@ -90,6 +118,7 @@ public:
 private:
   std::string value_;
 };
+
 
 
 #endif //__OBSERVER_SQL_EXECUTOR_VALUE_H_

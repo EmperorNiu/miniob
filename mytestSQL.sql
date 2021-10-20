@@ -22,4 +22,4 @@ select * from j1,j2 where j1.id=j2.id;
 create table t3(id int, age date);
 insert into t3 values(1, "2021-2-28");
 create table a(id int, age float);
-insert into a values(1, 1.231234);
+insert into a values(1, 1.203001);
