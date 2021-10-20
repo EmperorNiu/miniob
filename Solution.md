@@ -10,11 +10,12 @@
 2. 校验where中的字段
 3. 校验投影字段（select后的字段）
 5. ?
-6. 
+
 ## drop table
 
 1. 删除不存在的表时返回 FAILURE
-2. 删除表的table文件、data文件、index文件
+2. 删除表的table文件、data文件
+3. 删除 index 文件
 已完成
 
 TODO

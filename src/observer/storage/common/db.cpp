@@ -76,17 +76,20 @@ RC Db::drop_table(const char *table_name) {
   if (opened_tables_.count(table_name) == 0) {
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
+  Table *table = find_table(table_name);
+  // 删除index文件
+  if (table->table_meta().index_num() != 0) {
+    for (int i = 0; i < table->table_meta().index_num(); ++i) {
+      const IndexMeta * index = table->table_meta().index(i);
+      std::string index_file_path = index_data_file(path_.c_str(), table_name, index->name());
+      std::remove(index_file_path.c_str());
+    }
+  }
   std::string data_file_path = table_data_file(path_.c_str(), table_name);
   std::string table_file_path = table_meta_file(path_.c_str(), table_name);
-  // nya：错误处理呀
+  // 删除data文件和table文件
   std::remove(data_file_path.c_str());
   std::remove(table_file_path.c_str());
-//  if (!std::remove(data_file_path.c_str())) {
-//    return RC::IOERR_DELETE;
-//  }
-//  if (!std::remove(table_file_path.c_str())) {
-//    return RC::IOERR_DELETE;
-//  }
   // 删除 opened_tables_ 中的对应内容
   opened_tables_.erase(table_name);
   return RC::SUCCESS;
