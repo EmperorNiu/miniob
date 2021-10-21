@@ -126,6 +126,7 @@ ParserContext *get_context(yyscan_t scanner)
 %token <string> SSS
 %token <string> STAR
 %token <string> STRING_V
+%token <string> AGGOP
 //非终结符
 
 %type <number> type;
@@ -361,8 +362,68 @@ select:				/*  select 语句的语法解析树*/
 			CONTEXT->from_length=0;
 			CONTEXT->select_length=0;
 			CONTEXT->value_length = 0;
-	}
-	;
+		} | SELECT MAX LBRACE select_attr RBRACE FROM ID rel_list where SEMICOLON
+		{
+			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$7;
+			selects_append_relation(&CONTEXT->ssql->sstr.selection, $7);
+			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 0);
+			selects_append_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->conditions, CONTEXT->condition_length);
+
+			CONTEXT->ssql->flag=SCF_SELECT;//"select";
+			// CONTEXT->ssql->sstr.selection.attr_num = CONTEXT->select_length;
+
+			//临时变量清零
+			CONTEXT->condition_length=0;
+			CONTEXT->from_length=0;
+			CONTEXT->select_length=0;
+			CONTEXT->value_length = 0;
+		} | SELECT MIN LBRACE select_attr RBRACE FROM ID rel_list where SEMICOLON
+		{
+			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$7;
+			selects_append_relation(&CONTEXT->ssql->sstr.selection, $7);
+			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 1);
+			selects_append_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->conditions, CONTEXT->condition_length);
+
+			CONTEXT->ssql->flag=SCF_SELECT;//"select";
+			// CONTEXT->ssql->sstr.selection.attr_num = CONTEXT->select_length;
+
+			//临时变量清零
+			CONTEXT->condition_length=0;
+			CONTEXT->from_length=0;
+			CONTEXT->select_length=0;
+			CONTEXT->value_length = 0;
+		} | SELECT AVG LBRACE select_attr RBRACE FROM ID rel_list where SEMICOLON
+		{
+			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$7;
+			selects_append_relation(&CONTEXT->ssql->sstr.selection, $7);
+			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 3);
+			selects_append_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->conditions, CONTEXT->condition_length);
+
+			CONTEXT->ssql->flag=SCF_SELECT;//"select";
+			// CONTEXT->ssql->sstr.selection.attr_num = CONTEXT->select_length;
+
+			//临时变量清零
+			CONTEXT->condition_length=0;
+			CONTEXT->from_length=0;
+			CONTEXT->select_length=0;
+			CONTEXT->value_length = 0;
+		} | SELECT COUNT LBRACE select_attr RBRACE FROM ID rel_list where SEMICOLON
+		{
+			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$7;
+			selects_append_relation(&CONTEXT->ssql->sstr.selection, $7);
+			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 2);
+			selects_append_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->conditions, CONTEXT->condition_length);
+
+			CONTEXT->ssql->flag=SCF_SELECT;//"select";
+			// CONTEXT->ssql->sstr.selection.attr_num = CONTEXT->select_length;
+
+			//临时变量清零
+			CONTEXT->condition_length=0;
+			CONTEXT->from_length=0;
+			CONTEXT->select_length=0;
+			CONTEXT->value_length = 0;
+		}
+     ;
 
 select_attr:
     STAR {  
