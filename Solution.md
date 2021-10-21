@@ -43,3 +43,7 @@ trx 版本是否需要完成
 
 需要实现max/min/count/avg.
 包含聚合字段时，只会出现聚合字段。聚合函数中的参数不会是表达式，比如age +1
+
+## 问题
+
+select 对float类型筛选时存在问题 差值小于1 （condition filter）

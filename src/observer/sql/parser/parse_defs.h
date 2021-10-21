@@ -43,7 +43,8 @@ typedef enum {
     MAX_OP,
     MIN_OP,
     COUNT_OP,
-    AVG_OP
+    AVG_OP,
+    NO_AG_OP
 } AggregateOp;
 
 //属性值类型

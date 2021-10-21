@@ -33,6 +33,7 @@ public:
 class SelectExeNode : public ExecutionNode {
 public:
   SelectExeNode();
+  AggregateOp aggregateOp;
   virtual ~SelectExeNode();
 
   RC init(Trx *trx, Table *table, TupleSchema && tuple_schema, std::vector<DefaultConditionFilter *> &&condition_filters);
@@ -42,6 +43,7 @@ private:
   Trx *trx_ = nullptr;
   Table  * table_;
   TupleSchema  tuple_schema_;
+
   std::vector<DefaultConditionFilter *> condition_filters_;
 };
 

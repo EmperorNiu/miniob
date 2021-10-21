@@ -159,5 +159,20 @@ private:
   TupleSet &tuple_set_;
 };
 
+class TupleRecordAggregateConverter {
+public:
+    TupleRecordAggregateConverter(Table *table, TupleSet &tuple_set, AggregateOp aggregateOp);
+    void aggregate_record(const char *record);
+    int count;
+    int agg_int;
+    float agg_float;
+    AttrType type;
+private:
+    Table *table_;
+    TupleSet &tuple_set_;
+    AggregateOp aggregateOp_;
+
+};
+
 
 #endif //__OBSERVER_SQL_EXECUTOR_TUPLE_H_
