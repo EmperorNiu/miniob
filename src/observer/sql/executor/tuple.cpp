@@ -140,6 +140,7 @@ TupleSet::TupleSet(TupleSet &&other) : tuples_(std::move(other.tuples_)), schema
   other.schema_.clear();
 }
 
+
 TupleSet &TupleSet::operator=(TupleSet &&other) {
   if (this == &other) {
     return *this;

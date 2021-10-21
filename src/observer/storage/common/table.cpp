@@ -569,6 +569,9 @@ RC Table::update_record(Trx *trx, const char *attribute_name, const Value *value
   if (rc != RC::SUCCESS) {
     return rc;
   }
+  if (value->type != table_meta_.field(attribute_name)->type()) {
+    return RC::INVALID_ARGUMENT;
+  }
   RecordUpdater updater(*this, trx, attribute_name, value);
 //  Record rc_new = Record();
   rc = scan_record(trx, &condition_filter, -1, &updater, record_reader_update_adapter);

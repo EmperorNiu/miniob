@@ -226,6 +226,7 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
   Session *session = session_event->get_client()->session;
   Trx *trx = session->current_trx();
   const Selects &selects = sql->sstr.selection;
+  std::vector<const char *> table_names;
   // 把所有的表和只跟这张表关联的condition都拿出来，生成最底层的select 执行节点
   std::vector<SelectExeNode *> select_nodes;
   for (size_t i = 0; i < selects.relation_num; i++) {
@@ -241,14 +242,21 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
       return rc;
     }
     select_nodes.push_back(select_node);
+    table_names.push_back(table_name);
   }
-  std::vector<DefaultConditionFilter *> condition_filters;
+  std::vector<Condition> join_conditions;
+//  std::vector<std::unordered_map<void*,std::vector<Record>>> hash_tables;
   for (size_t i = 0; i < selects.condition_num; i++) {
-    const Condition &condition = selects.conditions[i];
+    const Condition condition = selects.conditions[i];
     if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
         condition.left_attr.relation_name != condition.right_attr.relation_name) {
-      DefaultConditionFilter *condition_filter = new DefaultConditionFilter();
-
+      join_conditions.push_back(condition);
+//      std::unordered_map<void*,std::vector<Tuple>> hash_table;
+//      char * table_name_for_hash = condition.left_attr.relation_name;
+//      Table * table = DefaultHandler::get_default().find_table(db, table_name_for_hash);
+//      DefaultConditionFilter filter = DefaultConditionFilter();
+//      const ConDesc condec = ConDesc{false,0,0,0};
+//      filter.init()
     }
   }
   if (select_nodes.empty()) {
@@ -275,34 +283,38 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
   std::stringstream ss;
   if (tuple_sets.size() > 1) {
     // 本次查询了多张表，需要做join操作
+    // 循环 join
     TupleSet tuple_result;
     tuple_result.set_schema(tuple_sets[0].get_schema());
     TupleSet tuple_result_ = TupleSet(std::move(tuple_sets[0]));
     int size = tuple_result_.size();
     for (int i = 0; i < tuple_sets.size()-1; ++i) {
       tuple_result.append_schema(tuple_sets[i+1].get_schema());
-//      tuple_result_.append_schema(tuple_sets[i+1].get_schema());
       for (int j = 0; j < size; ++j) {
-        for (int k = 0; k < tuple_sets[i+1].size(); ++k) {
-//          Tuple t1 = Tuple(tuple_sets[i].get(j));
-          Tuple t1 = Tuple(tuple_result_.get(j));
-          Tuple t2 = tuple_sets[i+1].get(k);
-          for (int l = 0; l < t2.values().size(); ++l) {
-            t1.add(t2.values()[l]);
-          }
-          tuple_result.add(std::move(t1));
+        for (int k = 0; k < tuple_sets[i + 1].size(); ++k) {
+//          for (int m = 0; m < join_conditions.size(); ++m) {
+//            int c1 = strcmp(join_conditions[m].left_attr.relation_name, table_names[i]);
+//            int c2 = strcmp(join_conditions[m].left_attr.relation_name, table_names[i + 1]);
+//            int c3 = strcmp(join_conditions[m].right_attr.relation_name, table_names[i]);
+//            int c4 = strcmp(join_conditions[m].right_attr.relation_name, table_names[i + 1]);
+//            if ((c1 == 0 && c4 == 0) || (c2 == 0 && c3 == 0)) {
+//              if (join_conditions[m].comp == 0 && tuple_sets[i].get_schema().fields()) {
+//              }
+//            }
+            Tuple t1 = Tuple(tuple_result_.get(j));
+            Tuple t2 = tuple_sets[i + 1].get(k);
+
+            for (int l = 0; l < t2.values().size(); ++l) {
+              t1.add(t2.values()[l]);
+            }
+            tuple_result.add(std::move(t1));
+//          }
         }
       }
       size = tuple_result.size();
       tuple_result_ = TupleSet(std::move(tuple_result));
       tuple_result.tuple_clear();
     }
-//    for (size_t i = 0; i < selects.condition_num; i++) {
-//      const Condition &condition = selects.conditions[i];
-//      if (condition.left_is_attr == 1 && condition.right_is_attr == 1) {
-//
-//      }
-//    }
     tuple_result_.print(ss);
   } else {
     // 当前只查询一张表，直接返回结果即可
@@ -392,3 +404,8 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
 
   return select_node.init(trx, table, std::move(schema), std::move(condition_filters));
 }
+
+bool match_tuple(TupleSet t1,TupleSet t2, RelAttr r1, RelAttr r2, Condition condition) {
+
+}
+
