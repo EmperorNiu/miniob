@@ -6,6 +6,10 @@ miniob设计的目标是让不熟悉数据库设计和实现的同学能够快�
 # How to build
 please refer to docs/how_to_build.md
 
+```shell
+flex --header-file=lex.yy.h lex_sql.l
+bison -d -b yacc_sql yacc_sql.y
+```
 
 # 如何启动
 

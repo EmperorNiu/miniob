@@ -263,4 +263,109 @@ void TupleRecordConverter::add_record(const char *record) {
   tuple_set_.add(std::move(tuple));
 }
 
+TupleRecordAggregateConverter::TupleRecordAggregateConverter(Table *table, TupleSet &tuple_set, AggregateOp aggregateOp) :
+  table_(table), tuple_set_(tuple_set), aggregateOp_(aggregateOp) {
+  count = 0;
+  if (aggregateOp == MIN_OP) {
+    agg_int = INT_MAX;
+    agg_float = (float) LONG_MAX;
+  } else {
+    agg_int = 0;
+    agg_float = 0;
+  }
+}
 
+void TupleRecordAggregateConverter::aggregate_record(const char *record) {
+  const TupleSchema &schema = tuple_set_.schema();
+//  Tuple tuple;
+  const TableMeta &table_meta = table_->table_meta();
+  for (const TupleField &field : schema.fields()) {
+    const FieldMeta *field_meta = table_meta.field(field.field_name());
+    assert(field_meta != nullptr);
+    type = field_meta->type();
+    count += 1;
+    switch (aggregateOp_) {
+      case MAX_OP: {
+        switch (field_meta->type()) {
+          case INTS: {
+            int value = *(int*)(record + field_meta->offset());
+            if (value > agg_int) {
+              agg_int = value;
+            }
+          }
+            break;
+          case FLOATS: {
+            float value = *(float *)(record + field_meta->offset());
+            if (value > agg_float) {
+              agg_float = value;
+            }
+          }
+            break;
+          case DATES:{
+            int value = *(int*)(record + field_meta->offset());
+            if (value > agg_int) {
+              agg_int = value;
+            }
+          }
+            break;
+          default: {
+            LOG_PANIC("Unsupported field type for this operation. type=%d", field_meta->type());
+          }
+        }
+      }
+        break;
+      case MIN_OP: {
+        switch (field_meta->type()) {
+          case INTS: {
+            int value = *(int*)(record + field_meta->offset());
+            if (value < agg_int) {
+              agg_int = value;
+            }
+          }
+            break;
+          case FLOATS: {
+            float value = *(float *)(record + field_meta->offset());
+            if (value < agg_float) {
+              agg_float = value;
+            }
+          }
+            break;
+          case DATES:{
+            int value = *(int*)(record + field_meta->offset());
+            if (value < agg_int) {
+              agg_int = value;
+            }
+          }
+            break;
+          default: {
+            LOG_PANIC("Unsupported field type for this operation. type=%d", field_meta->type());
+          }
+        }
+      }
+        break;
+      case AVG_OP: {
+        switch (field_meta->type()) {
+          case INTS: {
+            int value = *(int*)(record + field_meta->offset());
+            agg_int += value;
+          }
+            break;
+          case FLOATS: {
+            float value = *(float *)(record + field_meta->offset());
+            agg_float += value;
+          }
+            break;
+          default: {
+            LOG_PANIC("Unsupported field type for this operation. type=%d", field_meta->type());
+          }
+        }
+      }
+        break;
+      default: {
+        LOG_PANIC("Unsupported field type for this operation. type=%d", field_meta->type());
+      }
+    }
+  }
+
+//  tuple_set_.add(std::move(tuple));
+}

@@ -39,3 +39,4 @@ select * from person;
 drop table person;
 create table person(id int, height float, name char, birthday date);
 select * from person;
+select min(birthday) from person;

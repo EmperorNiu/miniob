@@ -558,8 +558,8 @@ private:
 };
 
 static RC record_reader_update_adapter(Record *record, void *context) {
-  RecordUpdater &record_deleter = *(RecordUpdater *)context;
-  return record_deleter.update_record(record);
+  RecordUpdater &record_updater = *(RecordUpdater *)context;
+  return record_updater.update_record(record);
 }
 
 RC Table::update_record(Trx *trx, const char *attribute_name, const Value *value, int condition_num, const Condition conditions[], int *updated_count) {

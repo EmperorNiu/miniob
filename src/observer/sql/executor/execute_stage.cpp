@@ -244,21 +244,21 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
     select_nodes.push_back(select_node);
     table_names.push_back(table_name);
   }
-  std::vector<Condition> join_conditions;
-//  std::vector<std::unordered_map<void*,std::vector<Record>>> hash_tables;
-  for (size_t i = 0; i < selects.condition_num; i++) {
-    const Condition condition = selects.conditions[i];
-    if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
-        condition.left_attr.relation_name != condition.right_attr.relation_name) {
-      join_conditions.push_back(condition);
-//      std::unordered_map<void*,std::vector<Tuple>> hash_table;
-//      char * table_name_for_hash = condition.left_attr.relation_name;
-//      Table * table = DefaultHandler::get_default().find_table(db, table_name_for_hash);
-//      DefaultConditionFilter filter = DefaultConditionFilter();
-//      const ConDesc condec = ConDesc{false,0,0,0};
-//      filter.init()
-    }
-  }
+//  std::vector<Condition> join_conditions;
+////  std::vector<std::unordered_map<void*,std::vector<Record>>> hash_tables;
+//  for (size_t i = 0; i < selects.condition_num; i++) {
+//    const Condition condition = selects.conditions[i];
+//    if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
+//        condition.left_attr.relation_name != condition.right_attr.relation_name) {
+//      join_conditions.push_back(condition);
+////      std::unordered_map<void*,std::vector<Tuple>> hash_table;
+////      char * table_name_for_hash = condition.left_attr.relation_name;
+////      Table * table = DefaultHandler::get_default().find_table(db, table_name_for_hash);
+////      DefaultConditionFilter filter = DefaultConditionFilter();
+////      const ConDesc condec = ConDesc{false,0,0,0};
+////      filter.init()
+//    }
+//  }
   if (select_nodes.empty()) {
     LOG_ERROR("No table given");
     end_trx_if_need(session, trx, false);
@@ -352,6 +352,8 @@ static RC schema_add_field(Table *table, const char *field_name, TupleSchema &sc
   return RC::SUCCESS;
 }
 
+
+
 // 把所有的表和只跟这张表关联的condition都拿出来，生成最底层的select 执行节点
 RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, const char *table_name, SelectExeNode &select_node) {
   // 列出跟这张表关联的Attr
@@ -368,10 +370,12 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
       if (0 == strcmp("*", attr.attribute_name)) {
         // 列出这张表所有字段
         TupleSchema::from_table(table, schema);
+        select_node.aggregateOp = selects.aggregateOp;
         break; // 没有校验，给出* 之后，再写字段的错误
       } else {
         // 列出这张表相关字段
         RC rc = schema_add_field(table, attr.attribute_name, schema);
+        select_node.aggregateOp = selects.aggregateOp;
         if (rc != RC::SUCCESS) {
           return rc;
         }
