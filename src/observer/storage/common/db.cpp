@@ -91,6 +91,8 @@ RC Db::drop_table(const char *table_name) {
   std::remove(data_file_path.c_str());
   std::remove(table_file_path.c_str());
   // 删除 opened_tables_ 中的对应内容
+  table = opened_tables_[table_name];
+  delete table;
   opened_tables_.erase(table_name);
   return RC::SUCCESS;
 }
