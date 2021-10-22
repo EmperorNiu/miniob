@@ -267,8 +267,8 @@ TupleRecordAggregateConverter::TupleRecordAggregateConverter(Table *table, Tuple
   table_(table), tuple_set_(tuple_set), aggregateOp_(aggregateOp) {
   count = 0;
   if (aggregateOp == MIN_OP) {
-    agg_int = INT_MAX;
-    agg_float = (float) LONG_MAX;
+    agg_int = 2147483647;
+    agg_float = (float) 2147483647;
   } else {
     agg_int = 0;
     agg_float = 0;
