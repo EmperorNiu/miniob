@@ -288,7 +288,7 @@ RC Table::make_record(int value_num, const Value *values, char * &record_out) {
 
 RC Table::change_record(const char *attribute, const Value *v, Record *record) {
   const int normal_field_start_index = table_meta_.sys_field_num();
-  for (int i = 0; i < table_meta_.field_num(); i++) {
+  for (int i = 0; i < table_meta_.field_num()-normal_field_start_index; i++) {
     const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
     if (*(field->name()) == *attribute){
       memcpy(record->data + field->offset(), v->data, field->len());
@@ -593,8 +593,20 @@ RC Table::update_record(Trx *trx, Record *record, const char *attribute_name, co
 //  } else {
 //  }
 //  }
+  rc = delete_entry_of_indexes(record->data, record->rid, false);
+  if (rc != RC::SUCCESS) {
+    return rc;
+  }
   change_record(attribute_name, value, record);
   rc = record_handler_->update_record(record);
+  if (rc != RC::SUCCESS) {
+    return rc;
+  }
+  rc = insert_entry_of_indexes(record->data, record->rid);
+  if (rc != RC::SUCCESS) {
+    return rc;
+  }
+//  rc = update_entry_of_indexes(record->data, record->rid);
   return rc;
 }
 
@@ -688,6 +700,23 @@ RC Table::rollback_delete(Trx *trx, const RID &rid) {
 RC Table::insert_entry_of_indexes(const char *record, const RID &rid) {
   RC rc = RC::SUCCESS;
   for (Index *index : indexes_) {
+    rc = index->insert_entry(record, &rid);
+    if (rc != RC::SUCCESS) {
+      break;
+    }
+  }
+  return rc;
+}
+
+RC Table::update_entry_of_indexes(const char *record, const RID &rid) {
+  RC rc = RC::SUCCESS;
+  for (Index *index : indexes_) {
+
+    rc = index->delete_entry(record, &rid);
+    if (rc != RC::SUCCESS) {
+      return rc;
+    }
+
     rc = index->insert_entry(record, &rid);
     if (rc != RC::SUCCESS) {
       break;
