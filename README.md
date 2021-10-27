@@ -22,7 +22,7 @@ bison -d -b yacc_sql yacc_sql.y
 ## 启动 obserber
 
 ```shell
-./bin/observer -f ../etc/observer.ini 
+./build/bin/observer -f ./etc/observer.ini 
 ```
 
 启动后会在build目录下产生日志文件

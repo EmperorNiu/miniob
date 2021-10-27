@@ -291,7 +291,17 @@ RC Table::change_record(const char *attribute, const Value *v, Record *record) {
   for (int i = 0; i < table_meta_.field_num()-normal_field_start_index; i++) {
     const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
     if (*(field->name()) == *attribute){
-      memcpy(record->data + field->offset(), v->data, field->len());
+//      memcpy(record->data + field->offset(), v->data, field->len());
+      if (field->type() == INTS && v->type == FLOATS ) {
+//        int tmp = (int)(*(float*)(v + sizeof(int)));
+        int t = (int)(*(float *) v->data);
+        memcpy(record->data + field->offset(), &t, field->len());
+      } else if (field->type() == FLOATS && v->type == INTS ) {
+        float t = (float)(*(int *) v->data);
+        memcpy(record->data + field->offset(), &t, field->len());
+      } else {
+        memcpy(record->data + field->offset(), v->data, field->len());
+      }
     }
   }
 }
@@ -569,9 +579,19 @@ RC Table::update_record(Trx *trx, const char *attribute_name, const Value *value
   if (rc != RC::SUCCESS) {
     return rc;
   }
-  if (value->type != table_meta_.field(attribute_name)->type()) {
-    return RC::INVALID_ARGUMENT;
+  int field_type_compare_compatible_table[5][5] = {
+          1,0,0,0,0,
+          0,1,0,0,0,
+          0,0,1,1,0,
+          0,0,1,1,0,
+          0,0,0,0,1
+  };
+  if (!field_type_compare_compatible_table[value->type][table_meta_.field(attribute_name)->type()]){
+    return RC::SCHEMA_FIELD_TYPE_MISMATCH;
   }
+//  if (value->type != table_meta_.field(attribute_name)->type()) {
+//    return RC::INVALID_ARGUMENT;
+//  }
   RecordUpdater updater(*this, trx, attribute_name, value);
 //  Record rc_new = Record();
   rc = scan_record(trx, &condition_filter, -1, &updater, record_reader_update_adapter);

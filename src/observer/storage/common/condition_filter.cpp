@@ -102,23 +102,47 @@ RC DefaultConditionFilter::init(Table &table, const Condition &condition)
     right.value = nullptr;
   } else {
     right.is_attr = false;
+
     right.value = condition.right_value.data;
     type_right = condition.right_value.type;
 
     right.attr_length = 0;
     right.attr_offset = 0;
   }
-
+  int field_type_compare_compatible_table[5][5] = {
+          1,0,0,0,0,
+          0,1,0,0,0,
+          0,0,1,1,0,
+          0,0,1,1,0,
+          0,0,0,0,1
+  };
   // 校验和转换
-  //  if (!field_type_compare_compatible_table[type_left][type_right]) {
-  //    // 不能比较的两个字段， 要把信息传给客户端
-  //    return RC::SCHEMA_FIELD_TYPE_MISMATCH;
-  //  }
+  if (!field_type_compare_compatible_table[type_left][type_right]) {
+    // 不能比较的两个字段， 要把信息传给客户端
+    return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+  } else if (!left.is_attr && right.is_attr) {
+    return init(left, right, type_right, condition.comp);
+  } else if (left.is_attr && !right.is_attr) {
+    if (type_left==FLOATS && type_right==INTS) {
+      tmp_f = (float)(*(int *) condition.right_value.data);
+      right.value = &tmp_f;
+    }
+    else if (type_left==INTS && type_right==FLOATS) {
+      tmp_i = (int)(*(float *) condition.right_value.data);
+      right.value = &tmp_i;
+    }
+    return init(left, right, type_left, condition.comp);
+  }
   // NOTE：这里没有实现不同类型的数据比较，比如整数跟浮点数之间的对比
   // 但是选手们还是要实现。这个功能在预选赛中会出现
-  if (type_left != type_right) {
-    return RC::SCHEMA_FIELD_TYPE_MISMATCH;
-  }
+//  if (left.is_attr == true && right.is_attr == false){
+//    right.value
+//  }
+//  if (left.is_attr == false && right.is_attr == true) {}
+
+//  if (type_left != type_right) {
+//    return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+//  }
 
   return init(left, right, type_left, condition.comp);
 }

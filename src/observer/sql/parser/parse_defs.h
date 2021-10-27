@@ -50,6 +50,8 @@ typedef enum {
 //属性值类型
 typedef enum { UNDEFINED, CHARS, INTS, FLOATS, DATES} AttrType;
 
+
+
 //属性值
 typedef struct _Value {
   AttrType type;  // type of value

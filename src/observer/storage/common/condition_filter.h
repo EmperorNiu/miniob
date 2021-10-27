@@ -68,6 +68,8 @@ private:
   ConDesc  right_;
   AttrType attr_type_ = UNDEFINED;
   CompOp   comp_op_ = NO_OP;
+  float   tmp_f;
+  int     tmp_i;
 };
 
 class CompositeConditionFilter : public ConditionFilter {
