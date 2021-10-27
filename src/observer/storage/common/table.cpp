@@ -290,7 +290,8 @@ RC Table::change_record(const char *attribute, const Value *v, Record *record) {
   const int normal_field_start_index = table_meta_.sys_field_num();
   for (int i = 0; i < table_meta_.field_num()-normal_field_start_index; i++) {
     const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
-    if (*(field->name()) == *attribute){
+
+    if (std::strcmp(field->name(),attribute) == 0){
 //      memcpy(record->data + field->offset(), v->data, field->len());
       if (field->type() == INTS && v->type == FLOATS ) {
 //        int tmp = (int)(*(float*)(v + sizeof(int)));

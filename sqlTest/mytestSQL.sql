@@ -53,7 +53,14 @@ create index id_index on j1(id);
 create unique index id_index on j2(id);
 
 create table t (id int, name char, col1 int, col2 int);
+create index i_id on t (id);
 select * from t;
 insert into t values(1,'t2',2,3);
-insert into t values(2,'t2', 3,4);
+insert into t values(3,'t3', 3,4);
+insert into t values(3,'t3', 4,4);
 update t set name='abc' where id=1;
+insert into t values(3,'t3', 4,4);
+update t set name='a' where col1>2;
+update t set id=4 where name='abc';
+update t set name='abcd' where col1=100 and col2=3;
+update t set name='abcd' where col1=2100 and col2=3;
