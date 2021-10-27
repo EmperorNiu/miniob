@@ -56,6 +56,9 @@ void value_init_date(Value *value, const char *v) {
     int y, m, d = 0;
     int days[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     sscanf(v, "%d-%d-%d", &y, &m, &d);
+    if(y%4==0){
+        days[1]=29;
+    }
     int r = 10000 * y + 100 * m + d;
     if (m < 1 || m > 12 || d < 1 || d > days[m-1]) {
         value->type = UNDEFINED;
