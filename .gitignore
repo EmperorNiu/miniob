@@ -1,4 +1,6 @@
 build/
 cmake-build-debug/
+sqlTest/
+miniob/
 .idea
 .DS_Store

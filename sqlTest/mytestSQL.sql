@@ -48,4 +48,12 @@ update person set birthday='1999-08-14' where name='t1';
 update person set height=4.1 where id=0;
 update person set height=40.0 where birthday='1999-06-17';
 
-create index id_index on person(id);
+create index id_index on j1(id);
+
+create unique index id_index on j2(id);
+
+create table t (id int, name char, col1 int, col2 int);
+select * from t;
+insert into t values(1,'t2',2,3);
+insert into t values(2,'t2', 3,4);
+update t set name='abc' where id=1;

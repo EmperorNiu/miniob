@@ -28,8 +28,8 @@ class Value;
 class IndexMeta {
 public:
   IndexMeta() = default;
-
   RC init(const char *name, const FieldMeta &field);
+  RC init(const char *name, const FieldMeta &field, const int isUnique);
 
 public:
   const char *name() const;
@@ -43,5 +43,6 @@ public:
 private:
   std::string       name_;
   std::string       field_;
+  int               isUnique_;
 };
 #endif // __OBSERVER_STORAGE_COMMON_INDEX_META_H__

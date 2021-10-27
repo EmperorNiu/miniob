@@ -33,6 +33,17 @@ RC IndexMeta::init(const char *name, const FieldMeta &field) {
   return RC::SUCCESS;
 }
 
+RC IndexMeta::init(const char *name, const FieldMeta &field, const int isUnique) {
+  if (nullptr == name || common::is_blank(name)) {
+    return RC::INVALID_ARGUMENT;
+  }
+
+  name_ = name;
+  field_ = field.name();
+  isUnique_ = isUnique;
+  return RC::SUCCESS;
+}
+
 void IndexMeta::to_json(Json::Value &json_value) const {
   json_value[FIELD_NAME] = name_;
   json_value[FIELD_FIELD_NAME] = field_;

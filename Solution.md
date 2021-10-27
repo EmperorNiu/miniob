@@ -29,6 +29,8 @@ update单个字段
 1. 符合规范的更新
 2. 与表的meta data 不符的更新返回 FAILURE
 3. 其他错误校验
+4. index 更新
+5. int float 之间的类型转换
 
 TODO
 trx 版本是否需要完成
@@ -55,6 +57,12 @@ date测试不会超过2038年2月。注意处理非法的date输入，需要返�
 实现max/min/count/avg. 包含聚合字段时，只会出现聚合字段。聚合函数中的参数不会是表达式，比如age +1
 
 
+## uniuqe index
+
+1. 添加解析
+2. 创建索引检查 unique
+3. 插入索引检查 
+4. 
 ## 问题
 
 select 对float类型筛选时存在问题 差值小于1 （condition filter）

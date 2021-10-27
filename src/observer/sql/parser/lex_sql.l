@@ -49,7 +49,8 @@ QUOTE            [\'\"]
 [Tt][Aa][Bb][Ll][Ee]					           RETURN_TOKEN(TABLE);
 [Tt][Aa][Bb][Ll][Ee][Ss]			           RETURN_TOKEN(TABLES);
 [Ii][Nn][Dd][Ee][Xx]                  	 RETURN_TOKEN(INDEX);
-[Oo][Nn]								                 RETURN_TOKEN(ON);
+[Uu][Nn][Ii][Qq][Uu][Ee]                  	 RETURN_TOKEN(UNIQUE);
+[Oo][Nn]								     RETURN_TOKEN(ON);
 [Ss][Hh][Oo][Ww]                         RETURN_TOKEN(SHOW);
 [Ss][Yy][Nn][Cc]                         RETURN_TOKEN(SYNC);
 [Ss][Ee][Ll][Ee][Cc][Tt]                 RETURN_TOKEN(SELECT);
@@ -61,8 +62,8 @@ QUOTE            [\'\"]
 [Ww][Hh][Ee][Rr][Ee]                  	 RETURN_TOKEN(WHERE);
 [Aa][Nn][Dd]                             RETURN_TOKEN(AND);
 [Ii][Nn][Ss][Ee][rR][tT]                 RETURN_TOKEN(INSERT);
-[Ii][Nn][Tt][Oo]					 	             RETURN_TOKEN(INTO);
-[Vv][Aa][Ll][Uu][Ee][Ss]                 RETURN_TOKEN(VALUES);
+[Ii][Nn][Tt][Oo]					 	 RETURN_TOKEN(INTO);
+[Vv][Aa][Ll][Uu][Ee][Ss]                 RETURN_TOKEN(INDEX);
 [Dd][Ee][Ll][Ee][Tt][Ee]                 RETURN_TOKEN(DELETE);
 [Uu][Pp][Dd][Aa][Tt][Ee]                 RETURN_TOKEN(UPDATE);
 [Ss][Ee][Tt]							               RETURN_TOKEN(SET);
