@@ -41,7 +41,15 @@ public:
   const IndexMeta &index_meta() const {
     return index_meta_;
   }
-
+  const FieldMeta &field_meta() const {
+      return field_meta_;
+  }
+  int isUnique() const {
+      return isUnique_;
+  }
+  void setUnique(int isUnique) {
+    isUnique_ = isUnique;
+  }
   virtual RC insert_entry(const char *record, const RID *rid) = 0;
   virtual RC delete_entry(const char *record, const RID *rid) = 0;
 
@@ -53,6 +61,7 @@ protected:
   RC init(const IndexMeta &index_meta, const FieldMeta &field_meta);
 
 protected:
+  int         isUnique_;
   IndexMeta   index_meta_;
   FieldMeta   field_meta_;    /// 当前实现仅考虑一个字段的索引
 };

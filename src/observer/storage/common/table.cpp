@@ -447,14 +447,41 @@ RC Table::scan_record_by_index(Trx *trx, IndexScanner *scanner, ConditionFilter 
 
 class IndexInserter {
 public:
-  explicit IndexInserter(Index *index) : index_(index) {
+  explicit IndexInserter(Index *index, int isUnique) : index_(index), isUnique_(isUnique) {
   }
 
   RC insert_index(const Record *record) {
-    return index_->insert_entry(record->data, &record->rid);
+    const FieldMeta fieldMeta = index_->field_meta();
+
+    RC rc = index_->insert_entry(record->data, &record->rid);
+    if (rc == RC::SUCCESS) {
+      if (isUnique_) {
+        if (fieldMeta.type() == INTS || fieldMeta.type() == DATES) {
+          int data;
+          memcpy(&data, record->data + fieldMeta.offset(), fieldMeta.len());
+          if (unique_int.count(data) == 0) unique_int.insert(data);
+          else return RC::SCHEMA_INDEX_EXIST;
+        } else if (fieldMeta.type() == FLOATS) {
+          float data;
+          memcpy(&data, record->data + fieldMeta.offset(), fieldMeta.len());
+          if (unique_float.count(data) == 0) unique_float.insert(data);
+          else return RC::SCHEMA_INDEX_EXIST;
+        } else if (fieldMeta.type()== CHARS) {
+          std::string data;
+          memcpy(&data, record->data + fieldMeta.offset(), fieldMeta.len());
+          if (unique_string.count(data) == 0) unique_string.insert(data);
+          else return RC::SCHEMA_INDEX_EXIST;
+        }
+      }
+    }
+    return rc;
   }
 private:
   Index * index_;
+  int isUnique_;
+  std::set<int> unique_int;
+  std::set<float> unique_float;
+  std::set<std::string> unique_string;
 };
 
 static RC insert_index_record_reader_adapter(Record *record, void *context) {
@@ -487,6 +514,7 @@ RC Table::create_index(Trx *trx, const char *index_name, const char *attribute_n
   BplusTreeIndex *index = new BplusTreeIndex();
   std::string index_file = index_data_file(base_dir_.c_str(), name(), index_name);
   rc = index->create(index_file.c_str(), new_index_meta, *field_meta);
+  index->setUnique(isUnique);
   if (rc != RC::SUCCESS) {
     delete index;
     LOG_ERROR("Failed to create bplus tree index. file name=%s, rc=%d:%s", index_file.c_str(), rc, strrc(rc));
@@ -494,7 +522,7 @@ RC Table::create_index(Trx *trx, const char *index_name, const char *attribute_n
   }
 
   // 遍历当前的所有数据，插入这个索引
-  IndexInserter index_inserter(index);
+  IndexInserter index_inserter(index, isUnique);
   rc = scan_record(trx, nullptr, -1, &index_inserter, insert_index_record_reader_adapter);
   if (rc != RC::SUCCESS) {
     // rollback
@@ -721,9 +749,16 @@ RC Table::rollback_delete(Trx *trx, const RID &rid) {
 RC Table::insert_entry_of_indexes(const char *record, const RID &rid) {
   RC rc = RC::SUCCESS;
   for (Index *index : indexes_) {
-    rc = index->insert_entry(record, &rid);
-    if (rc != RC::SUCCESS) {
-      break;
+    if (index->isUnique()) {
+//      IndexScanner *scanner = index->create_scanner(EQUAL_TO, record);
+//      RID id = rid;
+//      scanner->next_entry(rid);
+    }
+    else {
+      rc = index->insert_entry(record, &rid);
+      if (rc != RC::SUCCESS) {
+        break;
+      }
     }
   }
   return rc;
@@ -761,7 +796,7 @@ RC Table::delete_entry_of_indexes(const char *record, const RID &rid, bool error
 
 Index *Table::find_index(const char *index_name) const {
   for (Index *index: indexes_) {
-    if (0 == strcmp(index->index_meta().name(), index_name)) {
+    if (0 == std::strcmp(index->index_meta().name(), index_name)) {
       return index;
     }
   }
