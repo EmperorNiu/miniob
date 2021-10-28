@@ -212,7 +212,7 @@ RC Table::insert_record(Trx *trx, Record *record) {
 
   rc = insert_entry_of_indexes(record->data, record->rid);
   if (rc != RC::SUCCESS) {
-    RC rc2 = delete_entry_of_indexes(record->data, record->rid, true);
+    RC rc2 = delete_entry_of_indexes(record->data, record->rid, false);
     if (rc2 != RC::SUCCESS) {
       LOG_PANIC("Failed to rollback index data when insert index entries failed. table name=%s, rc=%d:%s",
                 name(), rc2, strrc(rc2));
@@ -291,7 +291,7 @@ RC Table::change_record(const char *attribute, const Value *v, Record *record) {
   for (int i = 0; i < table_meta_.field_num()-normal_field_start_index; i++) {
     const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
 
-    if (std::strcmp(field->name(),attribute) == 0){
+    if (strcmp(field->name(),attribute) == 0){
 //      memcpy(record->data + field->offset(), v->data, field->len());
       if (field->type() == INTS && v->type == FLOATS ) {
 //        int tmp = (int)(*(float*)(v + sizeof(int)));
@@ -750,9 +750,25 @@ RC Table::insert_entry_of_indexes(const char *record, const RID &rid) {
   RC rc = RC::SUCCESS;
   for (Index *index : indexes_) {
     if (index->isUnique()) {
-//      IndexScanner *scanner = index->create_scanner(EQUAL_TO, record);
-//      RID id = rid;
-//      scanner->next_entry(rid);
+      IndexScanner *scanner = index->create_scanner(EQUAL_TO, record);
+      RID rid_n;
+      rc = scanner->next_entry(&rid_n);
+      if (rc != RC::SUCCESS) {
+        if (RC::RECORD_EOF == rc) {
+          rc = index->insert_entry(record, &rid);
+          if (rc != RC::SUCCESS) {
+            return rc;
+          }
+        } else return rc;
+      }
+      else {
+        Record r;
+        rc = record_handler_->get_record(&rid, &r);
+        if (rc == RC::SUCCESS)
+          return RC::SCHEMA_INDEX_EXIST;
+        else
+          return RC::SUCCESS;
+      }
     }
     else {
       rc = index->insert_entry(record, &rid);
@@ -796,7 +812,7 @@ RC Table::delete_entry_of_indexes(const char *record, const RID &rid, bool error
 
 Index *Table::find_index(const char *index_name) const {
   for (Index *index: indexes_) {
-    if (0 == std::strcmp(index->index_meta().name(), index_name)) {
+    if (0 == strcmp(index->index_meta().name(), index_name)) {
       return index;
     }
   }
