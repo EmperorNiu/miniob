@@ -67,5 +67,9 @@ update t set name='abc' where id=1;
 insert into t values(3,'t3', 4,4);
 update t set name='a' where col1>2;
 update t set id=4 where name='abc';
-update t set name='abcd' where col1=100 and col2=3;
-update t set name='abcd' where col1=2100 and col2=3;
+update t set name='abcd' where col1=2 and col2=3;
+
+update t set col1=100;
+select * from t;
+update t set name2='abc' where id=1;
+update t set name='abc' where id='a';

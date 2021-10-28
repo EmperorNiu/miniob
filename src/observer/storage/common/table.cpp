@@ -322,6 +322,7 @@ RC Table::change_record(const char *attribute, const Value *v, Record *record) {
       }
     }
   }
+  return RC::SUCCESS;
 }
 
 RC Table::init_record_handler(const char *base_dir) {
@@ -625,6 +626,9 @@ RC Table::update_record(Trx *trx, const char *attribute_name, const Value *value
   if (rc != RC::SUCCESS) {
     return rc;
   }
+  if (table_meta_.field(attribute_name) == nullptr) {
+    return RC::SCHEMA_FIELD_NOT_EXIST;
+  }
   int field_type_compare_compatible_table[5][5] = {
           1,0,0,0,0,
           0,1,0,0,0,
@@ -632,6 +636,7 @@ RC Table::update_record(Trx *trx, const char *attribute_name, const Value *value
           0,0,1,1,0,
           0,0,0,0,1
   };
+
   if (!field_type_compare_compatible_table[value->type][table_meta_.field(attribute_name)->type()]){
     return RC::SCHEMA_FIELD_TYPE_MISMATCH;
   }
