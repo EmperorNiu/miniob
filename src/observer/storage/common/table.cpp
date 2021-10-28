@@ -226,25 +226,42 @@ RC Table::insert_record(Trx *trx, Record *record) {
   }
   return rc;
 }
-RC Table::insert_record(Trx *trx, int value_num, const Value *values) {
-  if (value_num <= 0 || nullptr == values ) {
+RC Table::insert_record(Trx *trx, int value_num, const Value *values, int insert_num) {
+  if (value_num <= 0 || nullptr == values || insert_num<=0) {
     LOG_ERROR("Invalid argument. value num=%d, values=%p", value_num, values);
     return RC::INVALID_ARGUMENT;
   }
-
   char *record_data;
-  RC rc = make_record(value_num, values, record_data);
-  if (rc != RC::SUCCESS) {
-    LOG_ERROR("Failed to create a record. rc=%d:%s", rc, strrc(rc));
-    return rc;
-  }
-
-  Record record;
-  record.data = record_data;
+  int value_length = value_num/insert_num;
+    for (int i = 0; i < insert_num; ++i) {
+        Record* r = new Record[insert_num];
+        Value* a = new Value[value_length];
+        for (int j = 0; j < value_length; ++j) {
+            a[j] = values[i*value_length+j];
+        }
+        RC rc = make_record(value_length, a, record_data);
+        if (rc != RC::SUCCESS) {
+            for (int k = 0; k < i; ++k) {
+                delete_record(trx,&r[k]);
+            }
+            LOG_ERROR("Failed to create a record. rc=%d:%s", rc, strrc(rc));
+            return rc;
+        }
+        Record record;
+        record.data = record_data;
+        rc = insert_record(trx, &record);
+        r[i] = record;
+        delete[] record_data;
+        if (rc != RC::SUCCESS) {
+            for (int k = 0; k < i; ++k) {
+                delete_record(trx,&r[k]);
+            }
+            LOG_ERROR("Failed to create a record. rc=%d:%s", rc, strrc(rc));
+            return rc;
+        }
+    }
   // record.valid = true;
-  rc = insert_record(trx, &record);
-  delete[] record_data;
-  return rc;
+  return RC::SUCCESS;
 }
 
 const char *Table::name() const {
