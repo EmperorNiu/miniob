@@ -36,6 +36,7 @@ insert into person values(0, 1.73, 't1', '1999-01-13');
 insert into person values(1, 1.78, 't2', '1999-03-15');
 insert into person values(2, 1.51, 't3', '1999-06-17');
 insert into person values(3, 1.83, 't4', '2001-08-11');
+insert into person values(1, 1.78, 't2', '1999-03-15'),(1, 1.78, 't2', '1999-03-15'),(3, 1.83, 't4', '2001-08-11');
 select * from person;
 drop table person;
 create table person(id int, height float, name char, birthday date);
