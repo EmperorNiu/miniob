@@ -190,6 +190,18 @@ RC Table::insert_record(Trx *trx, Record *record) {
   if (trx != nullptr) {
     trx->init_trx_info(this, *record);
   }
+  for (Index *index : indexes_) {
+    if (index->isUnique()) {
+      FieldMeta fieldMeta = index->field_meta();
+      IndexScanner *scanner = index->create_scanner(EQUAL_TO, record->data);
+      RID rid_n;
+      rc = scanner->next_entry(&rid_n);
+      if (RC::RECORD_EOF == rc) {
+        continue;
+      } else return RC::SCHEMA_INDEX_EXIST;
+    }
+  }
+
   rc = record_handler_->insert_record(record->data, table_meta_.record_size(), &record->rid);
   if (rc != RC::SUCCESS) {
     LOG_ERROR("Insert record failed. table name=%s, rc=%d:%s", table_meta_.name(), rc, strrc(rc));
@@ -771,33 +783,33 @@ RC Table::rollback_delete(Trx *trx, const RID &rid) {
 RC Table::insert_entry_of_indexes(const char *record, const RID &rid) {
   RC rc = RC::SUCCESS;
   for (Index *index : indexes_) {
-    if (index->isUnique()) {
-      IndexScanner *scanner = index->create_scanner(EQUAL_TO, record);
-      RID rid_n;
-      rc = scanner->next_entry(&rid_n);
-      if (rc != RC::SUCCESS) {
-        if (RC::RECORD_EOF == rc) {
-          rc = index->insert_entry(record, &rid);
-          if (rc != RC::SUCCESS) {
-            return rc;
-          }
-        } else return rc;
-      }
-      else {
-        Record r;
-        rc = record_handler_->get_record(&rid, &r);
-        if (rc == RC::SUCCESS)
-          return RC::SCHEMA_INDEX_EXIST;
-        else
-          return RC::SUCCESS;
-      }
-    }
-    else {
+//    if (index->isUnique()) {
+//      IndexScanner *scanner = index->create_scanner(EQUAL_TO, record);
+//      RID rid_n;
+//      rc = scanner->next_entry(&rid_n);
+//      if (rc != RC::SUCCESS) {
+//        if (RC::RECORD_EOF == rc) {
+//          rc = index->insert_entry(record, &rid);
+//          if (rc != RC::SUCCESS) {
+//            return rc;
+//          }
+//        } else return rc;
+//      }
+//      else {
+//        Record r;
+//        rc = record_handler_->get_record(&rid, &r);
+//        if (rc == RC::SUCCESS)
+//          return RC::SCHEMA_INDEX_EXIST;
+//        else
+//          return RC::SUCCESS;
+//      }
+//    }
+//    else {
       rc = index->insert_entry(record, &rid);
       if (rc != RC::SUCCESS) {
         break;
       }
-    }
+//    }
   }
   return rc;
 }

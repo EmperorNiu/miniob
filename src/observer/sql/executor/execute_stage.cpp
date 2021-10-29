@@ -244,21 +244,21 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
     select_nodes.push_back(select_node);
     table_names.push_back(table_name);
   }
-//  std::vector<Condition> join_conditions;
-////  std::vector<std::unordered_map<void*,std::vector<Record>>> hash_tables;
-//  for (size_t i = 0; i < selects.condition_num; i++) {
-//    const Condition condition = selects.conditions[i];
-//    if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
-//        condition.left_attr.relation_name != condition.right_attr.relation_name) {
-//      join_conditions.push_back(condition);
-////      std::unordered_map<void*,std::vector<Tuple>> hash_table;
-////      char * table_name_for_hash = condition.left_attr.relation_name;
-////      Table * table = DefaultHandler::get_default().find_table(db, table_name_for_hash);
-////      DefaultConditionFilter filter = DefaultConditionFilter();
-////      const ConDesc condec = ConDesc{false,0,0,0};
-////      filter.init()
-//    }
-//  }
+  std::vector<Condition> join_conditions;
+//  std::vector<std::unordered_map<void*,std::vector<Record>>> hash_tables;
+  for (size_t i = 0; i < selects.condition_num; i++) {
+    const Condition condition = selects.conditions[i];
+    if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
+        condition.left_attr.relation_name != condition.right_attr.relation_name) {
+      join_conditions.push_back(condition);
+//      std::unordered_map<void*,std::vector<Tuple>> hash_table;
+//      char * table_name_for_hash = condition.left_attr.relation_name;
+//      Table * table = DefaultHandler::get_default().find_table(db, table_name_for_hash);
+//      DefaultConditionFilter filter = DefaultConditionFilter();
+//      const ConDesc condec = ConDesc{false,0,0,0};
+//      filter.init()
+    }
+  }
   if (select_nodes.empty()) {
     LOG_ERROR("No table given");
     end_trx_if_need(session, trx, false);
@@ -292,28 +292,51 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
       tuple_result.append_schema(tuple_sets[i+1].get_schema());
       for (int j = 0; j < size; ++j) {
         for (int k = 0; k < tuple_sets[i + 1].size(); ++k) {
-//          for (int m = 0; m < join_conditions.size(); ++m) {
-//            int c1 = strcmp(join_conditions[m].left_attr.relation_name, table_names[i]);
-//            int c2 = strcmp(join_conditions[m].left_attr.relation_name, table_names[i + 1]);
-//            int c3 = strcmp(join_conditions[m].right_attr.relation_name, table_names[i]);
-//            int c4 = strcmp(join_conditions[m].right_attr.relation_name, table_names[i + 1]);
-//            if ((c1 == 0 && c4 == 0) || (c2 == 0 && c3 == 0)) {
-//              if (join_conditions[m].comp == 0 && tuple_sets[i].get_schema().fields()) {
-//              }
-//            }
-            Tuple t1 = Tuple(tuple_result_.get(j));
-            Tuple t2 = tuple_sets[i + 1].get(k);
-
+          Tuple t1 = Tuple(tuple_result_.get(j));
+          Tuple t2 = tuple_sets[i + 1].get(k);
+          for (int m = 0; m < join_conditions.size(); ++m) {
+            int c1 = strcmp(join_conditions[m].left_attr.relation_name, table_names[i]);
+            int c2 = strcmp(join_conditions[m].left_attr.relation_name, table_names[i + 1]);
+            int c3 = strcmp(join_conditions[m].right_attr.relation_name, table_names[i]);
+            int c4 = strcmp(join_conditions[m].right_attr.relation_name, table_names[i + 1]);
+            char *l_name = join_conditions[m].left_attr.attribute_name;
+            char *r_name = join_conditions[m].right_attr.attribute_name;
+            if (c1 == 0 && c4 == 0) {
+              int l_i = tuple_result_.get_schema().index_of_field(table_names[i],l_name);
+              int r_i = tuple_sets[i + 1].get_schema().index_of_field(table_names[i+1],r_name);
+              if(!t1.get(l_i).compare(t2.get(r_i))){
+                for (int l = 0; l < t2.values().size(); ++l) {
+                  t1.add(t2.values()[l]);
+                }
+                tuple_result.add(std::move(t1));
+              }
+            } else if (c2 == 0 && c3 == 0) {
+              int l_i = tuple_sets[i + 1].get_schema().index_of_field(table_names[i+1],l_name);
+              int r_i = tuple_result_.get_schema().index_of_field(table_names[i],r_name);
+              if(!t2.get(l_i).compare(t1.get(r_i))){
+                for (int l = 0; l < t2.values().size(); ++l) {
+                  t1.add(t2.values()[l]);
+                }
+                tuple_result.add(std::move(t1));
+              }
+            }
+          }
+          if (join_conditions.size() == 0) {
             for (int l = 0; l < t2.values().size(); ++l) {
               t1.add(t2.values()[l]);
             }
             tuple_result.add(std::move(t1));
-//          }
+          }
+//            for (int l = 0; l < t2.values().size(); ++l) {
+//              t1.add(t2.values()[l]);
+//            }
+//            tuple_result.add(std::move(t1));
         }
       }
       size = tuple_result.size();
       tuple_result_ = TupleSet(std::move(tuple_result));
       tuple_result.tuple_clear();
+      tuple_result.set_schema(tuple_result_.get_schema());
     }
     tuple_result_.print(ss);
   } else {
