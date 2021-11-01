@@ -58,7 +58,7 @@ create index name_index on person(birthday);
 select * from person where birthday='1999-01-13';
 create index name1_index on person(name);
 create unique index name_index on person(name);
-insert into person values(1, 1.78, 't2', '1999-03-15'),(1, 1.78, 't2', '1999-03-15'),(3, 1.83, 't4', '2001-08-11'),(3, 1.83, 't4', '2001-08-11');
+insert into person values(1, 1.78, 't2', '1999-03-15'),(1, 1.78, 't2', '1999-103-15'),(3, 1.83, 't4', '2001-08-11'),(3, 1.83, 't4', '2001-08-11');
 select * from person;
 drop table person;
 create table person(id int, height float, name char, birthday date);
