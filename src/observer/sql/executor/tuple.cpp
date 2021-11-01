@@ -135,6 +135,47 @@ void TupleSchema::print(std::ostream &os) const {
   os << fields_.back().field_name() << std::endl;
 }
 
+void TupleSchema::print(std::ostream &os, std::vector<int> is_show) const {
+  if (fields_.empty()) {
+    os << "No schema";
+    return;
+  }
+
+  // 判断有多张表还是只有一张表
+  std::set<std::string> table_names;
+  for (const auto &field: fields_) {
+    table_names.insert(field.table_name());
+  }
+  int i = 0;
+  int first = 0;
+  int flag = 0;
+  for (std::vector<TupleField>::const_iterator iter = fields_.begin(), end = --fields_.end();
+       iter != end; ++iter) {
+    if (is_show[i] == 1) {
+      flag = 1;
+      if (i > 0 && i != first){
+        os << " | ";
+      }
+      if (table_names.size() > 1) {
+        os << iter->table_name() << ".";
+      }
+      os << iter->field_name();
+    }
+    i++;
+    if (flag==0){
+      first++;
+    }
+  }
+  if (is_show[i] == 1) {
+    os << " | ";
+    if (table_names.size() > 1) {
+      os << fields_.back().table_name() << ".";
+    }
+    os << fields_.back().field_name();
+  }
+  os << std::endl;
+}
+
 /////////////////////////////////////////////////////////////////////////////
 TupleSet::TupleSet(TupleSet &&other) : tuples_(std::move(other.tuples_)), schema_(other.schema_){
   other.schema_.clear();
@@ -179,11 +220,69 @@ void TupleSet::print(std::ostream &os) const {
   for (const Tuple &item : tuples_) {
     const std::vector<std::shared_ptr<TupleValue>> &values = item.values();
     for (std::vector<std::shared_ptr<TupleValue>>::const_iterator iter = values.begin(), end = --values.end();
-          iter != end; ++iter) {
+         iter != end; ++iter) {
       (*iter)->to_string(os);
       os << " | ";
     }
     values.back()->to_string(os);
+    os << std::endl;
+  }
+}
+
+void TupleSet::print(std::ostream &os, const Selects selects) const {
+  if (schema_.fields().empty()) {
+    LOG_WARN("Got empty schema");
+    return;
+  }
+  std::vector<int> is_show;
+  for (int i = 0; i < schema_.fields().size(); ++i) {
+    is_show.push_back(0);
+  }
+  for (size_t i = 0; i < selects.relation_num; i++) {
+    const char *table_name = selects.relations[i];
+    for (int i = 0; i < selects.attr_num; i++) {
+      const RelAttr &attr = selects.attributes[i];
+      if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)) {
+        if ((0 == strcmp("*", attr.attribute_name) && attr.relation_name == nullptr) ||
+            (0 == strcmp("*", attr.attribute_name) && attr.relation_name != nullptr && 0 == strcmp(table_name,attr.relation_name))) {
+          for (int j = 0; j < schema_.fields().size(); ++j) {
+            if (strcmp(schema_.field(j).table_name(),table_name)==0)
+              is_show[j] = 1;
+          }
+        } else {
+          for (int j = 0; j < schema_.fields().size(); ++j) {
+            if (strcmp(schema_.field(j).table_name(),table_name)==0 && strcmp(schema_.field(j).field_name(),attr.attribute_name)==0)
+              is_show[j] = 1;
+          }
+        }
+      }
+    }
+  }
+  schema_.print(os, is_show);
+
+  for (const Tuple &item : tuples_) {
+    const std::vector<std::shared_ptr<TupleValue>> &values = item.values();
+    int i = 0;
+    int first = 0;
+    int flag = 0;
+    for (std::vector<std::shared_ptr<TupleValue>>::const_iterator iter = values.begin(), end = --values.end();
+          iter != end; ++iter) {
+      if (is_show[i] == 1){
+        if (i > 0 && i!=first) {
+          os << " | ";
+        }
+        flag=1;
+        (*iter)->to_string(os);
+      }
+      i++;
+      if (flag == 0){
+        first++;
+      }
+    }
+    if (is_show[i] == 1) {
+      os << " | ";
+      values.back()->to_string(os);
+    }
     os << std::endl;
   }
 }

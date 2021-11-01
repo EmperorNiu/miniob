@@ -229,27 +229,28 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
   std::vector<const char *> table_names;
   // 把所有的表和只跟这张表关联的condition都拿出来，生成最底层的select 执行节点
   std::vector<SelectExeNode *> select_nodes;
-  for (size_t i = 0; i < selects.relation_num; i++) {
-    const char *table_name = selects.relations[i];
-    SelectExeNode *select_node = new SelectExeNode;
-    rc = create_selection_executor(trx, selects, db, table_name, *select_node);
-    if (rc != RC::SUCCESS) {
-      delete select_node;
-      for (SelectExeNode *& tmp_node: select_nodes) {
-        delete tmp_node;
+//  for (size_t i = 0; i < selects.relation_num; i++) {
+  for (int i = selects.relation_num-1; i >=0; i--) {
+      const char *table_name = selects.relations[i];
+      SelectExeNode *select_node = new SelectExeNode;
+      rc = create_selection_executor(trx, selects, db, table_name, *select_node);
+      if (rc != RC::SUCCESS) {
+        delete select_node;
+        for (SelectExeNode *& tmp_node: select_nodes) {
+          delete tmp_node;
+        }
+        end_trx_if_need(session, trx, false);
+        return rc;
       }
-      end_trx_if_need(session, trx, false);
-      return rc;
-    }
-    select_nodes.push_back(select_node);
-    table_names.push_back(table_name);
+      select_nodes.push_back(select_node);
+      table_names.push_back(table_name);
   }
   std::vector<Condition> join_conditions;
 //  std::vector<std::unordered_map<void*,std::vector<Record>>> hash_tables;
   for (size_t i = 0; i < selects.condition_num; i++) {
     const Condition condition = selects.conditions[i];
     if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
-        condition.left_attr.relation_name != condition.right_attr.relation_name) {
+        strcmp(condition.left_attr.relation_name,condition.right_attr.relation_name) != 0) {
       join_conditions.push_back(condition);
 //      std::unordered_map<void*,std::vector<Tuple>> hash_table;
 //      char * table_name_for_hash = condition.left_attr.relation_name;
@@ -338,10 +339,10 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
       tuple_result.tuple_clear();
       tuple_result.set_schema(tuple_result_.get_schema());
     }
-    tuple_result_.print(ss);
+    tuple_result_.print(ss, selects);
   } else {
     // 当前只查询一张表，直接返回结果即可
-    tuple_sets.front().print(ss);
+    tuple_sets.front().print(ss,selects);
   }
 
   for (SelectExeNode *& tmp_node: select_nodes) {
@@ -387,24 +388,30 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
 
-  for (int i = selects.attr_num - 1; i >= 0; i--) {
-    const RelAttr &attr = selects.attributes[i];
-    if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)) {
-      if (0 == strcmp("*", attr.attribute_name)) {
-        // 列出这张表所有字段
-        TupleSchema::from_table(table, schema);
-        select_node.aggregateOp = selects.aggregateOp;
-        break; // 没有校验，给出* 之后，再写字段的错误
-      } else {
-        // 列出这张表相关字段
-        RC rc = schema_add_field(table, attr.attribute_name, schema);
-        select_node.aggregateOp = selects.aggregateOp;
-        if (rc != RC::SUCCESS) {
-          return rc;
-        }
-      }
-    }
-  }
+//  for (int i = selects.attr_num - 1; i >= 0; i--) {
+//    const RelAttr &attr = selects.attributes[i];
+//    if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)){
+      TupleSchema::from_table(table, schema);
+      select_node.aggregateOp = selects.aggregateOp;
+//    }
+
+//    if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)) {
+//      if ((0 == strcmp("*", attr.attribute_name) && attr.relation_name == nullptr) ||
+//          (0 == strcmp("*", attr.attribute_name) && attr.relation_name != nullptr && 0 == strcmp(table_name,attr.relation_name))) {
+//        // 列出这张表所有字段&& 0 == strcmp(table_name,attr.relation_name)
+//        TupleSchema::from_table(table, schema);
+//        select_node.aggregateOp = selects.aggregateOp;
+//        // break; // 没有校验，给出* 之后，再写字段的错误
+//      } else {
+//        // 列出这张表相关字段
+//        RC rc = schema_add_field(table, attr.attribute_name, schema);
+//        select_node.aggregateOp = selects.aggregateOp;
+//        if (rc != RC::SUCCESS) {
+//          return rc;
+//        }
+//      }
+//    }
+//  }
 
   // 找出仅与此表相关的过滤条件, 或者都是值的过滤条件
   std::vector<DefaultConditionFilter *> condition_filters;
@@ -427,6 +434,20 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
       }
       condition_filters.push_back(condition_filter);
     }
+//    if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
+//        strcmp(condition.left_attr.relation_name,condition.right_attr.relation_name) != 0) {
+//      if (strcmp(condition.left_attr.relation_name, table_name) == 0) {
+//        RC rc = schema_add_field(table, condition.left_attr.attribute_name, schema);
+//        if (rc != RC::SUCCESS) {
+//          return rc;
+//        }
+//      } else if (strcmp(condition.right_attr.relation_name, table_name) == 0) {
+//        RC rc = schema_add_field(table, condition.right_attr.attribute_name, schema);
+//        if (rc != RC::SUCCESS) {
+//          return rc;
+//        }
+//      }
+//    }
   }
 
   return select_node.init(trx, table, std::move(schema), std::move(condition_filters));

@@ -108,6 +108,7 @@ public:
   }
 
   void print(std::ostream &os) const;
+  void print(std::ostream &os, std::vector<int> is_show) const;
 public:
   static void from_table(const Table *table, TupleSchema &schema);
 private:
@@ -140,6 +141,7 @@ public:
   const std::vector<Tuple> &tuples() const;
 
   void print(std::ostream &os) const;
+  void print(std::ostream &os, const Selects selects) const;
 public:
   const TupleSchema &schema() const {
     return schema_;
@@ -147,6 +149,8 @@ public:
 private:
   std::vector<Tuple> tuples_;
   TupleSchema schema_;
+
+
 };
 
 class TupleRecordConverter {

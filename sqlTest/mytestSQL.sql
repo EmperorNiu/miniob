@@ -21,6 +21,16 @@ select * from j1,j2,j3;
 select * from j1,j2 where j1.id=j2.id and j1.age > 30;
 select * from j1,j2 where j1.id=j2.id;
 select * from j1,j2 where j2.id=j1.id;
+select j1.age,j2.age from j1,j2 where j1.id=j2.id;
+select j1.* , j2.* from j1,j2 where j1.id=j2.id;
+select j1.*, j2.* from j1,j2;
+select j1.*, j2.age from j1,j2;
+select j1.id from j1,j2;
+
+select id from j1;
+
+
+
 create table t3(id int, age date);
 insert into t3 values(3, "2021-2-28");
 update t3 set age="2021-3-28" where id=1;
@@ -31,6 +41,8 @@ update a set age=30.1 where id=3;
 update a set id=4 where age=30.1;
 update j1 set age=30 where id=3;
 update j1 set age="31" where id=2;
+
+
 
 show tables;
 create table person(id int, height float, name char, birthday date);
