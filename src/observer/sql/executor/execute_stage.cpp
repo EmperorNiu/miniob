@@ -230,20 +230,21 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
   // 把所有的表和只跟这张表关联的condition都拿出来，生成最底层的select 执行节点
   std::vector<SelectExeNode *> select_nodes;
 //  for (size_t i = 0; i < selects.relation_num; i++) {
+
   for (int i = selects.relation_num-1; i >=0; i--) {
-      const char *table_name = selects.relations[i];
-      SelectExeNode *select_node = new SelectExeNode;
-      rc = create_selection_executor(trx, selects, db, table_name, *select_node);
-      if (rc != RC::SUCCESS) {
-        delete select_node;
-        for (SelectExeNode *& tmp_node: select_nodes) {
-          delete tmp_node;
-        }
-        end_trx_if_need(session, trx, false);
-        return rc;
+    const char *table_name = selects.relations[i];
+    SelectExeNode *select_node = new SelectExeNode;
+    rc = create_selection_executor(trx, selects, db, table_name, *select_node);
+    if (rc != RC::SUCCESS) {
+      delete select_node;
+      for (SelectExeNode *& tmp_node: select_nodes) {
+        delete tmp_node;
       }
-      select_nodes.push_back(select_node);
-      table_names.push_back(table_name);
+      end_trx_if_need(session, trx, false);
+      return rc;
+    }
+    select_nodes.push_back(select_node);
+    table_names.push_back(table_name);
   }
   std::vector<Condition> join_conditions;
 //  std::vector<std::unordered_map<void*,std::vector<Record>>> hash_tables;
@@ -387,12 +388,28 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
     LOG_WARN("No such table [%s] in db [%s]", table_name, db);
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
-
+  int flag = 0;
+  for (int i = selects.attr_num - 1; i >= 0; i--) {
+    const RelAttr &attr = selects.attributes[i];
+    if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)) {
+      flag = 1;
+      if (0 != strcmp("*", attr.attribute_name)) {
+        const FieldMeta *field_meta = table->table_meta().field(attr.attribute_name);
+        if (nullptr == field_meta) {
+          LOG_WARN("No such field. %s.%s", table->name(), attr.attribute_name);
+          return RC::SCHEMA_FIELD_MISSING;
+        }
+      }
+    }
+  }
+  if (flag == 0) {
+    return RC::SCHEMA_DB_NOT_EXIST;
+  }
 //  for (int i = selects.attr_num - 1; i >= 0; i--) {
 //    const RelAttr &attr = selects.attributes[i];
 //    if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)){
-      TupleSchema::from_table(table, schema);
-      select_node.aggregateOp = selects.aggregateOp;
+  TupleSchema::from_table(table, schema);
+  select_node.aggregateOp = selects.aggregateOp;
 //    }
 
 //    if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)) {

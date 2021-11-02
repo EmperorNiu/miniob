@@ -28,7 +28,8 @@ select j1.*, j2.age from j1,j2;
 select j1.id from j1,j2;
 
 select id from j1;
-
+select j4.age,j2.age from j1,j2 where j1.id=j2.id;
+select j1.agdsfe,j2.age from j1,j2 where j1.id=j2.id;
 
 
 create table t3(id int, age date);
@@ -58,12 +59,16 @@ create index name_index on person(birthday);
 select * from person where birthday='1999-01-13';
 create index name1_index on person(name);
 create unique index name_index on person(name);
-insert into person values(1, 1.78, 't2', '1999-03-15'),(1, 1.78, 't2', '1999-103-15'),(3, 1.83, 't4', '2001-08-11'),(3, 1.83, 't4', '2001-08-11');
+insert into person values(1, 1.78, 't2', '1999-03-15'),(2, 1.78, 't2', '1999-10-15'),(3, 1.83, 't4', '2001-08-11');
 select * from person;
 drop table person;
 create table person(id int, height float, name char, birthday date);
 select * from person;
 select min(birthday) from person;
+
+insert into person values(2, 1.51, 't3', '1999-06-17');
+insert into person values(0, 1.73, 't1', '1999-01-13'),(1, 1.56, 't2', '1999-03-15'),(2, 1.51, 't3', '1999-06-17');
+
 
 update person set id=0 where name='t1';
 update person set height=5.2 where name='t1';
