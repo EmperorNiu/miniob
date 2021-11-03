@@ -316,6 +316,50 @@ const std::vector<Tuple> &TupleSet::tuples() const {
 }
 
 /////////////////////////////////////////////////////////////////////////////
+//ConditionRecordConverter::ConditionRecordConverter(Table *table, std::vector<DefaultConditionFilter*> &condition_set,char *field_name) :
+//        table_(table), condition_set_(condition_set), field_name_(field_name){
+//}
+//
+//void ConditionRecordConverter::add_condition(const char *record) {
+//  const TableMeta &table_meta = table_->table_meta();
+//  const FieldMeta *field_meta = table_meta.field(field_name_);
+//  DefaultConditionFilter *condition_filter = new DefaultConditionFilter();
+//  switch (field_meta->type()) {
+//    case INTS: {
+//      int value = *(int*)(record + field_meta->offset());
+//      Condition condition = {
+//              1, nullptr,
+//      };
+//      RC rc = condition_filter->init();
+//      condition_set_.
+//    }
+//      break;
+//    case FLOATS: {
+//      float value = *(float *)(record + field_meta->offset());
+//      tuple.add(value);
+//    }
+//      break;
+//    case CHARS: {
+//      const char *s = record + field_meta->offset();  // 现在当做Cstring来处理
+//      tuple.add(s, strlen(s));
+//    }
+//      break;
+//    case DATES:{
+//      int value = *(int*)(record + field_meta->offset());
+//      int y = value/10000;
+//      int m = (value-y*10000)/100;
+//      int d = value-y*10000-m*100;
+//      char s[20];
+//      int n = sprintf(s, "%d-%02d-%02d", y, m, d);
+//      tuple.add(s,strlen(s));
+//    }
+//      break;
+//    default: {
+//      LOG_PANIC("Unsupported field type. type=%d", field_meta->type());
+//    }
+//  }
+//}
+
 TupleRecordConverter::TupleRecordConverter(Table *table, TupleSet &tuple_set) :
       table_(table), tuple_set_(tuple_set){
 }

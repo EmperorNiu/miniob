@@ -17,6 +17,7 @@ See the Mulan PSL v2 for more details. */
 
 #include <memory>
 #include <vector>
+#include <storage/common/condition_filter.h>
 
 #include "sql/parser/parse.h"
 #include "sql/executor/value.h"
@@ -152,6 +153,18 @@ private:
 
 
 };
+
+//class ConditionRecordConverter {
+//public:
+//    ConditionRecordConverter(Table *table, std::vector<DefaultConditionFilter*> &condition_set,char *field_name);
+//
+//    void add_condition(const char *record);
+//private:
+//    Table *table_;
+//    std::vector<DefaultConditionFilter*> &condition_set_;
+//    char *field_name_;
+//};
+
 
 class TupleRecordConverter {
 public:
