@@ -31,7 +31,8 @@ select j1.id from j1,j2;
 
 select j1.height from j1 where j1.height<2.4;
 select j1.height from j1,j2 where j1.height<=2.4 and j1.height=j2.height;
-
+select * from j1,j2,j3 where j1.id=j2.id and j3.height=5.3;
+select * from j1,j2,j3 where j1.id=j2.id;
 
 select id from j1;
 select j4.age,j2.age from j1,j2 where j1.id=j2.id;

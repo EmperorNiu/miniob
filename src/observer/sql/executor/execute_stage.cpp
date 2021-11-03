@@ -256,20 +256,15 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
     table_names.push_back(table_name);
   }
   std::vector<Condition> join_conditions;
-//  std::vector<std::unordered_map<void*,std::vector<Record>>> hash_tables;
+
   for (size_t i = 0; i < selects.condition_num; i++) {
     const Condition condition = selects.conditions[i];
     if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
         strcmp(condition.left_attr.relation_name,condition.right_attr.relation_name) != 0) {
       join_conditions.push_back(condition);
-//      std::unordered_map<void*,std::vector<Tuple>> hash_table;
-//      char * table_name_for_hash = condition.left_attr.relation_name;
-//      Table * table = DefaultHandler::get_default().find_table(db, table_name_for_hash);
-//      DefaultConditionFilter filter = DefaultConditionFilter();
-//      const ConDesc condec = ConDesc{false,0,0,0};
-//      filter.init()
     }
   }
+
   if (select_nodes.empty()) {
     LOG_ERROR("No table given");
     end_trx_if_need(session, trx, false);
@@ -305,6 +300,7 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
         for (int k = 0; k < tuple_sets[i + 1].size(); ++k) {
           Tuple t1 = Tuple(tuple_result_.get(j));
           Tuple t2 = tuple_sets[i + 1].get(k);
+          int flag = 0;
           for (int m = 0; m < join_conditions.size(); ++m) {
             int c1 = strcmp(join_conditions[m].left_attr.relation_name, table_names[i]);
             int c2 = strcmp(join_conditions[m].left_attr.relation_name, table_names[i + 1]);
@@ -313,6 +309,7 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
             char *l_name = join_conditions[m].left_attr.attribute_name;
             char *r_name = join_conditions[m].right_attr.attribute_name;
             if (c1 == 0 && c4 == 0) {
+              flag = 1;
               int l_i = tuple_result_.get_schema().index_of_field(table_names[i],l_name);
               int r_i = tuple_sets[i + 1].get_schema().index_of_field(table_names[i+1],r_name);
               if(!t1.get(l_i).compare(t2.get(r_i))){
@@ -322,6 +319,7 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
                 tuple_result.add(std::move(t1));
               }
             } else if (c2 == 0 && c3 == 0) {
+              flag = 1;
               int l_i = tuple_sets[i + 1].get_schema().index_of_field(table_names[i+1],l_name);
               int r_i = tuple_result_.get_schema().index_of_field(table_names[i],r_name);
               if(!t2.get(l_i).compare(t1.get(r_i))){
@@ -332,16 +330,12 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
               }
             }
           }
-          if (join_conditions.size() == 0) {
+          if (flag == 0) {
             for (int l = 0; l < t2.values().size(); ++l) {
               t1.add(t2.values()[l]);
             }
             tuple_result.add(std::move(t1));
           }
-//            for (int l = 0; l < t2.values().size(); ++l) {
-//              t1.add(t2.values()[l]);
-//            }
-//            tuple_result.add(std::move(t1));
         }
       }
       size = tuple_result.size();
@@ -411,12 +405,9 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
     }
   }
 
-//  for (int i = selects.attr_num - 1; i >= 0; i--) {
-//    const RelAttr &attr = selects.attributes[i];
-//    if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)){
   TupleSchema::from_table(table, schema);
   select_node.aggregateOp = selects.aggregateOp[0];
-//    }
+
 
 //    if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)) {
 //      if ((0 == strcmp("*", attr.attribute_name) && attr.relation_name == nullptr) ||
@@ -458,7 +449,12 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
       condition_filters.push_back(condition_filter);
     }
 //    if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
-//        strcmp(condition.left_attr.relation_name,condition.right_attr.relation_name) != 0) {
+//        strcmp(condition.left_attr.relation_name,condition.right_attr.relation_name) != 0 &&
+//        0 == strcmp(condition.left_attr.relation_name, table_name )) {
+//      Table * right_table = DefaultHandler::get_default().find_table(db, condition.right_attr.relation_name);
+//      right_table->scan_record(trx, nullptr,-1, )
+//      DefaultConditionFilter *condition_filter = new DefaultConditionFilter();
+////      RC rc = condition_filter->init(*table, condition);
 //      if (strcmp(condition.left_attr.relation_name, table_name) == 0) {
 //        RC rc = schema_add_field(table, condition.left_attr.attribute_name, schema);
 //        if (rc != RC::SUCCESS) {
