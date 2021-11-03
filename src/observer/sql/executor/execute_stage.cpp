@@ -308,25 +308,119 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
             int c4 = strcmp(join_conditions[m].right_attr.relation_name, table_names[i + 1]);
             char *l_name = join_conditions[m].left_attr.attribute_name;
             char *r_name = join_conditions[m].right_attr.attribute_name;
+            CompOp compOp = join_conditions[m].comp;
             if (c1 == 0 && c4 == 0) {
               flag = 1;
               int l_i = tuple_result_.get_schema().index_of_field(table_names[i],l_name);
               int r_i = tuple_sets[i + 1].get_schema().index_of_field(table_names[i+1],r_name);
-              if(!t1.get(l_i).compare(t2.get(r_i))){
-                for (int l = 0; l < t2.values().size(); ++l) {
-                  t1.add(t2.values()[l]);
-                }
-                tuple_result.add(std::move(t1));
+              switch (compOp) {
+                case EQUAL_TO:
+                  if(!t1.get(l_i).compare(t2.get(r_i))){
+                    for (int l = 0; l < t2.values().size(); ++l) {
+                      t1.add(t2.values()[l]);
+                    }
+                    tuple_result.add(std::move(t1));
+                  }
+                  break;
+                case LESS_EQUAL:
+                  if(t1.get(l_i).compare(t2.get(r_i)) <=0){
+                    for (int l = 0; l < t2.values().size(); ++l) {
+                      t1.add(t2.values()[l]);
+                    }
+                    tuple_result.add(std::move(t1));
+                  }
+                  break;
+                case NOT_EQUAL:
+                  if(t1.get(l_i).compare(t2.get(r_i)) !=0){
+                    for (int l = 0; l < t2.values().size(); ++l) {
+                      t1.add(t2.values()[l]);
+                    }
+                    tuple_result.add(std::move(t1));
+                  }
+                  break;
+                case LESS_THAN:
+                  if(t1.get(l_i).compare(t2.get(r_i)) < 0){
+                    for (int l = 0; l < t2.values().size(); ++l) {
+                      t1.add(t2.values()[l]);
+                    }
+                    tuple_result.add(std::move(t1));
+                  }
+                  break;
+                case GREAT_EQUAL:
+                  if(t1.get(l_i).compare(t2.get(r_i)) >= 0){
+                    for (int l = 0; l < t2.values().size(); ++l) {
+                      t1.add(t2.values()[l]);
+                    }
+                    tuple_result.add(std::move(t1));
+                  }
+                  break;
+                case GREAT_THAN:
+                  if(t1.get(l_i).compare(t2.get(r_i)) > 0){
+                    for (int l = 0; l < t2.values().size(); ++l) {
+                      t1.add(t2.values()[l]);
+                    }
+                    tuple_result.add(std::move(t1));
+                  }
+                  break;
+                default:
+                  return RC::SQL_SYNTAX;
               }
+
             } else if (c2 == 0 && c3 == 0) {
               flag = 1;
               int l_i = tuple_sets[i + 1].get_schema().index_of_field(table_names[i+1],l_name);
               int r_i = tuple_result_.get_schema().index_of_field(table_names[i],r_name);
-              if(!t2.get(l_i).compare(t1.get(r_i))){
-                for (int l = 0; l < t2.values().size(); ++l) {
-                  t1.add(t2.values()[l]);
-                }
-                tuple_result.add(std::move(t1));
+              switch (compOp) {
+                case EQUAL_TO:
+                  if(!t2.get(l_i).compare(t1.get(r_i))){
+                    for (int l = 0; l < t2.values().size(); ++l) {
+                      t1.add(t2.values()[l]);
+                    }
+                    tuple_result.add(std::move(t1));
+                  }
+                  break;
+                case LESS_EQUAL:
+                  if(t2.get(l_i).compare(t1.get(r_i)) <= 0){
+                    for (int l = 0; l < t2.values().size(); ++l) {
+                      t1.add(t2.values()[l]);
+                    }
+                    tuple_result.add(std::move(t1));
+                  }
+                  break;
+                case NOT_EQUAL:
+                  if(t2.get(l_i).compare(t1.get(r_i)) != 0){
+                    for (int l = 0; l < t2.values().size(); ++l) {
+                      t1.add(t2.values()[l]);
+                    }
+                    tuple_result.add(std::move(t1));
+                  }
+                  break;
+                case LESS_THAN:
+                  if(t2.get(l_i).compare(t1.get(r_i)) < 0){
+                    for (int l = 0; l < t2.values().size(); ++l) {
+                      t1.add(t2.values()[l]);
+                    }
+                    tuple_result.add(std::move(t1));
+                  }
+                  break;
+                case GREAT_EQUAL:
+                  if(t2.get(l_i).compare(t1.get(r_i)) >= 0){
+                    for (int l = 0; l < t2.values().size(); ++l) {
+                      t1.add(t2.values()[l]);
+                    }
+                    tuple_result.add(std::move(t1));
+                  }
+                  break;
+                case GREAT_THAN:
+                  if(t2.get(l_i).compare(t1.get(r_i)) > 0){
+                    for (int l = 0; l < t2.values().size(); ++l) {
+                      t1.add(t2.values()[l]);
+                    }
+                    tuple_result.add(std::move(t1));
+                  }
+                  break;
+                default:
+                  return RC::SQL_SYNTAX;
               }
             }
           }
