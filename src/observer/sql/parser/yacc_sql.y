@@ -405,7 +405,8 @@ aggregate_attr:
     }
     | AVG LBRACE select_attr RBRACE aggregate_list {
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 3);
-    } COUNT LBRACE select_attr RBRACE aggregate_list {
+    }
+    | COUNT LBRACE select_attr RBRACE aggregate_list {
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 4);
     }
     ;
@@ -417,7 +418,8 @@ aggregate_list:
     }
     | COMMA MIN LBRACE select_attr RBRACE aggregate_list {
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 2);
-    } COMMA AVG LBRACE select_attr RBRACE aggregate_list {
+    }
+    | COMMA AVG LBRACE select_attr RBRACE aggregate_list {
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 3);
     }
     | COMMA COUNT LBRACE select_attr RBRACE aggregate_list {

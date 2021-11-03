@@ -440,7 +440,11 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
     tuple_result_.print(ss, selects);
   } else {
     // 当前只查询一张表，直接返回结果即可
-    tuple_sets.front().print(ss,selects);
+    if (selects.aggregateOp_num > 0){
+      tuple_sets.front().print(ss);
+    } else {
+      tuple_sets.front().print(ss,selects);
+    }
   }
 
   for (SelectExeNode *& tmp_node: select_nodes) {
@@ -480,15 +484,21 @@ static RC schema_add_field(Table *table, const char *field_name, TupleSchema &sc
 RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, const char *table_name, SelectExeNode &select_node) {
   // 列出跟这张表关联的Attr
   TupleSchema schema;
+  TupleSchema agg_schema;
   Table * table = DefaultHandler::get_default().find_table(db, table_name);
   if (nullptr == table) {
     LOG_WARN("No such table [%s] in db [%s]", table_name, db);
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
-
+  for (int j = 0; j < selects.aggregateOp_num; ++j) {
+    select_node.aggregateOps.push_back(selects.aggregateOp[j]);
+    schema_add_field(table,selects.attributes[j].attribute_name,agg_schema);
+  }
   for (int i = selects.attr_num - 1; i >= 0; i--) {
     const RelAttr &attr = selects.attributes[i];
+
     if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)) {
+
       if (0 != strcmp("*", attr.attribute_name)) {
         const FieldMeta *field_meta = table->table_meta().field(attr.attribute_name);
         if (nullptr == field_meta) {
@@ -500,26 +510,6 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
   }
 
   TupleSchema::from_table(table, schema);
-  select_node.aggregateOp = selects.aggregateOp[0];
-
-
-//    if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)) {
-//      if ((0 == strcmp("*", attr.attribute_name) && attr.relation_name == nullptr) ||
-//          (0 == strcmp("*", attr.attribute_name) && attr.relation_name != nullptr && 0 == strcmp(table_name,attr.relation_name))) {
-//        // 列出这张表所有字段&& 0 == strcmp(table_name,attr.relation_name)
-//        TupleSchema::from_table(table, schema);
-//        select_node.aggregateOp = selects.aggregateOp;
-//        // break; // 没有校验，给出* 之后，再写字段的错误
-//      } else {
-//        // 列出这张表相关字段
-//        RC rc = schema_add_field(table, attr.attribute_name, schema);
-//        select_node.aggregateOp = selects.aggregateOp;
-//        if (rc != RC::SUCCESS) {
-//          return rc;
-//        }
-//      }
-//    }
-//  }
 
   // 找出仅与此表相关的过滤条件, 或者都是值的过滤条件
   std::vector<DefaultConditionFilter *> condition_filters;
@@ -542,27 +532,8 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
       }
       condition_filters.push_back(condition_filter);
     }
-//    if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
-//        strcmp(condition.left_attr.relation_name,condition.right_attr.relation_name) != 0 &&
-//        0 == strcmp(condition.left_attr.relation_name, table_name )) {
-//      Table * right_table = DefaultHandler::get_default().find_table(db, condition.right_attr.relation_name);
-//      right_table->scan_record(trx, nullptr,-1, )
-//      DefaultConditionFilter *condition_filter = new DefaultConditionFilter();
-////      RC rc = condition_filter->init(*table, condition);
-//      if (strcmp(condition.left_attr.relation_name, table_name) == 0) {
-//        RC rc = schema_add_field(table, condition.left_attr.attribute_name, schema);
-//        if (rc != RC::SUCCESS) {
-//          return rc;
-//        }
-//      } else if (strcmp(condition.right_attr.relation_name, table_name) == 0) {
-//        RC rc = schema_add_field(table, condition.right_attr.attribute_name, schema);
-//        if (rc != RC::SUCCESS) {
-//          return rc;
-//        }
-//      }
-//    }
   }
-
+  select_node.set_aggregate_schema(std::move(agg_schema));
   return select_node.init(trx, table, std::move(schema), std::move(condition_filters));
 }
 

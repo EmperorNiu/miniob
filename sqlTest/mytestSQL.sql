@@ -7,6 +7,7 @@ select * from t;
 update t set name = 200 where id>1;
 select * from t;
 
+/* select tables*/
 create table j1(id int, height float, name char, birthday date);
 create table j2(id int, height float, name char, birthday date);
 create table j3(id int, height float, name char, birthday date);
@@ -28,15 +29,13 @@ select j1.* , j2.* from j1,j2 where j1.id=j2.id;
 select j1.*, j2.* from j1,j2;
 select j1.*, j2.height from j1,j2;
 select j1.id from j1,j2;
-
 select j1.height from j1 where j1.height<2.4;
 select j1.height from j1,j2 where j1.height<=2.4 and j1.height=j2.height;
 select * from j1,j2,j3 where j1.id=j2.id and j3.height=5.3;
 select * from j1,j2,j3 where j1.id=j2.id;
-
 select * from j1,j2 where j2.id>j1.id;
 select * from j1,j2 where j1.id<j2.id;
-
+select * from j1,j2 where j2.id>=j1.id;
 select id from j1;
 select j4.age,j2.age from j1,j2 where j1.id=j2.id;
 select j1.agdsfe,j2.age from j1,j2 where j1.id=j2.id;
@@ -61,7 +60,6 @@ create unique index id_index on person(id);
 insert into person values(0, 1.73, 't1', '1999-01-13');
 insert into person values(1, 1.78, 't2', '1999-03-15');
 insert into person values(2, 1.51, 't3', '1999-06-17');
-insert into person values(2, 1.51, 't3', '3999-06-17');
 insert into person values(3, 1.83, 't4', '2001-08-11');
 insert into person values(4, 1.71, 't5', '1999-06-17');
 insert into person values(5, 1.83, 't6', '2001-08-11');
@@ -106,3 +104,17 @@ update t set col1=100;
 select * from t;
 update t set name2='abc' where id=1;
 update t set name='abc' where id='a';
+
+
+select max(id) from person;
+select max(height) from person;
+select max(birthday) from person;
+select min(id) from person;
+select min(height) from person;
+select min(birthday) from person;
+select avg(height) from person;
+select avg(id) from person;
+-- select min(name) from person;
+select min(id),min(height) from person;
+select max(id),min(height) from person;
+select max(id),avg(height),max(birthday) from person;

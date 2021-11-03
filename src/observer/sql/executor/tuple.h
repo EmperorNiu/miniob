@@ -178,7 +178,7 @@ private:
 
 class TupleRecordAggregateConverter {
 public:
-    TupleRecordAggregateConverter(Table *table, TupleSet &tuple_set, AggregateOp aggregateOp);
+    TupleRecordAggregateConverter(Table *table, TupleSet &tuple_set, AggregateOp aggregateOp,const char *field_name);
     void aggregate_record(const char *record);
     int count;
     int agg_int;
@@ -188,6 +188,8 @@ private:
     Table *table_;
     TupleSet &tuple_set_;
     AggregateOp aggregateOp_;
+    const char *field_name_;
+
 
 };
 
