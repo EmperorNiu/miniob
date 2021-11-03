@@ -47,6 +47,16 @@ typedef enum {
     COUNT_OP
 } AggregateOp;
 
+typedef enum {
+    ORDESC,
+    ORASC
+}OrderDirect;
+
+typedef struct {
+    OrderDirect direct;
+    RelAttr * attr;
+} OrderOp;
+
 //属性值类型
 typedef enum { UNDEFINED, CHARS, INTS, FLOATS, DATES} AttrType;
 
@@ -79,7 +89,9 @@ typedef struct {
   size_t    condition_num;          // Length of conditions in Where clause
   Condition conditions[MAX_NUM];    // conditions in Where clause
   AggregateOp aggregateOp[MAX_NUM];      // Aggregation operations
+  OrderOp orderOps[MAX_NUM];
   size_t    aggregateOp_num;           // Length of aggregation operation
+  size_t    orderOp_num;
 } Selects;
 
 // struct of insert
@@ -249,6 +261,10 @@ void query_init(Query *query);
 Query *query_create();  // create and init
 void query_reset(Query *query);
 void query_destroy(Query *query);  // reset and delete
+
+void order_init(OrderOp *orderOp, OrderDirect orderDirect, RelAttr *attr);
+void selects_append_orderOps(Selects *selects, OrderOp orderOps[],size_t order_num);
+
 
 #ifdef __cplusplus
 }

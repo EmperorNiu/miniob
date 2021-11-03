@@ -17,8 +17,11 @@ typedef struct ParserContext {
   size_t from_length;
   size_t value_length;
   size_t insert_num;
+  size_t order_num;
   Value values[MAX_NUM];
   Condition conditions[MAX_NUM];
+  OrderOp orderOps[MAX_NUM];
+  OrderDirect orderDirect;
   CompOp comp;
 	char id[MAX_NUM];
 } ParserContext;
@@ -45,6 +48,7 @@ void yyerror(yyscan_t scanner, const char *str)
   context->select_length = 0;
   context->value_length = 0;
   context->insert_num = 0;
+  context->order_num = 0;
   context->ssql->sstr.insertion.value_num = 0;
   printf("parse sql failed. error=%s", str);
 }
@@ -76,6 +80,8 @@ ParserContext *get_context(yyscan_t scanner)
         COUNT
         AVG
         DESC
+        ASC
+        ORDERBY
         SHOW
         SYNC
         INSERT
@@ -364,13 +370,13 @@ update:			/*  update 语句的语法解析树*/
 		}
     ;
 select:				/*  select 语句的语法解析树*/
-    SELECT select_attr FROM ID rel_list where SEMICOLON
+    SELECT select_attr FROM ID rel_list where order SEMICOLON
 		{
 			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$4;
 			selects_append_relation(&CONTEXT->ssql->sstr.selection, $4);
 			// selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 0);
 			selects_append_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->conditions, CONTEXT->condition_length);
-
+			selects_append_orderOps(&CONTEXT->ssql->sstr.selection,CONTEXT->orderOps,CONTEXT->order_num);
 			CONTEXT->ssql->flag=SCF_SELECT;//"select";
 			// CONTEXT->ssql->sstr.selection.attr_num = CONTEXT->select_length;
 
@@ -379,13 +385,13 @@ select:				/*  select 语句的语法解析树*/
 			CONTEXT->from_length=0;
 			CONTEXT->select_length=0;
 			CONTEXT->value_length = 0;
-		} | SELECT aggregate_attr FROM ID rel_list where SEMICOLON
+		} | SELECT aggregate_attr FROM ID rel_list where order SEMICOLON
 		{
 			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$7;
 			selects_append_relation(&CONTEXT->ssql->sstr.selection, $4);
 			// selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 0);
 			selects_append_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->conditions, CONTEXT->condition_length);
-
+			selects_append_orderOps(&CONTEXT->ssql->sstr.selection,CONTEXT->orderOps,CONTEXT->order_num);
 			CONTEXT->ssql->flag=SCF_SELECT;//"select";
 			// CONTEXT->ssql->sstr.selection.attr_num = CONTEXT->select_length;
 
@@ -477,6 +483,44 @@ rel_list:
     | COMMA ID rel_list {	
 				selects_append_relation(&CONTEXT->ssql->sstr.selection, $2);
 		  }
+    ;
+order:
+    /* empty */
+    | ORDERBY orderby order_list {
+				// CONTEXT->conditions[CONTEXT->condition_length++]=*$2;
+			}
+    ;
+order_list:
+    /* empty */
+    | COMMA orderby order_list{
+				// CONTEXT->conditions[CONTEXT->condition_length++]=*$2;
+			}
+    ;
+orderby:
+/* empty */
+| ID direction{
+			OrderOp orderOp;
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, $1);
+			order_init(&orderOp,CONTEXT->orderDirect,&attr);
+			CONTEXT->orderOps[CONTEXT->order_num++]=orderOp;
+		}
+		| ID DOT ID direction{
+			OrderOp orderOp;
+			RelAttr attr;
+			relation_attr_init(&attr, $1, $3);
+			order_init(&orderOp,CONTEXT->orderDirect,&attr);
+			CONTEXT->orderOps[CONTEXT->order_num++]=orderOp;
+		}
+;
+direction:
+    /* empty */
+    | DESC {
+		CONTEXT->orderDirect = ORDESC;
+			}
+    | ASC {
+		CONTEXT->orderDirect = ORASC;
+			}
     ;
 where:
     /* empty */ 

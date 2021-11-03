@@ -44,6 +44,8 @@ QUOTE            [\'\"]
 [Ee][Xx][Ii][Tt]						             RETURN_TOKEN(EXIT);
 [Hh][Ee][Ll][Pp]                    	   RETURN_TOKEN(HELP);
 [Dd][Ee][Ss][Cc]                         RETURN_TOKEN(DESC);
+[Aa][Ss][Cc]                         RETURN_TOKEN(ASC);
+[Oo][Rr][Dd][Ee][Rr]{WHITE_SAPCE}[Bb][Yy]                         RETURN_TOKEN(ORDERBY);
 [Cc][Rr][Ee][Aa][Tt][Ee]                 RETURN_TOKEN(CREATE);
 [Dd][Rr][Oo][Pp]                    	   RETURN_TOKEN(DROP);
 [Tt][Aa][Bb][Ll][Ee]					           RETURN_TOKEN(TABLE);
