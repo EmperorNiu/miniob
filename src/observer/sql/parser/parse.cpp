@@ -126,7 +126,7 @@ void selects_append_relation(Selects *selects, const char *relation_name) {
 }
 
 void selects_append_aggregation_op(Selects *selects, AggregateOp op) {
-  selects->aggregateOp = op;
+  selects->aggregateOp[selects->aggregateOp_num++] = op;
 }
 
 void selects_append_conditions(Selects *selects, Condition conditions[], size_t condition_num) {
@@ -152,7 +152,8 @@ void selects_destroy(Selects *selects) {
     for (size_t i = 0; i < selects->condition_num; i++) {
         condition_destroy(&selects->conditions[i]);
     }
-    selects->condition_num = 0;
+  selects->condition_num = 0;
+  selects->aggregateOp_num = 0;
 }
 
 void inserts_init(Inserts *inserts, const char *relation_name, Value values[], size_t value_num, size_t insert_num) {

@@ -7,25 +7,31 @@ select * from t;
 update t set name = 200 where id>1;
 select * from t;
 
-create table j1(id int, age int);
-create table j2(id int, age int);
-create table j3(id int, age int);
-insert into j1 values(1, 24);
-insert into j1 values(2, 22);
-insert into j2 values(2, 24);
-insert into j2 values(4, 53);
-insert into j3 values(5, 53);
-insert into j3 values(4, 31);
+create table j1(id int, height float, name char, birthday date);
+create table j2(id int, height float, name char, birthday date);
+create table j3(id int, height float, name char, birthday date);
+insert into j1 values(1, 2.4, 't1', '1999-01-13');
+insert into j1 values(2, 2.2, 't2', '1939-01-13');
+insert into j1 values(3, 2.5, 't5', '1939-04-16');
+insert into j2 values(2, 2.4, 't3', '1949-01-13');
+insert into j2 values(3, 2.7, 't5', '1969-04-16');
+insert into j2 values(4, 5.3, 't4', '1959-01-13');
+insert into j3 values(5, 5.3, 't2', '1959-01-13');
+insert into j3 values(4, 3.1, 't3', '1999-01-13');
 select * from j1,j2;
 select * from j1,j2,j3;
-select * from j1,j2 where j1.id=j2.id and j1.age > 30;
+select * from j1,j2 where j1.id=j2.id;
 select * from j1,j2 where j1.id=j2.id;
 select * from j1,j2 where j2.id=j1.id;
-select j1.age,j2.age from j1,j2 where j1.id=j2.id;
+select j1.height,j2.height from j1,j2 where j1.id=j2.id;
 select j1.* , j2.* from j1,j2 where j1.id=j2.id;
 select j1.*, j2.* from j1,j2;
-select j1.*, j2.age from j1,j2;
+select j1.*, j2.height from j1,j2;
 select j1.id from j1,j2;
+
+select j1.height from j1 where j1.height<2.4;
+select j1.height from j1,j2 where j1.height<=2.4 and j1.height=j2.height;
+
 
 select id from j1;
 select j4.age,j2.age from j1,j2 where j1.id=j2.id;

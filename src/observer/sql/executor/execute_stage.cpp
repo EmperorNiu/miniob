@@ -229,8 +229,17 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
   std::vector<const char *> table_names;
   // 把所有的表和只跟这张表关联的condition都拿出来，生成最底层的select 执行节点
   std::vector<SelectExeNode *> select_nodes;
-//  for (size_t i = 0; i < selects.relation_num; i++) {
-
+  for (size_t i = 0; i < selects.attr_num; i++) {
+    int flag = 0;
+    const RelAttr &attr = selects.attributes[i];
+    for (int j = 0; j < selects.relation_num; ++j) {
+      if (nullptr == attr.relation_name || 0 == strcmp(selects.relations[j], attr.relation_name))
+        flag = 1;
+    }
+    if (flag == 0) {
+      return RC::SCHEMA_TABLE_NOT_EXIST;
+    }
+  }
   for (int i = selects.relation_num-1; i >=0; i--) {
     const char *table_name = selects.relations[i];
     SelectExeNode *select_node = new SelectExeNode;
@@ -388,11 +397,10 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
     LOG_WARN("No such table [%s] in db [%s]", table_name, db);
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
-  int flag = 0;
+
   for (int i = selects.attr_num - 1; i >= 0; i--) {
     const RelAttr &attr = selects.attributes[i];
     if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)) {
-      flag = 1;
       if (0 != strcmp("*", attr.attribute_name)) {
         const FieldMeta *field_meta = table->table_meta().field(attr.attribute_name);
         if (nullptr == field_meta) {
@@ -402,14 +410,12 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
       }
     }
   }
-  if (flag == 0) {
-    return RC::SCHEMA_DB_NOT_EXIST;
-  }
+
 //  for (int i = selects.attr_num - 1; i >= 0; i--) {
 //    const RelAttr &attr = selects.attributes[i];
 //    if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)){
   TupleSchema::from_table(table, schema);
-  select_node.aggregateOp = selects.aggregateOp;
+  select_node.aggregateOp = selects.aggregateOp[0];
 //    }
 
 //    if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)) {
@@ -470,7 +476,5 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
   return select_node.init(trx, table, std::move(schema), std::move(condition_filters));
 }
 
-bool match_tuple(TupleSet t1,TupleSet t2, RelAttr r1, RelAttr r2, Condition condition) {
-
-}
+bool match_tuple(TupleSet t1,TupleSet t2, RelAttr r1, RelAttr r2, Condition condition) {}
 

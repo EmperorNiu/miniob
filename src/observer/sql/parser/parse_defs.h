@@ -40,11 +40,11 @@ typedef enum {
 } CompOp;
 
 typedef enum {
+    NO_AG_OP,
     MAX_OP,
     MIN_OP,
-    COUNT_OP,
     AVG_OP,
-    NO_AG_OP
+    COUNT_OP
 } AggregateOp;
 
 //属性值类型
@@ -78,7 +78,8 @@ typedef struct {
   char *    relations[MAX_NUM];     // relations in From clause
   size_t    condition_num;          // Length of conditions in Where clause
   Condition conditions[MAX_NUM];    // conditions in Where clause
-  AggregateOp aggregateOp;          // Aggregation operation type
+  AggregateOp aggregateOp[MAX_NUM];      // Aggregation operations
+  size_t    aggregateOp_num;           // Length of aggregation operation
 } Selects;
 
 // struct of insert
