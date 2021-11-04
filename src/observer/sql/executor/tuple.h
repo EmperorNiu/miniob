@@ -183,6 +183,7 @@ public:
     int count;
     int agg_int;
     float agg_float;
+    char *agg_string;
     AttrType type;
 private:
     Table *table_;

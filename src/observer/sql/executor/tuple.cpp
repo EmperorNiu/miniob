@@ -409,6 +409,7 @@ void TupleRecordConverter::add_record(const char *record) {
 TupleRecordAggregateConverter::TupleRecordAggregateConverter(Table *table, TupleSet &tuple_set, AggregateOp aggregateOp,const char *field_name) :
   table_(table), tuple_set_(tuple_set), aggregateOp_(aggregateOp),field_name_(field_name) {
   count = 0;
+  agg_string = nullptr;
   if (aggregateOp == MIN_OP) {
     agg_int = 2147483647;
     agg_float = (float) 2147483647;
@@ -447,6 +448,13 @@ void TupleRecordAggregateConverter::aggregate_record(const char *record) {
           }
         }
           break;
+        case CHARS:{
+          char *value = (char *)record + field_meta->offset();  // 现在当做Cstring来处理
+          if (agg_string == nullptr || strcmp(value,agg_string)>0){
+            agg_string = value;
+          }
+        }
+          break;
         case DATES:{
           int value = *(int*)(record + field_meta->offset());
           if (value > agg_int) {
@@ -474,6 +482,13 @@ void TupleRecordAggregateConverter::aggregate_record(const char *record) {
           float value = *(float *)(record + field_meta->offset());
           if (value < agg_float) {
             agg_float = value;
+          }
+        }
+          break;
+        case CHARS:{
+          char *value = (char *)(record + field_meta->offset());
+          if (agg_string == nullptr || strcmp(value,agg_string)<0){
+            agg_string = value;
           }
         }
           break;

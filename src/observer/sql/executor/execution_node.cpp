@@ -78,6 +78,7 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
           field_name = "MAX(" + (std::string)field_name2 + ")";
           if (converter.type == INTS) tuple.add(converter.agg_int);
           if (converter.type == FLOATS) tuple.add(converter.agg_float);
+          if (converter.type == CHARS) tuple.add(converter.agg_string, strlen(converter.agg_string));
           if (converter.type == DATES) {
             int value = converter.agg_int;
             int y = value/10000;
@@ -92,6 +93,7 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
           field_name = "MIN(" + (std::string)field_name2 + ")";
           if (converter.type == INTS) tuple.add(converter.agg_int);
           if (converter.type == FLOATS) tuple.add(converter.agg_float);
+          if (converter.type == CHARS) tuple.add(converter.agg_string, strlen(converter.agg_string));
           if (converter.type == DATES) {
             int value = converter.agg_int;
             int y = value/10000;
