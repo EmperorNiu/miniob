@@ -109,8 +109,10 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
           tuple.add(converter.count);
           break;
         case AVG_OP:
-          field_name = "AVG(" + (std::string)field_name2 + ")";
-          tuple.add(converter.agg_float/converter.count);
+          if (converter.type == INTS || converter.type == FLOATS){
+            field_name = "AVG(" + (std::string)field_name2 + ")";
+            tuple.add(converter.agg_float/converter.count);
+          }
           break;
         default:
           return RC::INVALID_ARGUMENT;

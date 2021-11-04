@@ -227,7 +227,8 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
   Trx *trx = session->current_trx();
   const Selects &selects = sql->sstr.selection;
   std::vector<const char *> table_names;
-  // 把所有的表和只跟这张表关联的condition都拿出来，生成最底层的select 执行节点
+
+  // 检查attr中是否有不存在的relation
   std::vector<SelectExeNode *> select_nodes;
   for (size_t i = 0; i < selects.attr_num; i++) {
     int flag = 0;
@@ -240,6 +241,8 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
       return RC::SCHEMA_TABLE_NOT_EXIST;
     }
   }
+
+  // 把所有的表和只跟这张表关联的condition都拿出来，生成最底层的select 执行节点
   for (int i = selects.relation_num-1; i >=0; i--) {
     const char *table_name = selects.relations[i];
     SelectExeNode *select_node = new SelectExeNode;
@@ -474,7 +477,7 @@ static RC schema_add_field(Table *table, const char *field_name, TupleSchema &sc
     return RC::SCHEMA_FIELD_MISSING;
   }
 
-  schema.add_if_not_exists(field_meta->type(), table->name(), field_meta->name());
+  schema.add(field_meta->type(), table->name(), field_meta->name());
   return RC::SUCCESS;
 }
 
@@ -490,10 +493,11 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
     LOG_WARN("No such table [%s] in db [%s]", table_name, db);
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
-  for (int j = 0; j < selects.aggregateOp_num; ++j) {
+//  for (int j = 0; j < selects.aggregateOp_num; ++j) {
+  for (int j = selects.aggregateOp_num - 1; j >= 0; --j) {
     select_node.aggregateOps.push_back(selects.aggregateOp[j]);
     if (0 != strcmp("*",selects.attributes[j].attribute_name)){
-      RC rc = schema_add_field(table,selects.attributes[j].attribute_name,agg_schema);
+      RC rc = schema_add_field(table,selects.attributes[selects.aggregateOp_num-j-1].attribute_name,agg_schema);
       if (rc != RC::SUCCESS) {
         return rc;
       }
