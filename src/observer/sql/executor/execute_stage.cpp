@@ -503,6 +503,8 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
       }
     } else if(selects.aggregateOp[j] == COUNT_OP) {
       agg_schema.add(UNDEFINED,table_name,"*");
+    } else {
+      return RC::SCHEMA_FIELD_NOT_EXIST;
     }
 
 
