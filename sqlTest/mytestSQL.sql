@@ -132,5 +132,5 @@ SELECT avg(*) FROM person;
 select avg(birthday) from person;
 select min(birthday) from person;
 select max(birthday) from person;
-
+select avg(birthday) from person;
 select count(birthday) from person;
