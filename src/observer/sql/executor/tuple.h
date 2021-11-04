@@ -128,7 +128,7 @@ public:
 
   void set_schema(const TupleSchema &schema);
   void append_schema(const TupleSchema &schema);
-
+  void sort(OrderOp orderOps[],size_t orderOp_num);
   const TupleSchema get_schema() const;
 
   void add(Tuple && tuple);
