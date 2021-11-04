@@ -126,6 +126,7 @@ select count(*) from person;
 select count() from person;
 select max(*) from person;
 select min(*) from person;
+SELECT count(height,id) FROM person;
 SELECT avg() FROM person;
 SELECT avg(*) FROM person;
 select avg(birthday) from person;

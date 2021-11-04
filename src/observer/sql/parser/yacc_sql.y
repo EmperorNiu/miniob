@@ -397,13 +397,22 @@ select:				/*  select 语句的语法解析树*/
 		} ;
 
 aggregate_attr:
-    MAX LBRACE select_attr RBRACE aggregate_list {
+    MAX LBRACE ID RBRACE aggregate_list {
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, $3);
+			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 1);
     }
-    | MIN LBRACE select_attr RBRACE aggregate_list {
+    | MIN LBRACE ID RBRACE aggregate_list {
+    			RelAttr attr;
+    			relation_attr_init(&attr, NULL, $3);
+    			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 2);
     }
-    | AVG LBRACE select_attr RBRACE aggregate_list {
+    | AVG LBRACE ID RBRACE aggregate_list {
+        		RelAttr attr;
+        		relation_attr_init(&attr, NULL, $3);
+        		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 3);
     }
     | COUNT LBRACE count_attr RBRACE aggregate_list {
@@ -413,13 +422,22 @@ aggregate_attr:
 
 aggregate_list:
     /* empty */
-    | COMMA MAX LBRACE select_attr RBRACE aggregate_list {
+    | COMMA MAX LBRACE ID RBRACE aggregate_list {
+            		RelAttr attr;
+            		relation_attr_init(&attr, NULL, $4);
+            		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 1);
     }
-    | COMMA MIN LBRACE select_attr RBRACE aggregate_list {
+    | COMMA MIN LBRACE ID RBRACE aggregate_list {
+                	RelAttr attr;
+                	relation_attr_init(&attr, NULL, $4);
+                	selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 2);
     }
-    | COMMA AVG LBRACE select_attr RBRACE aggregate_list {
+    | COMMA AVG LBRACE ID RBRACE aggregate_list {
+                	RelAttr attr;
+                	relation_attr_init(&attr, NULL, $4);
+                	selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 3);
     }
     | COMMA COUNT LBRACE count_attr RBRACE aggregate_list {
@@ -432,7 +450,11 @@ count_attr:
     			relation_attr_init(&attr, NULL, "*");
     			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
     }
-    | select_attr
+    | ID {
+    	            	RelAttr attr;
+                        relation_attr_init(&attr, NULL, $1);
+                        selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+    }
     | NUMBER {
     			RelAttr attr;
     			relation_attr_init(&attr, NULL, "*");

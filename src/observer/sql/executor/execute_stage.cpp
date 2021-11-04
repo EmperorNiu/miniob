@@ -497,7 +497,7 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
   for (int j = selects.aggregateOp_num - 1; j >= 0; --j) {
     select_node.aggregateOps.push_back(selects.aggregateOp[j]);
     if (0 != strcmp("*",selects.attributes[j].attribute_name)){
-      RC rc = schema_add_field(table,selects.attributes[selects.aggregateOp_num-j-1].attribute_name,agg_schema);
+      RC rc = schema_add_field(table,selects.attributes[j].attribute_name,agg_schema);
       if (rc != RC::SUCCESS) {
         return rc;
       }
@@ -506,7 +506,6 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
     } else {
       return RC::SCHEMA_FIELD_NOT_EXIST;
     }
-
 
   }
   for (int i = selects.attr_num - 1; i >= 0; i--) {
