@@ -492,7 +492,16 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
   }
   for (int j = 0; j < selects.aggregateOp_num; ++j) {
     select_node.aggregateOps.push_back(selects.aggregateOp[j]);
-    schema_add_field(table,selects.attributes[j].attribute_name,agg_schema);
+    if (0 != strcmp("*",selects.attributes[j].attribute_name)){
+      RC rc = schema_add_field(table,selects.attributes[j].attribute_name,agg_schema);
+      if (rc != RC::SUCCESS) {
+        return rc;
+      }
+    } else if(selects.aggregateOp[j] == COUNT_OP) {
+      agg_schema.add(UNDEFINED,table_name,"*");
+    }
+
+
   }
   for (int i = selects.attr_num - 1; i >= 0; i--) {
     const RelAttr &attr = selects.attributes[i];

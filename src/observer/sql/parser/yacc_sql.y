@@ -406,7 +406,7 @@ aggregate_attr:
     | AVG LBRACE select_attr RBRACE aggregate_list {
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 3);
     }
-    | COUNT LBRACE select_attr RBRACE aggregate_list {
+    | COUNT LBRACE count_attr RBRACE aggregate_list {
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 4);
     }
     ;
@@ -422,10 +422,22 @@ aggregate_list:
     | COMMA AVG LBRACE select_attr RBRACE aggregate_list {
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 3);
     }
-    | COMMA COUNT LBRACE select_attr RBRACE aggregate_list {
+    | COMMA COUNT LBRACE count_attr RBRACE aggregate_list {
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 4);
     }
     ;
+count_attr:
+    /* empty */ {
+    			RelAttr attr;
+    			relation_attr_init(&attr, NULL, "*");
+    			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+    }
+    | select_attr
+    | NUMBER {
+    			RelAttr attr;
+    			relation_attr_init(&attr, NULL, "*");
+    			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+    };
 
 select_attr:
     STAR {  

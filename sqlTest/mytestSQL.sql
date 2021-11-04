@@ -118,3 +118,7 @@ select avg(id) from person;
 select min(id),min(height) from person;
 select max(id),min(height) from person;
 select max(id),avg(height),max(birthday) from person;
+
+select count(id) from person;
+select count(*) from person;
+select count() from person;

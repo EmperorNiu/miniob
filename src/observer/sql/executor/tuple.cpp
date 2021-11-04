@@ -421,6 +421,10 @@ TupleRecordAggregateConverter::TupleRecordAggregateConverter(Table *table, Tuple
 void TupleRecordAggregateConverter::aggregate_record(const char *record) {
   const TupleSchema &schema = tuple_set_.schema();
 //  Tuple tuple;
+  if (strcmp(field_name_,"*")==0 && aggregateOp_ == COUNT_OP){
+    count += 1;
+    return;
+  }
   const TableMeta &table_meta = table_->table_meta();
   const FieldMeta *field_meta = table_meta.field(field_name_);
   assert(field_meta != nullptr);
