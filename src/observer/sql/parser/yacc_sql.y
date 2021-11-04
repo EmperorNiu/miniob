@@ -445,12 +445,7 @@ aggregate_list:
     }
     ;
 count_attr:
-    /* empty */ {
-    			RelAttr attr;
-    			relation_attr_init(&attr, NULL, "*");
-    			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-    }
-    | ID {
+    ID {
     	            	RelAttr attr;
                         relation_attr_init(&attr, NULL, $1);
                         selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
