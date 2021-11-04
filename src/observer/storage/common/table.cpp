@@ -191,17 +191,17 @@ RC Table::insert_record(Trx *trx, Record *record) {
     if (trx != nullptr) {
         trx->init_trx_info(this, *record);
     }
-    for (Index *index: indexes_) {
-        if (index->isUnique()) {
-            FieldMeta fieldMeta = index->field_meta();
-            IndexScanner *scanner = index->create_scanner(EQUAL_TO, record->data);
-            RID rid_n;
-            rc = scanner->next_entry(&rid_n);
-            if (RC::RECORD_EOF == rc) {
-                continue;
-            } else return RC::SCHEMA_INDEX_EXIST;
-        }
-    }
+//    for (Index *index: indexes_) {
+//        if (index->isUnique()) {
+//            FieldMeta fieldMeta = index->field_meta();
+//            IndexScanner *scanner = index->create_scanner(EQUAL_TO, record->data);
+//            RID rid_n;
+//            rc = scanner->next_entry(&rid_n);
+//            if (RC::RECORD_EOF == rc) {
+//                continue;
+//            } else return RC::SCHEMA_INDEX_EXIST;
+//        }
+//    }
 
     rc = record_handler_->insert_record(record->data, table_meta_.record_size(), &record->rid);
     if (rc != RC::SUCCESS) {
