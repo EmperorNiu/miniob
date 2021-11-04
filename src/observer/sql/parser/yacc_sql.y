@@ -455,6 +455,11 @@ count_attr:
                         relation_attr_init(&attr, NULL, $1);
                         selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
     }
+    | STAR {
+        	        RelAttr attr;
+                        relation_attr_init(&attr, NULL, "*");
+                        selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+        }
     | NUMBER {
     			RelAttr attr;
     			relation_attr_init(&attr, NULL, "*");
