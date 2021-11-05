@@ -56,11 +56,11 @@ void value_init_date(Value *value, const char *v) {
     int y, m, d = 0;
     int days[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
     sscanf(v, "%d-%d-%d", &y, &m, &d);
-    if(y%4==0){
-        days[1]=29;
+    if (y % 4 == 0) {
+        days[1] = 29;
     }
     int r = 10000 * y + 100 * m + d;
-    if (m < 1 || m > 12 || d < 1 || d > days[m-1]) {
+    if (m < 1 || m > 12 || d < 1 || d > days[m - 1]) {
         value->type = UNDEFINED;
         free(value->data);
         value->data = nullptr;
@@ -74,6 +74,11 @@ void value_destroy(Value *value) {
     value->type = UNDEFINED;
     free(value->data);
     value->data = nullptr;
+}
+
+void order_init(OrderOp *orderOp, OrderDirect orderDirect, RelAttr *attr) {
+    orderOp->direct = orderDirect;
+    orderOp->attr = attr;
 }
 
 void condition_init(Condition *condition, CompOp comp,
@@ -126,7 +131,7 @@ void selects_append_relation(Selects *selects, const char *relation_name) {
 }
 
 void selects_append_aggregation_op(Selects *selects, AggregateOp op) {
-  selects->aggregateOp[selects->aggregateOp_num++] = op;
+    selects->aggregateOp[selects->aggregateOp_num++] = op;
 }
 
 void selects_append_conditions(Selects *selects, Condition conditions[], size_t condition_num) {
@@ -135,6 +140,14 @@ void selects_append_conditions(Selects *selects, Condition conditions[], size_t 
         selects->conditions[i] = conditions[i];
     }
     selects->condition_num = condition_num;
+}
+
+void selects_append_orderOps(Selects *selects, OrderOp orderOps[],size_t order_num){
+    assert(order_num<=sizeof(selects->orderOps)/sizeof(selects->orderOps[0]));
+    for (size_t i = 0; i < order_num; i++) {
+        selects->orderOps[i] = orderOps[i];
+    }
+    selects->orderOp_num = order_num;
 }
 
 void selects_destroy(Selects *selects) {
@@ -152,8 +165,8 @@ void selects_destroy(Selects *selects) {
     for (size_t i = 0; i < selects->condition_num; i++) {
         condition_destroy(&selects->conditions[i]);
     }
-  selects->condition_num = 0;
-  selects->aggregateOp_num = 0;
+    selects->condition_num = 0;
+    selects->aggregateOp_num = 0;
 }
 
 void inserts_init(Inserts *inserts, const char *relation_name, Value values[], size_t value_num, size_t insert_num) {
@@ -164,7 +177,7 @@ void inserts_init(Inserts *inserts, const char *relation_name, Value values[], s
         inserts->values[i] = values[i];
     }
     inserts->value_num = value_num;
-    inserts->insert_num = insert_num+1;
+    inserts->insert_num = insert_num + 1;
 }
 void inserts_destroy(Inserts *inserts) {
     free(inserts->relation_name);

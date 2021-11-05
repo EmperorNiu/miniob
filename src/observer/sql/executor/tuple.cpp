@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/executor/tuple.h"
 #include "storage/common/table.h"
 #include "common/log/log.h"
+#include <algorithm>
 
 Tuple::Tuple(const Tuple &other) {
 //  LOG_PANIC("Copy constructor of tuple is not supported");
@@ -42,9 +43,11 @@ Tuple::~Tuple() {
 void Tuple::add(TupleValue *value) {
   values_.emplace_back(value);
 }
+
 void Tuple::add(const std::shared_ptr<TupleValue> &other) {
   values_.emplace_back(other);
 }
+
 void Tuple::add(int value) {
   add(new IntValue(value));
 }
@@ -315,7 +318,23 @@ const std::vector<Tuple> &TupleSet::tuples() const {
   return tuples_;
 }
 
-/////////////////////////////////////////////////////////////////////////////
+void TupleSet::sort(OrderOp orderOps[],size_t orderOp_num) {
+    std::sort(tuples_.begin(),tuples_.end(),[orderOps,orderOp_num, this](Tuple t1, Tuple t2){
+        for (int i = 0; i < orderOp_num; ++i) {
+            int index = schema_.index_of_field(orderOps[i].attr->relation_name,orderOps[i].attr->attribute_name);
+            int r = t1.get(index).compare(t2.get(index));
+            if (r!=0){
+                bool r1= bool(r+1);
+                bool r2 = bool(orderOps[i].direct);
+                bool r3 = r1^r2;
+                return r3;
+            }
+        }
+        return false;
+    });
+}
+
+////////////////////////////////////////////////////;/////////////////////////
 //ConditionRecordConverter::ConditionRecordConverter(Table *table, std::vector<DefaultConditionFilter*> &condition_set,char *field_name) :
 //        table_(table), condition_set_(condition_set), field_name_(field_name){
 //}

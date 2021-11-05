@@ -225,7 +225,7 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
   RC rc = RC::SUCCESS;
   Session *session = session_event->get_client()->session;
   Trx *trx = session->current_trx();
-  const Selects &selects = sql->sstr.selection;
+  Selects &selects = sql->sstr.selection;
   std::vector<const char *> table_names;
 
   // 检查attr中是否有不存在的relation
@@ -440,9 +440,25 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
       tuple_result.tuple_clear();
       tuple_result.set_schema(tuple_result_.get_schema());
     }
+    if (selects.orderOp_num > 0) {
+      for (int i = 0; i < selects.orderOp_num; ++i) {
+        if (selects.orderOps[i].attr->relation_name == nullptr) {
+          selects.orderOps[i].attr->relation_name = selects.relations[0];
+        }
+      }
+      tuple_sets.front().sort(selects.orderOps, selects.orderOp_num);
+    }
     tuple_result_.print(ss, selects);
   } else {
     // 当前只查询一张表，直接返回结果即可
+    if (selects.orderOp_num > 0) {
+      for (int i = 0; i < selects.orderOp_num; ++i) {
+        if (selects.orderOps[i].attr->relation_name == nullptr) {
+          selects.orderOps[i].attr->relation_name = selects.relations[0];
+        }
+      }
+      tuple_sets.front().sort(selects.orderOps, selects.orderOp_num);
+    }
     if (selects.aggregateOp_num > 0){
       tuple_sets.front().print(ss);
     } else {
