@@ -800,33 +800,33 @@ RC Table::rollback_delete(Trx *trx, const RID &rid) {
 RC Table::insert_entry_of_indexes(const char *record, const RID &rid) {
     RC rc = RC::SUCCESS;
     for (Index *index: indexes_) {
-//    if (index->isUnique()) {
-//      IndexScanner *scanner = index->create_scanner(EQUAL_TO, record);
-//      RID rid_n;
-//      rc = scanner->next_entry(&rid_n);
-//      if (rc != RC::SUCCESS) {
-//        if (RC::RECORD_EOF == rc) {
-//          rc = index->insert_entry(record, &rid);
-//          if (rc != RC::SUCCESS) {
-//            return rc;
-//          }
-//        } else return rc;
-//      }
-//      else {
-//        Record r;
-//        rc = record_handler_->get_record(&rid, &r);
-//        if (rc == RC::SUCCESS)
-//          return RC::SCHEMA_INDEX_EXIST;
-//        else
-//          return RC::SUCCESS;
-//      }
-//    }
-//    else {
+      if (index->isUnique()) {
+        IndexScanner *scanner = index->create_scanner(EQUAL_TO, record);
+        RID rid_n;
+        rc = scanner->next_entry(&rid_n);
+        if (rc != RC::SUCCESS) {
+          if (RC::RECORD_EOF == rc) {
+            rc = index->insert_entry(record, &rid);
+            if (rc != RC::SUCCESS) {
+              return rc;
+            }
+          } else return rc;
+        }
+        else {
+          Record r;
+          rc = record_handler_->get_record(&rid, &r);
+          if (rc == RC::SUCCESS)
+            return RC::SCHEMA_INDEX_EXIST;
+          else
+            return RC::SUCCESS;
+        }
+      }
+      else {
         rc = index->insert_entry(record, &rid);
         if (rc != RC::SUCCESS) {
             break;
         }
-//    }
+      }
     }
     return rc;
 }

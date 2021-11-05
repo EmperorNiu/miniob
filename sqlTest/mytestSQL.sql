@@ -134,3 +134,12 @@ select min(birthday) from person;
 select max(birthday) from person;
 select avg(birthday) from person;
 select count(birthday) from person;
+
+create table person(id int, height float, name char, birthday date);
+create unique index id_index on person(id);
+insert into person values(0, 1.73, 't1', '1999-01-13');
+insert into person values(1, 1.78, 't2', '1999-03-15');
+insert into person values(2, 1.51, 't3', '1999-06-17');
+insert into person values(3, 1.83, 't4', '2001-08-11');
+insert into person values(4, 1.71, 't5', '1999-06-17');
+insert into person values(5, 1.83, 't6', '2001-08-11');
