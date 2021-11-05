@@ -262,7 +262,7 @@ Query *query_create();  // create and init
 void query_reset(Query *query);
 void query_destroy(Query *query);  // reset and delete
 
-void order_init(OrderOp *orderOp, OrderDirect orderDirect, RelAttr *attr);
+void order_init(OrderOp *orderOp, OrderDirect orderDirect, const char *relation_name, const char *attribute_name);
 void selects_append_orderOps(Selects *selects, OrderOp orderOps[],size_t order_num);
 
 

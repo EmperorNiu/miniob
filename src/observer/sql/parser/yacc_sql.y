@@ -536,16 +536,12 @@ orderby:
 /* empty */
 | ID direction{
 			OrderOp orderOp;
-			RelAttr attr;
-			relation_attr_init(&attr, NULL, $1);
-			order_init(&orderOp,CONTEXT->orderDirect,&attr);
+			order_init(&orderOp,CONTEXT->orderDirect,NULL,$1);
 			CONTEXT->orderOps[CONTEXT->order_num++]=orderOp;
 		}
 		| ID DOT ID direction{
 			OrderOp orderOp;
-			RelAttr attr;
-			relation_attr_init(&attr, $1, $3);
-			order_init(&orderOp,CONTEXT->orderDirect,&attr);
+			order_init(&orderOp,CONTEXT->orderDirect,$1,$3);
 			CONTEXT->orderOps[CONTEXT->order_num++]=orderOp;
 		}
 ;
