@@ -446,78 +446,78 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
             }
             tuple_sets.front().sort(selects.orderOps, selects.orderOp_num);
             tuple_result_.print(ss, selects);
-        } else {
-            // 当前只查询一张表，直接返回结果即可
-            if (selects.orderOp_num > 0) {
-                for (int i = 0; i < selects.orderOp_num; ++i) {
-                    if (selects.orderOps[i].attr->relation_name == nullptr) {
-                        selects.orderOps[i].attr->relation_name = selects.relations[0];
-                    }
-                }
-                tuple_sets.front().sort(selects.orderOps, selects.orderOp_num);
-            }
-            tuple_sets.front().print(ss, selects);
         }
-
-        for (SelectExeNode *&tmp_node: select_nodes) {
-            delete tmp_node;
-        }
-        session_event->set_response(ss.str());
-        end_trx_if_need(session, trx, true);
-        return rc;
     }
+    else {
+        // 当前只查询一张表，直接返回结果即可
+        if (selects.orderOp_num > 0) {
+            for (int i = 0; i < selects.orderOp_num; ++i) {
+                if (selects.orderOps[i].attr->relation_name == nullptr) {
+                    selects.orderOps[i].attr->relation_name = selects.relations[0];
+                }
+            }
+            tuple_sets.front().sort(selects.orderOps, selects.orderOp_num);
+        }
+        tuple_sets.front().print(ss, selects);
+    }
+    for (SelectExeNode *&tmp_node: select_nodes) {
+        delete tmp_node;
+    }
+    session_event->set_response(ss.str());
+    end_trx_if_need(session, trx, true);
+    return rc;
+}
 
 // 创建表
 //RC ExecuteStage::do_create_table(const char *db, Query *sql, SessionEvent *session_event) {
 //}
 
-    bool match_table(const Selects &selects, const char *table_name_in_condition, const char *table_name_to_match) {
-        if (table_name_in_condition != nullptr) {
-            return 0 == strcmp(table_name_in_condition, table_name_to_match);
-        }
-
-        return selects.relation_num == 1;
+bool match_table(const Selects &selects, const char *table_name_in_condition, const char *table_name_to_match) {
+    if (table_name_in_condition != nullptr) {
+        return 0 == strcmp(table_name_in_condition, table_name_to_match);
     }
 
-    static RC schema_add_field(Table *table, const char *field_name, TupleSchema &schema) {
-        const FieldMeta *field_meta = table->table_meta().field(field_name);
-        if (nullptr == field_meta) {
-            LOG_WARN("No such field. %s.%s", table->name(), field_name);
-            return RC::SCHEMA_FIELD_MISSING;
-        }
+    return selects.relation_num == 1;
+}
 
-        schema.add_if_not_exists(field_meta->type(), table->name(), field_meta->name());
-        return RC::SUCCESS;
+static RC schema_add_field(Table *table, const char *field_name, TupleSchema &schema) {
+    const FieldMeta *field_meta = table->table_meta().field(field_name);
+    if (nullptr == field_meta) {
+        LOG_WARN("No such field. %s.%s", table->name(), field_name);
+        return RC::SCHEMA_FIELD_MISSING;
     }
 
+    schema.add_if_not_exists(field_meta->type(), table->name(), field_meta->name());
+    return RC::SUCCESS;
+}
 
 
 // 把所有的表和只跟这张表关联的condition都拿出来，生成最底层的select 执行节点
-    RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, const char *table_name,
-                                 SelectExeNode &select_node) {
-        // 列出跟这张表关联的Attr
-        TupleSchema schema;
-        Table *table = DefaultHandler::get_default().find_table(db, table_name);
-        if (nullptr == table) {
-            LOG_WARN("No such table [%s] in db [%s]", table_name, db);
-            return RC::SCHEMA_TABLE_NOT_EXIST;
-        }
+RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, const char *table_name,
+                             SelectExeNode &select_node) {
+    // 列出跟这张表关联的Attr
+    TupleSchema schema;
+    Table *table = DefaultHandler::get_default().find_table(db, table_name);
+    if (nullptr == table) {
+        LOG_WARN("No such table [%s] in db [%s]", table_name, db);
+        return RC::SCHEMA_TABLE_NOT_EXIST;
+    }
 
-        for (int i = selects.attr_num - 1; i >= 0; i--) {
-            const RelAttr &attr = selects.attributes[i];
-            if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)) {
-                if (0 != strcmp("*", attr.attribute_name)) {
-                    const FieldMeta *field_meta = table->table_meta().field(attr.attribute_name);
-                    if (nullptr == field_meta) {
-                        LOG_WARN("No such field. %s.%s", table->name(), attr.attribute_name);
-                        return RC::SCHEMA_FIELD_MISSING;
-                    }
+    for (int i = selects.attr_num - 1; i >= 0; i--) {
+        const RelAttr &attr = selects.attributes[i];
+        if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)) {
+            if (0 != strcmp("*", attr.attribute_name)) {
+                const FieldMeta *field_meta = table->table_meta().field(attr.attribute_name);
+                if (nullptr == field_meta) {
+                    LOG_WARN("No such field. %s.%s", table->name(), attr.attribute_name);
+                    return RC::SCHEMA_FIELD_MISSING;
                 }
             }
         }
+    }
 
-        TupleSchema::from_table(table, schema);
-        select_node.aggregateOp = selects.aggregateOp[0];
+    TupleSchema::from_table(table, schema);
+    select_node.aggregateOp = selects.aggregateOp[0];
 
 
 //    if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)) {
@@ -538,30 +538,30 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
 //    }
 //  }
 
-        // 找出仅与此表相关的过滤条件, 或者都是值的过滤条件
-        std::vector<DefaultConditionFilter *> condition_filters;
-        for (size_t i = 0; i < selects.condition_num; i++) {
-            const Condition &condition = selects.conditions[i];
-            if ((condition.left_is_attr == 0 && condition.right_is_attr == 0) || // 两边都是值
-                (condition.left_is_attr == 1 && condition.right_is_attr == 0 &&
-                 match_table(selects, condition.left_attr.relation_name, table_name)) ||  // 左边是属性右边是值
-                (condition.left_is_attr == 0 && condition.right_is_attr == 1 &&
-                 match_table(selects, condition.right_attr.relation_name, table_name)) ||  // 左边是值，右边是属性名
-                (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
-                 match_table(selects, condition.left_attr.relation_name, table_name) &&
-                 match_table(selects, condition.right_attr.relation_name, table_name)) // 左右都是属性名，并且表名都符合
-                    ) {
-                DefaultConditionFilter *condition_filter = new DefaultConditionFilter();
-                RC rc = condition_filter->init(*table, condition);
-                if (rc != RC::SUCCESS) {
-                    delete condition_filter;
-                    for (DefaultConditionFilter *&filter: condition_filters) {
-                        delete filter;
-                    }
-                    return rc;
+    // 找出仅与此表相关的过滤条件, 或者都是值的过滤条件
+    std::vector<DefaultConditionFilter *> condition_filters;
+    for (size_t i = 0; i < selects.condition_num; i++) {
+        const Condition &condition = selects.conditions[i];
+        if ((condition.left_is_attr == 0 && condition.right_is_attr == 0) || // 两边都是值
+            (condition.left_is_attr == 1 && condition.right_is_attr == 0 &&
+             match_table(selects, condition.left_attr.relation_name, table_name)) ||  // 左边是属性右边是值
+            (condition.left_is_attr == 0 && condition.right_is_attr == 1 &&
+             match_table(selects, condition.right_attr.relation_name, table_name)) ||  // 左边是值，右边是属性名
+            (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
+             match_table(selects, condition.left_attr.relation_name, table_name) &&
+             match_table(selects, condition.right_attr.relation_name, table_name)) // 左右都是属性名，并且表名都符合
+                ) {
+            DefaultConditionFilter *condition_filter = new DefaultConditionFilter();
+            RC rc = condition_filter->init(*table, condition);
+            if (rc != RC::SUCCESS) {
+                delete condition_filter;
+                for (DefaultConditionFilter *&filter: condition_filters) {
+                    delete filter;
                 }
-                condition_filters.push_back(condition_filter);
+                return rc;
             }
+            condition_filters.push_back(condition_filter);
+        }
 //    if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
 //        strcmp(condition.left_attr.relation_name,condition.right_attr.relation_name) != 0 &&
 //        0 == strcmp(condition.left_attr.relation_name, table_name )) {
@@ -581,10 +581,10 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
 //        }
 //      }
 //    }
-        }
-
-        return select_node.init(trx, table, std::move(schema), std::move(condition_filters));
     }
 
-    bool match_tuple(TupleSet t1, TupleSet t2, RelAttr r1, RelAttr r2, Condition condition) {}
+    return select_node.init(trx, table, std::move(schema), std::move(condition_filters));
+}
+
+bool match_tuple(TupleSet t1, TupleSet t2, RelAttr r1, RelAttr r2, Condition condition) {}
 

@@ -70,7 +70,7 @@ select * from person where birthday='1999-01-13';
 create index name1_index on person(name);
 create unique index name_index on person(name);
 insert into person values(1, 1.78, 't2', '1999-03-15'),(2, 1.78, 't2', '1999-10-15'),(3, 1.83, 't4', '2001-08-11'),(4, 1.71, 't5', '1999-06-17'),(5, 1.83, 't6', '2001-08-11');
-select * from person order by id asc;
+select * from person order by height asc;
 select * from person order by person.id;
 select * from person;
 drop table person;
