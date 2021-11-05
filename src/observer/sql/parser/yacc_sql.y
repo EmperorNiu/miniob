@@ -547,12 +547,15 @@ orderby:
 ;
 direction:
     /* empty */
+    ASC {
+    		CONTEXT->orderDirect = ORASC;
+    			}
     | DESC {
 		CONTEXT->orderDirect = ORDESC;
 			}
-    | ASC {
-		CONTEXT->orderDirect = ORASC;
-			}
+    | {
+    		CONTEXT->orderDirect = ORASC;
+    }
     ;
 where:
     /* empty */ 
