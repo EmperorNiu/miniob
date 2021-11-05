@@ -326,7 +326,7 @@ void TupleSet::sort(OrderOp orderOps[],size_t orderOp_num) {
             int r = t1.get(index).compare(t2.get(index));
             if (r!=0){
                 bool r1= r > 0? true: false ;
-                bool r2 = bool(orderOps[i].direct);
+                bool r2 = !orderOps[i].direct;
                 bool r3 = r1^r2;
                 return r3;
             }

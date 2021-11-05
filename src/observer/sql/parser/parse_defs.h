@@ -48,8 +48,8 @@ typedef enum {
 } AggregateOp;
 
 typedef enum {
-    ORDESC,
-    ORASC
+    ORASC,
+    ORDESC
 }OrderDirect;
 
 typedef struct {

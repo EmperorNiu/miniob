@@ -74,6 +74,7 @@ create unique index name_index on person(name);
 insert into person values(1, 1.78, 't2', '1999-03-15'),(2, 1.78, 't2', '1999-10-15'),(3, 1.83, 't4', '2001-08-11'),(4, 1.71, 't5', '1999-06-17'),(5, 1.83, 't6', '2001-08-11');
 select * from person order by height asc;
 select * from person order by person.idd,height asc;
+select * from person order by name asc,id asc,height,birthday;
 select * from person;
 drop table person;
 create table person(id int, height float, name char, birthday date);
