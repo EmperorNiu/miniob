@@ -324,7 +324,7 @@ void TupleSet::sort(OrderOp orderOps[],size_t orderOp_num) {
             int index = schema_.index_of_field(orderOps[i].attr->relation_name,orderOps[i].attr->attribute_name);
             int r = t1.get(index).compare(t2.get(index));
             if (r!=0){
-                bool r1= bool(r+1);
+                bool r1= r > 0? true: false ;
                 bool r2 = bool(orderOps[i].direct);
                 bool r3 = r1^r2;
                 return r3;

@@ -442,6 +442,9 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
     }
     if (selects.orderOp_num > 0) {
       for (int i = 0; i < selects.orderOp_num; ++i) {
+          if(tuple_sets[0].get_schema().index_of_field(selects.orderOps[i].attr->relation_name,selects.orderOps[i].attr->attribute_name)==-1){
+              return RC::SQL_SYNTAX;
+          }
         if (selects.orderOps[i].attr->relation_name == nullptr) {
           selects.orderOps[i].attr->relation_name = selects.relations[0];
         }
@@ -453,6 +456,9 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
     // 当前只查询一张表，直接返回结果即可
     if (selects.orderOp_num > 0) {
       for (int i = 0; i < selects.orderOp_num; ++i) {
+          if(tuple_sets[0].get_schema().index_of_field(selects.orderOps[i].attr->relation_name,selects.orderOps[i].attr->attribute_name)==-1){
+              return RC::SQL_SYNTAX;
+          }
         if (selects.orderOps[i].attr->relation_name == nullptr) {
           selects.orderOps[i].attr->relation_name = selects.relations[0];
         }
