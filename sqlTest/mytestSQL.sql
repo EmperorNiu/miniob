@@ -148,3 +148,4 @@ insert into person values(2, 1.51, 't3', '1999-06-17');
 insert into person values(3, 1.83, 't4', '2001-08-11');
 insert into person values(4, 1.71, 't5', '1999-06-17');
 insert into person values(5, 1.83, 't6', '2001-08-11');
+select * from person order by id;

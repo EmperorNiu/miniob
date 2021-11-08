@@ -143,6 +143,7 @@ RC Table::open(const char *meta_file, const char *base_dir) {
         }
 
         BplusTreeIndex *index = new BplusTreeIndex();
+        index->setUnique(index_meta->isUnique());
         std::string index_file = index_data_file(base_dir, name(), index_meta->name());
         rc = index->open(index_file.c_str(), *index_meta, *field_meta);
         if (rc != RC::SUCCESS) {
@@ -191,17 +192,6 @@ RC Table::insert_record(Trx *trx, Record *record) {
     if (trx != nullptr) {
         trx->init_trx_info(this, *record);
     }
-//    for (Index *index: indexes_) {
-//        if (index->isUnique()) {
-//            FieldMeta fieldMeta = index->field_meta();
-//            IndexScanner *scanner = index->create_scanner(EQUAL_TO, record->data);
-//            RID rid_n;
-//            rc = scanner->next_entry(&rid_n);
-//            if (RC::RECORD_EOF == rc) {
-//                continue;
-//            } else return RC::SCHEMA_INDEX_EXIST;
-//        }
-//    }
 
     rc = record_handler_->insert_record(record->data, table_meta_.record_size(), &record->rid);
     if (rc != RC::SUCCESS) {
@@ -230,10 +220,14 @@ RC Table::insert_record(Trx *trx, Record *record) {
             LOG_PANIC("Failed to rollback index data when insert index entries failed. table name=%s, rc=%d:%s",
                       name(), rc2, strrc(rc2));
         }
+
         rc2 = record_handler_->delete_record(&record->rid);
         if (rc2 != RC::SUCCESS) {
             LOG_PANIC("Failed to rollback record data when insert index entries failed. table name=%s, rc=%d:%s",
                       name(), rc2, strrc(rc2));
+        }
+        if (trx != nullptr) {
+            trx->delete_record(this, record);
         }
         return rc;
     }
@@ -801,7 +795,9 @@ RC Table::insert_entry_of_indexes(const char *record, const RID &rid) {
     RC rc = RC::SUCCESS;
     for (Index *index: indexes_) {
       if (index->isUnique()) {
-        IndexScanner *scanner = index->create_scanner(EQUAL_TO, record);
+        char data[index->field_meta().len()];
+        memcpy(data,record+index->field_meta().offset(),index->field_meta().len());
+        IndexScanner *scanner = index->create_scanner(EQUAL_TO, data);
         RID rid_n;
         rc = scanner->next_entry(&rid_n);
         if (rc != RC::SUCCESS) {
@@ -812,14 +808,8 @@ RC Table::insert_entry_of_indexes(const char *record, const RID &rid) {
             }
           } else return rc;
         }
-        else {
-          Record r;
-          rc = record_handler_->get_record(&rid, &r);
-          if (rc == RC::SUCCESS)
-            return RC::SCHEMA_INDEX_EXIST;
-          else
-            return RC::SUCCESS;
-        }
+        else
+          return RC::SCHEMA_INDEX_EXIST;
       }
       else {
         rc = index->insert_entry(record, &rid);

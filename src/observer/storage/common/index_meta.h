@@ -34,7 +34,7 @@ public:
 public:
   const char *name() const;
   const char *field() const;
-
+  const int isUnique() const;
   void desc(std::ostream &os) const;
 public:
   void to_json(Json::Value &json_value) const;
