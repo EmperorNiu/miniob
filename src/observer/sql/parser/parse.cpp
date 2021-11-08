@@ -76,9 +76,16 @@ void value_destroy(Value *value) {
     value->data = nullptr;
 }
 
-void order_init(OrderOp *orderOp, OrderDirect orderDirect, RelAttr *attr) {
+void order_init(OrderOp *orderOp, OrderDirect orderDirect, const char *relation_name, const char *attribute_name) {
+    auto *relation_attr = new RelAttr;
     orderOp->direct = orderDirect;
-    orderOp->attr = attr;
+    if (relation_name != nullptr) {
+        relation_attr->relation_name = strdup(relation_name);
+    } else {
+        relation_attr->relation_name = nullptr;
+    }
+    relation_attr->attribute_name = strdup(attribute_name);
+    orderOp->attr = relation_attr;
 }
 
 void condition_init(Condition *condition, CompOp comp,

@@ -446,7 +446,7 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
           selects.orderOps[i].attr->relation_name = selects.relations[0];
         }
       }
-      tuple_sets.front().sort(selects.orderOps, selects.orderOp_num);
+      tuple_result_.sort(selects.orderOps, selects.orderOp_num);
     }
     tuple_result_.print(ss, selects);
   } else {
