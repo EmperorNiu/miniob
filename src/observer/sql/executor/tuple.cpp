@@ -555,3 +555,11 @@ void TupleRecordAggregateConverter::aggregate_record(const char *record) {
   }
 //  tuple_set_.add(std::move(tuple));
 }
+
+std::string TupleRecordAggregateGroupByConverter::group_field_to_key(const char *record) {
+  std::string key;
+  for (int i = 0; i < group_field_names_.size(); ++i) {
+    key += group_field_names_[i];
+  }
+  return key;
+}

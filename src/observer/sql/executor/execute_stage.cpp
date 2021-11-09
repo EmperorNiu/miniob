@@ -228,7 +228,6 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
   Selects &selects = sql->sstr.selection;
   std::vector<const char *> table_names;
 
-  // 检查attr中是否有不存在的relation
   std::vector<SelectExeNode *> select_nodes;
   for (size_t i = 0; i < selects.attr_num; i++) {
     int flag = 0;
@@ -509,7 +508,7 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
     LOG_WARN("No such table [%s] in db [%s]", table_name, db);
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
-//  for (int j = 0; j < selects.aggregateOp_num; ++j) {
+  // 添加聚合操作的信息
   for (int j = selects.aggregateOp_num - 1; j >= 0; --j) {
     select_node.aggregateOps.push_back(selects.aggregateOp[j]);
     if (0 != strcmp("*",selects.attributes[j].attribute_name)){
@@ -522,13 +521,11 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
     } else {
       return RC::SCHEMA_FIELD_NOT_EXIST;
     }
-
   }
+  // 校验是否存在不在表中的属性
   for (int i = selects.attr_num - 1; i >= 0; i--) {
     const RelAttr &attr = selects.attributes[i];
-
     if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)) {
-
       if (0 != strcmp("*", attr.attribute_name)) {
         const FieldMeta *field_meta = table->table_meta().field(attr.attribute_name);
         if (nullptr == field_meta) {
@@ -566,6 +563,3 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
   select_node.set_aggregate_schema(std::move(agg_schema));
   return select_node.init(trx, table, std::move(schema), std::move(condition_filters));
 }
-
-bool match_tuple(TupleSet t1,TupleSet t2, RelAttr r1, RelAttr r2, Condition condition) {}
-

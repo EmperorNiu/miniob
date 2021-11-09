@@ -17,6 +17,7 @@ See the Mulan PSL v2 for more details. */
 
 #include <memory>
 #include <vector>
+#include <map>
 #include <storage/common/condition_filter.h>
 
 #include "sql/parser/parse.h"
@@ -190,9 +191,24 @@ private:
     TupleSet &tuple_set_;
     AggregateOp aggregateOp_;
     const char *field_name_;
-
-
 };
 
+class TupleRecordAggregateGroupByConverter {
+public:
+    TupleRecordAggregateGroupByConverter(Table *table, TupleSet &tuple_set, AggregateOp aggregateOp,const char *field_name);
+    void aggregate_group_record(const char *record);
+    std::string group_field_to_key(const char *record);
+    std::map<std::string,int> count;
+    std::map<std::string,int> agg_int;
+    std::map<std::string,float> agg_float;
+    std::map<std::string,std::string> agg_string;
+    AttrType type;
+private:
+    Table *table_;
+    TupleSet &tuple_set_;
+    AggregateOp aggregateOp_; // aggregate operator
+    const char *field_name_;  // aggregated field name
+    std::vector<std::string> group_field_names_; // grouped  field names
+};
 
 #endif //__OBSERVER_SQL_EXECUTOR_TUPLE_H_

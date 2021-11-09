@@ -82,6 +82,7 @@ ParserContext *get_context(yyscan_t scanner)
         DESC
         ASC
         ORDERBY
+        GROUPBY
         SHOW
         SYNC
         INSERT
@@ -370,7 +371,7 @@ update:			/*  update 语句的语法解析树*/
 		}
     ;
 select:				/*  select 语句的语法解析树*/
-    SELECT select_attr FROM ID rel_list where order SEMICOLON
+    SELECT select_attr FROM ID rel_list where order group SEMICOLON
 		{
 			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$4;
 			selects_append_relation(&CONTEXT->ssql->sstr.selection, $4);
@@ -385,7 +386,7 @@ select:				/*  select 语句的语法解析树*/
 			CONTEXT->from_length=0;
 			CONTEXT->select_length=0;
 			CONTEXT->value_length = 0;
-		} | SELECT aggregate_attr FROM ID rel_list where order SEMICOLON
+		} | SELECT aggregate_attr FROM ID rel_list where order group SEMICOLON
 		{
 			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$7;
 			selects_append_relation(&CONTEXT->ssql->sstr.selection, $4);
@@ -557,6 +558,38 @@ direction:
     		CONTEXT->orderDirect = ORASC;
     }
     ;
+group:
+    /* empty */
+    | GROUPBY groupby {
+				// CONTEXT->conditions[CONTEXT->condition_length++]=*$2;
+}
+;
+groupby:
+/* empty */
+| ID group_list{
+	RelAttr attr;
+	relation_attr_init(&attr, NULL, $1);
+	selects_append_groupBy_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+}
+| ID DOT ID group_list{
+	RelAttr attr;
+	relation_attr_init(&attr, $1, $3);
+	selects_append_groupBy_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+}
+;
+group_list:
+    /* empty */
+| COMMA ID group_list{
+	RelAttr attr;
+	relation_attr_init(&attr, NULL, $2);
+	selects_append_groupBy_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+}
+| COMMA ID DOT ID group_list{
+	RelAttr attr;
+	relation_attr_init(&attr, $2, $4);
+	selects_append_groupBy_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+}
+;
 where:
     /* empty */ 
     | WHERE condition condition_list {	

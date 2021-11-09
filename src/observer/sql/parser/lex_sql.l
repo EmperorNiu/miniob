@@ -62,6 +62,7 @@ QUOTE            [\'\"]
 [Aa][Vv][Gg]                             RETURN_TOKEN(AVG);
 [Ff][Rr][Oo][Mm]                      	 RETURN_TOKEN(FROM);
 [Ww][Hh][Ee][Rr][Ee]                  	 RETURN_TOKEN(WHERE);
+[Gg][Rr][Oo][Uu][Pp]{WHITE_SAPCE}[Bb][Yy]      RETURN_TOKEN(GROUPBY);
 [Aa][Nn][Dd]                             RETURN_TOKEN(AND);
 [Ii][Nn][Ss][Ee][rR][tT]                 RETURN_TOKEN(INSERT);
 [Ii][Nn][Tt][Oo]					 	 RETURN_TOKEN(INTO);

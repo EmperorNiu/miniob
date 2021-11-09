@@ -59,7 +59,6 @@ update j1 set age="31" where id=2;
 
 show tables;
 create table person(id int, height float, name char, birthday date);
-create unique index id_index on person(id);
 create index id_index on person(id);
 insert into person values(0, 1.73, 't1', '1999-01-13');
 insert into person values(1, 1.78, 't2', '1999-03-15');
@@ -71,6 +70,8 @@ insert into person values(5, 1.83, 't6', '2001-08-11');
 create index name_index on person(birthday);
 select * from person where birthday='1999-01-13';
 create index name1_index on person(name);
+
+-- Order by test
 create unique index name_index on person(name);
 insert into person values(1, 1.78, 't2', '1999-03-15'),(2, 1.78, 't2', '1999-10-15'),(3, 1.83, 't4', '2001-08-11'),(4, 1.71, 't5', '1999-06-17'),(5, 1.83, 't6', '2001-08-11');
 select * from person order by height asc;
@@ -83,7 +84,7 @@ select * from person;
 select min(birthday) from person;
 
 insert into person values(2, 1.51, 't3', '1999-06-17');
-insert into person values(0, 1.73, 't1', '1999-01-13'),(1, 1.56, 't2', '1999-03-15'),(2, 1.51, 't3', '1999-06-17');
+insert into person values(3, 1.73, 't1', '1999-01-13'),(4, 1.56, 't2', '1999-03-15'),(5, 1.51, 't3', '1999-06-17');
 
 
 update person set id=0 where name='t1';
@@ -114,6 +115,7 @@ update t set name2='abc' where id=1;
 update t set name='abc' where id='a';
 
 
+-- Aggregate test
 select max(id) from person;
 select max(height) from person;
 select max(birthday) from person;
@@ -122,7 +124,6 @@ select min(height) from person;
 select min(birthday) from person;
 select avg(height) from person;
 select avg(id) from person;
--- select min(name) from person;
 select min(id),min(height) from person;
 select max(id),min(height) from person;
 select max(id),min(id) from person;
@@ -143,12 +144,34 @@ select max(birthday) from person;
 select avg(birthday) from person;
 select count(birthday) from person;
 
+
+-- Unique test
 create table person(id int, height float, name char, birthday date);
 create unique index id_index on person(id);
 insert into person values(0, 1.73, 't1', '1999-01-13');
 insert into person values(1, 1.78, 't2', '1999-03-15');
 insert into person values(2, 1.51, 't3', '1999-06-17');
+insert into person values(2, 1.51, 't3', '1999-06-17');
 insert into person values(3, 1.83, 't4', '2001-08-11');
-insert into person values(4, 1.71, 't5', '1999-06-17');
-insert into person values(5, 1.83, 't6', '2001-08-11');
-select * from person order by id;
+drop table person;
+create table person(id int, height float, name char, birthday date);
+insert into person values(0, 1.73, 't1', '1999-01-13');
+insert into person values(1, 1.78, 't2', '1999-03-15');
+insert into person values(2, 1.51, 't3', '1999-06-17');
+insert into person values(2, 1.51, 't3', '1999-06-17');
+insert into person values(3, 1.83, 't4', '2001-08-11');
+create unique index id_index on person(id);
+drop table person;
+
+
+-- Group by test
+drop table person;
+create table person(id int, height float, name char, birthday date);
+insert into person values(0, 1.73, 't1', '1999-01-13');
+insert into person values(1, 1.78, 't2', '1999-03-15');
+insert into person values(1, 1.93, 't2', '1999-03-25');
+insert into person values(2, 1.51, 't4', '1899-03-17');
+insert into person values(2, 1.61, 't4', '1999-06-19');
+insert into person values(2, 1.21, 't4', '1999-06-27');
+insert into person values(3, 1.83, 't4', '2001-08-11');
+select avg(height) from person group by id;
