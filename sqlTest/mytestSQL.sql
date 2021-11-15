@@ -165,3 +165,11 @@ update t1 set age = 1 where address is null;
 select * from t1 where t1.birthday is null;
 select * from t1 where t1.age is null;
 create index age_index on t1(age);
+
+create table t1(id int,num int nullable,birthday date nullable);
+insert into t1 values(1,1,"2020-1-19"),(2,2,"2009-6-9"),(3,null,"1999-10-3"),(4,4,null),(5,null,null);
+
+create table t2(id int,name char nullable,birthday date nullable);
+insert into t2 values(1,"aaa","2020-1-19"),(2,"bbb","1987-4-5"),(3,null,null),(4,null,"2021-10-30"),(5,"eee",null);
+
+select * from t1,t2 where t1.birthday>t2.birthday;

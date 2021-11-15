@@ -72,7 +72,7 @@ void value_init_date(Value *value, const char *v) {
 }
 
 void value_init_null(Value *value){
-    value->type = NULLS;
+        value->type = NULLS;
     value->data = malloc(4);
     int r = 0;
     memcpy(value->data,&r,sizeof r);
