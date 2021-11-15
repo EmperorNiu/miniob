@@ -391,9 +391,17 @@ void TupleRecordConverter::add_record(const char *record) {
   const TupleSchema &schema = tuple_set_.schema();
   Tuple tuple;
   const TableMeta &table_meta = table_->table_meta();
+  const int null_bitmap = *(int *)(record+4);//TODO
+  int i=0;
   for (const TupleField &field : schema.fields()) {
     const FieldMeta *field_meta = table_meta.field(field.field_name());
     assert(field_meta != nullptr);
+    if(null_bitmap&1<<i){
+        tuple.add("NULL",4);
+        i++;
+        continue;
+    }
+    i++;
     switch (field_meta->type()) {
       case INTS: {
         int value = *(int*)(record + field_meta->offset());
@@ -444,6 +452,7 @@ TupleRecordAggregateConverter::TupleRecordAggregateConverter(Table *table, Tuple
 
 void TupleRecordAggregateConverter::aggregate_record(const char *record) {
   const TupleSchema &schema = tuple_set_.schema();
+  int null_bitmap = *(int*)(record+4);
 //  Tuple tuple;
   if (strcmp(field_name_,"*")==0 && aggregateOp_ == COUNT_OP){
     count += 1;
@@ -451,6 +460,7 @@ void TupleRecordAggregateConverter::aggregate_record(const char *record) {
   }
   const TableMeta &table_meta = table_->table_meta();
   const FieldMeta *field_meta = table_meta.field(field_name_);
+  if(null_bitmap&1<<field_meta->index_num()) return;
   assert(field_meta != nullptr);
   type = field_meta->type();
   count += 1;
