@@ -323,6 +323,7 @@ RC Table::make_record(int value_num, const Value *values, char *&record_out) {
 
 RC Table::change_record(const char *attribute, const Value *v, Record *record) {
     const int normal_field_start_index = table_meta_.sys_field_num();
+    int null_bitmap = *(int *)(record->data+4);
     for (int i = 0; i < table_meta_.field_num() - normal_field_start_index; i++) {
         const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
 
@@ -338,6 +339,9 @@ RC Table::change_record(const char *attribute, const Value *v, Record *record) {
             } else {
                 memcpy(record->data + field->offset(), v->data, field->len());
             }
+            if (v->type==NULLS) null_bitmap = null_bitmap|(1<<i);
+            else null_bitmap = null_bitmap&((~1)<<i);
+            memcpy(record->data+4,&null_bitmap,4);
         }
     }
     return RC::SUCCESS;
