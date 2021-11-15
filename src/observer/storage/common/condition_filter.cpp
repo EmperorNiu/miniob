@@ -122,8 +122,9 @@ RC DefaultConditionFilter::init(Table &table, const Condition &condition)
   if (!field_type_compare_compatible_table[type_left][type_right]) {
     // 不能比较的两个字段， 要把信息传给客户端
     return RC::SCHEMA_FIELD_TYPE_MISMATCH;
-  } else if(type_right==NULLS){
-      return init(left,right,NULLS,condition.comp);
+  }else if(type_right==NULLS){
+      if(type_left==type_right) return init(left,right,NULLS,CompOp (13-condition.comp));
+      else return init(left,right,NULLS,condition.comp);
   }else if (!left.is_attr && right.is_attr) {
     return init(left, right, type_right, condition.comp);
   } else if (left.is_attr && !right.is_attr) {
