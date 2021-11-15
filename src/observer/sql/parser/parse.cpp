@@ -70,6 +70,13 @@ void value_init_date(Value *value, const char *v) {
     value->data = malloc(sizeof(r));
     memcpy(value->data, &r, sizeof r);
 }
+
+void value_init_null(Value *value){
+    value->type = NULLS;
+    value->data = malloc(4);
+    int r = 0;
+    memcpy(value->data,&r,sizeof r);
+}
 void value_destroy(Value *value) {
     value->type = UNDEFINED;
     free(value->data);
@@ -119,10 +126,11 @@ void condition_destroy(Condition *condition) {
     }
 }
 
-void attr_info_init(AttrInfo *attr_info, const char *name, AttrType type, size_t length) {
+void attr_info_init(AttrInfo *attr_info, const char *name, AttrType type, size_t length, bool nullable) {
     attr_info->name = strdup(name);
     attr_info->type = type;
     attr_info->length = length;
+    attr_info->nullable = nullable;
 }
 void attr_info_destroy(AttrInfo *attr_info) {
     free(attr_info->name);

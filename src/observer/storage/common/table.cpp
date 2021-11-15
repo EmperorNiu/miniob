@@ -292,10 +292,15 @@ RC Table::make_record(int value_num, const Value *values, char *&record_out) {
     }
 
     const int normal_field_start_index = table_meta_.sys_field_num();
+    const FieldMeta *nullsmapField = table_meta_.field(1);
+    unsigned int nullsmap = 0;
     for (int i = 0; i < value_num; i++) {
         const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
         const Value &value = values[i];
-        if (field->type() != value.type) {
+        if (value.type==NULLS){
+            if(!field->nullable()) return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+            nullsmap = nullsmap | (1<<i);
+        }else if (field->type() != value.type) {
             LOG_ERROR("Invalid value type. field name=%s, type=%d, but given=%d",
                       field->name(), field->type(), value.type);
             return RC::SCHEMA_FIELD_TYPE_MISMATCH;
@@ -305,7 +310,7 @@ RC Table::make_record(int value_num, const Value *values, char *&record_out) {
     // 复制所有字段的值
     int record_size = table_meta_.record_size();
     char *record = new char[record_size];
-
+    memcpy(record + nullsmapField->offset(), &nullsmap, nullsmapField->len());
     for (int i = 0; i < value_num; i++) {
         const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
         const Value &value = values[i];

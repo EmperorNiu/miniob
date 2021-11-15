@@ -152,3 +152,10 @@ insert into person values(3, 1.83, 't4', '2001-08-11');
 insert into person values(4, 1.71, 't5', '1999-06-17');
 insert into person values(5, 1.83, 't6', '2001-08-11');
 select * from person order by id;
+
+create table t1 (id int not null, age int nullable, address char);
+insert into t1 values(1, 2, 'OK'),(2,null,'OKK'),(3,4,'OKKK');
+select * from t1 where age=2;
+select count(*) from t1;
+select count(age) from t1;
+select avg(age) from t1;

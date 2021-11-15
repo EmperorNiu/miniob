@@ -68,6 +68,10 @@ ParserContext *get_context(yyscan_t scanner)
 
 //标识tokens
 %token  SEMICOLON
+	IS
+	ANULL
+	NULLABLE
+	NOTNULL
         CREATE
         DROP
         TABLE
@@ -136,8 +140,10 @@ ParserContext *get_context(yyscan_t scanner)
 %token <string> STAR
 %token <string> STRING_V
 %token <string> AGGOP
+
 //非终结符
 
+%type <number>  is_nullable;
 %type <number> type;
 %type <condition1> condition;
 %type <value1> value;
@@ -255,14 +261,14 @@ create_table:		/*create table 语句的语法解析树*/
     ;
 attr_def_list:
     /* empty */
-    | COMMA attr_def attr_def_list {    }
+    | COMMA attr_def attr_def_list{    }
     ;
     
 attr_def:
-    ID_get type LBRACE number RBRACE 
+    ID_get type LBRACE number RBRACE is_nullable
 		{
 			AttrInfo attribute;
-			attr_info_init(&attribute, CONTEXT->id, $2, $4);
+			attr_info_init(&attribute, CONTEXT->id, $2, $4,$6);
 			create_table_append_attribute(&CONTEXT->ssql->sstr.create_table, &attribute);
 			// CONTEXT->ssql->sstr.create_table.attributes[CONTEXT->value_length].name =(char*)malloc(sizeof(char));
 			// strcpy(CONTEXT->ssql->sstr.create_table.attributes[CONTEXT->value_length].name, CONTEXT->id); 
@@ -270,10 +276,10 @@ attr_def:
 			// CONTEXT->ssql->sstr.create_table.attributes[CONTEXT->value_length].length = $4;
 			CONTEXT->value_length++;
 		}
-    |ID_get type
+    |ID_get type is_nullable
 		{
 			AttrInfo attribute;
-			attr_info_init(&attribute, CONTEXT->id, $2, 4);
+			attr_info_init(&attribute, CONTEXT->id, $2, 4,$3);
 			create_table_append_attribute(&CONTEXT->ssql->sstr.create_table, &attribute);
 			// CONTEXT->ssql->sstr.create_table.attributes[CONTEXT->value_length].name=(char*)malloc(sizeof(char));
 			// strcpy(CONTEXT->ssql->sstr.create_table.attributes[CONTEXT->value_length].name, CONTEXT->id); 
@@ -282,6 +288,11 @@ attr_def:
 			CONTEXT->value_length++;
 		}
     ;
+is_nullable:
+	{$$ = 0;}
+	| NOTNULL {$$ = 0;}
+	| NULLABLE {$$ = 1;}
+	;
 number:
 		NUMBER {$$ = $1;}
 		;
@@ -346,6 +357,9 @@ value:
     |DATE {
     			$1 = substr($1,1,strlen($1)-2);
 		value_init_date(&CONTEXT->values[CONTEXT->value_length++], $1);
+    }
+    |ANULL{
+    		value_init_null(&CONTEXT->values[CONTEXT->value_length++]);
     }
     ;
     
@@ -723,6 +737,7 @@ comOp:
     | LE { CONTEXT->comp = LESS_EQUAL; }
     | GE { CONTEXT->comp = GREAT_EQUAL; }
     | NE { CONTEXT->comp = NOT_EQUAL; }
+    | IS {CONTEXT->comp = EQUAL_IS;}
     ;
 
 load_data:

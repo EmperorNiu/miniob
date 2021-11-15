@@ -40,7 +40,7 @@ DefaultConditionFilter::~DefaultConditionFilter()
 
 RC DefaultConditionFilter::init(const ConDesc &left, const ConDesc &right, AttrType attr_type, CompOp comp_op)
 {
-  if (attr_type < CHARS || attr_type > DATES) {
+  if (attr_type < CHARS || attr_type > NULLS) {
     LOG_ERROR("Invalid condition with unsupported attribute type: %d", attr_type);
     return RC::INVALID_ARGUMENT;
   }
@@ -65,10 +65,10 @@ RC DefaultConditionFilter::init(Table &table, const Condition &condition)
 
   AttrType type_left = UNDEFINED;
   AttrType type_right = UNDEFINED;
-
   if (1 == condition.left_is_attr) {
     left.is_attr = true;
     const FieldMeta *field_left = table_meta.field(condition.left_attr.attribute_name);
+    left.index_num = field_left->index_num();
     if (nullptr == field_left) {
       LOG_WARN("No such field in condition. %s.%s", table.name(), condition.left_attr.attribute_name);
       return RC::SCHEMA_FIELD_MISSING;
@@ -91,6 +91,7 @@ RC DefaultConditionFilter::init(Table &table, const Condition &condition)
   if (1 == condition.right_is_attr) {
     right.is_attr = true;
     const FieldMeta *field_right = table_meta.field(condition.right_attr.attribute_name);
+    right.index_num = field_right->index_num();
     if (nullptr == field_right) {
       LOG_WARN("No such field in condition. %s.%s", table.name(), condition.right_attr.attribute_name);
       return RC::SCHEMA_FIELD_MISSING;
@@ -109,18 +110,21 @@ RC DefaultConditionFilter::init(Table &table, const Condition &condition)
     right.attr_length = 0;
     right.attr_offset = 0;
   }
-  int field_type_compare_compatible_table[5][5] = {
-          1,0,0,0,0,
-          0,1,0,0,0,
-          0,0,1,1,0,
-          0,0,1,1,0,
-          0,0,0,0,1
+  int field_type_compare_compatible_table[6][6] = {
+          1,0,0,0,0,1,
+          0,1,0,0,0,1,
+          0,0,1,1,0,1,
+          0,0,1,1,0,1,
+          0,0,0,0,1,1,
+          1,1,1,1,1,1
   };
   // 校验和转换
   if (!field_type_compare_compatible_table[type_left][type_right]) {
     // 不能比较的两个字段， 要把信息传给客户端
     return RC::SCHEMA_FIELD_TYPE_MISMATCH;
-  } else if (!left.is_attr && right.is_attr) {
+  } else if(type_right==NULLS){
+      return init(left,right,NULLS,condition.comp);
+  }else if (!left.is_attr && right.is_attr) {
     return init(left, right, type_right, condition.comp);
   } else if (left.is_attr && !right.is_attr) {
     if (type_left==FLOATS && type_right==INTS) {
@@ -151,20 +155,21 @@ bool DefaultConditionFilter::filter(const Record &rec) const
 {
   char *left_value = nullptr;
   char *right_value = nullptr;
-
+  int null_bitmap = *(int *)(rec.data +4);
+  int cmp_result = 0;
   if (left_.is_attr) {  // value
+      if(null_bitmap&1<<left_.index_num&&comp_op_!=EQUAL_IS) return false;
     left_value = (char *)(rec.data + left_.attr_offset);
   } else {
     left_value = (char *)left_.value;
   }
 
   if (right_.is_attr) {
+      if(null_bitmap&1<<right_.index_num) return false;
     right_value = (char *)(rec.data + right_.attr_offset);
   } else {
     right_value = (char *)right_.value;
   }
-
-  int cmp_result = 0;
   switch (attr_type_) {
     case CHARS: {  // 字符串都是定长的，直接比较
       // 按照C字符串风格来定
@@ -187,6 +192,9 @@ bool DefaultConditionFilter::filter(const Record &rec) const
       int right = *(int *)right_value;
       cmp_result = left - right;
     }
+      case NULLS:{
+          return null_bitmap&1<<left_.index_num && comp_op_==EQUAL_IS;
+      }
     default: {
     }
   }
@@ -204,7 +212,8 @@ bool DefaultConditionFilter::filter(const Record &rec) const
       return cmp_result >= 0;
     case GREAT_THAN:
       return cmp_result > 0;
-
+      case EQUAL_IS:
+          return false;
     default:
       break;
   }
