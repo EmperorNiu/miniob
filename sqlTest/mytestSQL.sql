@@ -185,10 +185,19 @@ select * from t1 where t1.height > (select avg(height) from t2);
 select avg(height) from t2;
 select * from t1 where t1.height > 5.39;
 select * from t1 where t1.id < (select avg(id) from t2);
-select * from t1 where t1.id not in (select id from t2 where id > 3);
+select * from t1 where id in (select t2.id from t2);
 select * from t1 where height > 2;
 
-
+simple-sub-query: result file difference(`-` is yours and `+` is base)
+ 1. SELECT
+SELECT * FROM SSQ_1 WHERE ID IN (SELECT SSQ_2.ID FROM SSQ_2);
+-FAILURE
++1 | 4 | 11.2
++2 | 2 | 12
++ID | COL1 | FEAT1
+SELECT * FROM SSQ_1 WHERE COL1 NOT IN (SELECT SSQ_2.COL2 FROM SSQ_2);
++1 | 4 | 11.2
++ID | COL1 | FEAT1
 
 -- null
 insert into person values(4, 1.71, 't5', '1999-06-17');
@@ -215,3 +224,6 @@ create table t2(id int,name char nullable,birthday date nullable);
 insert into t2 values(1,"aaa","2020-1-19"),(2,"bbb","1987-4-5"),(3,null,null),(4,null,"2021-10-30"),(5,"eee",null);
 
 select * from t1,t2 where t1.birthday>t2.birthday;
+
+
+

@@ -68,11 +68,12 @@ RC DefaultConditionFilter::init(Table &table, const Condition &condition)
   if (1 == condition.left_is_attr) {
     left.is_attr = true;
     const FieldMeta *field_left = table_meta.field(condition.left_attr.attribute_name);
-    left.index_num = field_left->index_num();
+
     if (nullptr == field_left) {
       LOG_WARN("No such field in condition. %s.%s", table.name(), condition.left_attr.attribute_name);
       return RC::SCHEMA_FIELD_MISSING;
     }
+    left.index_num = field_left->index_num();
     left.attr_length = field_left->len();
     left.attr_offset = field_left->offset();
 
@@ -91,11 +92,11 @@ RC DefaultConditionFilter::init(Table &table, const Condition &condition)
   if (1 == condition.right_is_attr) {
     right.is_attr = true;
     const FieldMeta *field_right = table_meta.field(condition.right_attr.attribute_name);
-    right.index_num = field_right->index_num();
     if (nullptr == field_right) {
       LOG_WARN("No such field in condition. %s.%s", table.name(), condition.right_attr.attribute_name);
       return RC::SCHEMA_FIELD_MISSING;
     }
+    right.index_num = field_right->index_num();
     right.attr_length = field_right->len();
     right.attr_offset = field_right->offset();
     type_right = field_right->type();
