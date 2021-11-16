@@ -292,10 +292,15 @@ RC Table::make_record(int value_num, const Value *values, char *&record_out) {
     }
 
     const int normal_field_start_index = table_meta_.sys_field_num();
+    const FieldMeta *nullsmapField = table_meta_.field(1);
+    unsigned int nullsmap = 0;
     for (int i = 0; i < value_num; i++) {
         const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
         const Value &value = values[i];
-        if (field->type() != value.type) {
+        if (value.type==NULLS){
+            if(!field->nullable()) return RC::SCHEMA_FIELD_TYPE_MISMATCH;
+            nullsmap = nullsmap | (1<<i);
+        }else if (field->type() != value.type) {
             LOG_ERROR("Invalid value type. field name=%s, type=%d, but given=%d",
                       field->name(), field->type(), value.type);
             return RC::SCHEMA_FIELD_TYPE_MISMATCH;
@@ -305,7 +310,7 @@ RC Table::make_record(int value_num, const Value *values, char *&record_out) {
     // 复制所有字段的值
     int record_size = table_meta_.record_size();
     char *record = new char[record_size];
-
+    memcpy(record + nullsmapField->offset(), &nullsmap, nullsmapField->len());
     for (int i = 0; i < value_num; i++) {
         const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
         const Value &value = values[i];
@@ -318,6 +323,7 @@ RC Table::make_record(int value_num, const Value *values, char *&record_out) {
 
 RC Table::change_record(const char *attribute, const Value *v, Record *record) {
     const int normal_field_start_index = table_meta_.sys_field_num();
+    int null_bitmap = *(int *)(record->data+4);
     for (int i = 0; i < table_meta_.field_num() - normal_field_start_index; i++) {
         const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
 
@@ -333,6 +339,9 @@ RC Table::change_record(const char *attribute, const Value *v, Record *record) {
             } else {
                 memcpy(record->data + field->offset(), v->data, field->len());
             }
+            if (v->type==NULLS) null_bitmap = null_bitmap|(1<<i);
+            else null_bitmap = null_bitmap&((~1)<<i);
+            memcpy(record->data+4,&null_bitmap,4);
         }
     }
     return RC::SUCCESS;
@@ -452,7 +461,7 @@ RC Table::scan_record_by_index(Trx *trx, IndexScanner *scanner, ConditionFilter 
     while (record_count < limit) {
         rc = scanner->next_entry(&rid);
         if (rc != RC::SUCCESS) {
-            if (RC::RECORD_EOF == rc) {
+            if (RC::RECORD_EOF == rc || RC::RECORD_NO_MORE_IDX_IN_MEM==rc) {
                 rc = RC::SUCCESS;
                 break;
             }
@@ -863,6 +872,7 @@ Index *Table::find_index(const char *index_name) const {
 IndexScanner *Table::find_index_for_scan(const DefaultConditionFilter &filter) {
     const ConDesc *field_cond_desc = nullptr;
     const ConDesc *value_cond_desc = nullptr;
+    if(filter.comp_op()==EQUAL_IS||filter.comp_op()==EQUAL_IS_NOT) return nullptr;
     if (filter.left().is_attr && !filter.right().is_attr) {
         field_cond_desc = &filter.left();
         value_cond_desc = &filter.right();

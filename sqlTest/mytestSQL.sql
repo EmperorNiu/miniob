@@ -84,7 +84,7 @@ select * from person;
 select min(birthday) from person;
 
 insert into person values(2, 1.51, 't3', '1999-06-17');
-insert into person values(3, 1.73, 't1', '1999-01-13'),(4, 1.56, 't2', '1999-03-15'),(5, 1.51, 't3', '1999-06-17');
+insert into person values(0, 1.73, 't1', '1999-01-13'),(1, 1.56, 't2', '1999-03-15'),(2, 1.51, 't3', '1999-06-17');
 
 
 update person set id=0 where name='t1';
@@ -180,3 +180,28 @@ select avg(height) from person group by id;
 select * from j1 where j1.height > (select avg(height) from j2);
 select * from j1 where height > 2;
 0x122009208
+
+insert into person values(4, 1.71, 't5', '1999-06-17');
+insert into person values(5, 1.83, 't6', '2001-08-11');
+select * from person order by id;
+
+create table t1 (id int not null, age int nullable, address char nullable, birthday date nullable);
+insert into t1 values(1, 2, 'OK','1999-01-13'),(2,null,'OKK',null),(3,4,'OKKK',null ),(4,null,null,'2001-08-11');
+select * from t1 where age=2;
+select * from t1 where age is not null;
+select count(*) from t1;
+select count(age) from t1;
+select avg(age) from t1;
+
+update t1 set age = 1 where address is null;
+select * from t1 where t1.birthday is null;
+select * from t1 where t1.age is null;
+create index age_index on t1(age);
+
+create table t1(id int,num int nullable,birthday date nullable);
+insert into t1 values(1,1,"2020-1-19"),(2,2,"2009-6-9"),(3,null,"1999-10-3"),(4,4,null),(5,null,null);
+
+create table t2(id int,name char nullable,birthday date nullable);
+insert into t2 values(1,"aaa","2020-1-19"),(2,"bbb","1987-4-5"),(3,null,null),(4,null,"2021-10-30"),(5,"eee",null);
+
+select * from t1,t2 where t1.birthday>t2.birthday;
