@@ -872,6 +872,7 @@ Index *Table::find_index(const char *index_name) const {
 IndexScanner *Table::find_index_for_scan(const DefaultConditionFilter &filter) {
     const ConDesc *field_cond_desc = nullptr;
     const ConDesc *value_cond_desc = nullptr;
+
     // if(filter.comp_op()==EQUAL_IS||filter.comp_op()==EQUAL_IS_NOT) return nullptr;
     if (filter.left().is_attr && !filter.right().is_attr) {
         field_cond_desc = &filter.left();
@@ -908,11 +909,12 @@ IndexScanner *Table::find_index_for_scan(const ConditionFilter *filter) {
     if (nullptr == filter) {
         return nullptr;
     }
-
-    // remove dynamic_cast
-    const DefaultConditionFilter *default_condition_filter = dynamic_cast<const DefaultConditionFilter *>(filter);
-    if (default_condition_filter != nullptr) {
+    if (!filter->isIn()){
+      // remove dynamic_cast
+      const DefaultConditionFilter *default_condition_filter = dynamic_cast<const DefaultConditionFilter *>(filter);
+      if (default_condition_filter != nullptr) {
         return find_index_for_scan(*default_condition_filter);
+      }
     }
 
     const CompositeConditionFilter *composite_condition_filter = dynamic_cast<const CompositeConditionFilter *>(filter);

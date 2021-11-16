@@ -179,25 +179,28 @@ insert into person values(3, 1.83, 't4', '2001-08-11');
 select avg(height) from person group by id;
 
 -- sub select
-create table t1(id int, height float, name char, birthday date);
-create table t2(id int, height float, name char, birthday date);
-insert into t1 values(1, 1.78, 't2', '1999-03-15'),(2, 3.78, 't2', '1999-10-15'),(3, 7.83, 't4', '2001-08-11'),(4, 6.71, 't5', '1999-06-17'),(5, 16.83, 't6', '2001-08-11');
-insert into t2 values(1, 1.78, 't2', '1999-03-15'),(2, 5.78, 't2', '1999-10-15'),(3, 2.83, 't4', '2001-08-11'),(4, 11.71, 't5', '1999-06-17'),(5, 4.83, 't6', '2001-08-11');
-select * from t1 where t1.height > (select avg(height) from t2);
+create table t1(id int, col1 int, name char, birthday date);
+create table t2(idd int, col2 int, name char, birthday date);
+insert into t1 values(1, 45, 't2', '1999-03-15'),(2, 378, 't2', '1999-10-15'),(3, 73, 't4', '2001-08-11'),(4, 61, 't5', '1999-06-17'),(5, 16, 't6', '2001-08-11');
+insert into t2 values(1, 17, 't2', '1999-03-15'),(2, 16, 't2', '1999-10-15'),(3, 24, 't4', '2001-08-11'),(4, 11, 't5', '1999-06-17');
+select * from t1 where t1.height > (select avg(col2) from t2);
 select avg(height) from t2;
 select * from t1 where t1.height > 5.39;
-select * from t1 where t1.id < (select avg(id) from t2);
-select * from t1 where id in (select t2.id from t2);
+select * from t1 where t1.id < (select avg(idd) from t2);
+select * from t1 where id in (select t2.idd from t2);
+select * from t1 where col1 NOT IN (select t2.col2 from t2);
+select * from t1 where col1 IN (select t2.col2 from t2);
 select * from t1 where height > 2;
-EmperorNiu:
-score:40, passed: basic,select-tables,aggregation-func,drop-table,insert,unique,order-by, commit id=09b82e1dbfb13c387f336af50483cf05a56fffd6, date=2021-11-16 21:45:00
+create index col2_index on t2(col2);
+create index col1_index on t1(col1);
+create index id_index on t1(id);
+
 simple-sub-query: result file difference(`-` is yours and `+` is base)
  1. SELECT
 SELECT * FROM SSQ_1 WHERE ID IN (SELECT SSQ_2.ID FROM SSQ_2);
--FAILURE
-+1 | 4 | 11.2
-+2 | 2 | 12
-+ID | COL1 | FEAT1
+1 | 4 | 11.2
+ 2 | 2 | 12
+ ID | COL1 | FEAT1
 SELECT * FROM SSQ_1 WHERE COL1 NOT IN (SELECT SSQ_2.COL2 FROM SSQ_2);
 +1 | 4 | 11.2
 +ID | COL1 | FEAT1
