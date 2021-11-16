@@ -6,6 +6,8 @@ insert into t values(4, 53);
 select * from t;
 update t set name = 200 where id>1;
 select * from t;
+-- date
+select * from t1 where birthday > "2000-03-15";
 
 /* select tables*/
 create table j1(id int, height float, name char, birthday date);
@@ -187,7 +189,8 @@ select * from t1 where t1.height > 5.39;
 select * from t1 where t1.id < (select avg(id) from t2);
 select * from t1 where id in (select t2.id from t2);
 select * from t1 where height > 2;
-
+EmperorNiu:
+score:40, passed: basic,select-tables,aggregation-func,drop-table,insert,unique,order-by, commit id=09b82e1dbfb13c387f336af50483cf05a56fffd6, date=2021-11-16 21:45:00
 simple-sub-query: result file difference(`-` is yours and `+` is base)
  1. SELECT
 SELECT * FROM SSQ_1 WHERE ID IN (SELECT SSQ_2.ID FROM SSQ_2);

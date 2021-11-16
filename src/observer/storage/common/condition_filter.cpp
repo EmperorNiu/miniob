@@ -193,11 +193,11 @@ bool DefaultConditionFilter::filter(const Record &rec) const
       int left = *(int *)left_value;
       int right = *(int *)right_value;
       cmp_result = left - right;
+    } break;
+    case NULLS: {
+      bool isnull = null_bitmap & 1 << left_.index_num;
+      return (isnull && comp_op_ == EQUAL_IS) || (!isnull && comp_op_ == EQUAL_IS_NOT);
     }
-      case NULLS: {
-          bool isnull = null_bitmap & 1 << left_.index_num;
-          return (isnull && comp_op_ == EQUAL_IS) || (!isnull && comp_op_ == EQUAL_IS_NOT);
-      }
     default: {
     }
   }
