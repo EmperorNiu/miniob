@@ -911,7 +911,7 @@ comOp:
     | NE { CONTEXT->comp = NOT_EQUAL; }
     | IS {CONTEXT->comp = EQUAL_IS;}
     | ISNOT{CONTEXT->comp = EQUAL_IS_NOT;}
-    | IN { CONTEXT->comp = IN; }
+    | IN { CONTEXT->comp = EQUAL_IN; }
     | NOTIN { CONTEXT->comp = NOT_IN; }
     ;
 

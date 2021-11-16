@@ -872,7 +872,7 @@ Index *Table::find_index(const char *index_name) const {
 IndexScanner *Table::find_index_for_scan(const DefaultConditionFilter &filter) {
     const ConDesc *field_cond_desc = nullptr;
     const ConDesc *value_cond_desc = nullptr;
-    if(filter.comp_op()==EQUAL_IS||filter.comp_op()==EQUAL_IS_NOT) return nullptr;
+    // if(filter.comp_op()==EQUAL_IS||filter.comp_op()==EQUAL_IS_NOT) return nullptr;
     if (filter.left().is_attr && !filter.right().is_attr) {
         field_cond_desc = &filter.left();
         value_cond_desc = &filter.right();

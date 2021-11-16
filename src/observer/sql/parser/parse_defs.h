@@ -37,7 +37,7 @@ typedef enum {
   LESS_THAN,    //"<"     3
   GREAT_EQUAL,  //">="    4
   GREAT_THAN,   //">"     5
-  IN,           //"in"    6
+  EQUAL_IN,           //"in"    6
   NOT_IN,       //"not in"7
   EQUAL_IS,           //"is"    6
   EQUAL_IS_NOT,
