@@ -177,10 +177,20 @@ insert into person values(3, 1.83, 't4', '2001-08-11');
 select avg(height) from person group by id;
 
 -- sub select
-select * from j1 where j1.height > (select avg(height) from j2);
-select * from j1 where height > 2;
-0x122009208
+create table t1(id int, height float, name char, birthday date);
+create table t2(id int, height float, name char, birthday date);
+insert into t1 values(1, 1.78, 't2', '1999-03-15'),(2, 3.78, 't2', '1999-10-15'),(3, 7.83, 't4', '2001-08-11'),(4, 6.71, 't5', '1999-06-17'),(5, 16.83, 't6', '2001-08-11');
+insert into t2 values(1, 1.78, 't2', '1999-03-15'),(2, 5.78, 't2', '1999-10-15'),(3, 2.83, 't4', '2001-08-11'),(4, 11.71, 't5', '1999-06-17'),(5, 4.83, 't6', '2001-08-11');
+select * from t1 where t1.height > (select avg(height) from t2);
+select avg(height) from t2;
+select * from t1 where t1.height > 5.39;
+select * from t1 where t1.id < (select avg(id) from t2);
+select * from t1 where t1.id not in (select id from t2 where id > 3);
+select * from t1 where height > 2;
 
+
+
+-- null
 insert into person values(4, 1.71, 't5', '1999-06-17');
 insert into person values(5, 1.83, 't6', '2001-08-11');
 select * from person order by id;

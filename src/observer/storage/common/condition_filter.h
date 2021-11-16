@@ -39,6 +39,8 @@ public:
    * @return true means match condition, false means failed to match.
    */
   virtual bool filter(const Record &rec) const = 0;
+  virtual bool isIn() const = 0;
+  virtual bool isNotIn() const = 0;
 };
 
 class DefaultConditionFilter : public ConditionFilter {
@@ -50,7 +52,8 @@ public:
   RC init(Table &table, const Condition &condition);
 
   virtual bool filter(const Record &rec) const;
-
+  bool isIn() const override ;
+  bool isNotIn() const override ;
 public:
   const ConDesc &left() const {
     return left_;
@@ -81,7 +84,8 @@ public:
   RC init(const ConditionFilter *filters[], int filter_num);
   RC init(Table &table, const Condition *conditions, int condition_num);
   virtual bool filter(const Record &rec) const;
-
+  bool isIn() const override ;
+  bool isNotIn() const override ;
 public:
   int filter_num() const {
     return filter_num_;

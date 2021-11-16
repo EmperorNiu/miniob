@@ -43,6 +43,7 @@ protected:
   RC do_sub_select(const char *db, Selects selects, SessionEvent *session_event, TupleSet& sub_tupleSet);
   RC do_create_table(const char *db, Query *sql, SessionEvent *session_event);
   RC condition_transform(TupleSet& tupleSet, Condition& condition);
+  RC in_condition_transform(TupleSet& tupleSet, Condition condition,std::vector<Condition>& in_condition, Selects selects);
 protected:
 private:
   Stage *default_storage_stage_ = nullptr;

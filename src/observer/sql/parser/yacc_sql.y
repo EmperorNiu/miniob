@@ -766,6 +766,38 @@ condition:
 		CONTEXT->conditions[CONTEXT->condition_length++] = condition;
 		// sub_selects_init(&CONTEXT->ssql->sstr.selection);
     }
+    | ID IN subselect {
+		RelAttr left_attr;
+		relation_attr_init(&left_attr, NULL, $1);
+		Condition condition;
+		condition_init2(&condition, EQUAL_IN, 1, &left_attr, NULL, 0, NULL, NULL,1);
+		CONTEXT->conditions[CONTEXT->condition_length++] = condition;
+		// sub_selects_init(&CONTEXT->ssql->sstr.selection);
+    }
+    | ID DOT ID IN subselect {
+		RelAttr left_attr;
+		relation_attr_init(&left_attr, $1, $3);
+		Condition condition;
+		condition_init2(&condition, EQUAL_IN, 1, &left_attr, NULL, 0, NULL, NULL,1);
+		CONTEXT->conditions[CONTEXT->condition_length++] = condition;
+		// sub_selects_init(&CONTEXT->ssql->sstr.selection);
+    }
+    | ID NOTIN subselect {
+		RelAttr left_attr;
+		relation_attr_init(&left_attr, NULL, $1);
+		Condition condition;
+		condition_init2(&condition, NOT_IN, 1, &left_attr, NULL, 0, NULL, NULL,1);
+		CONTEXT->conditions[CONTEXT->condition_length++] = condition;
+		// sub_selects_init(&CONTEXT->ssql->sstr.selection);
+    }
+    | ID DOT ID NOTIN subselect {
+		RelAttr left_attr;
+		relation_attr_init(&left_attr, $1, $3);
+		Condition condition;
+		condition_init2(&condition, NOT_IN, 1, &left_attr, NULL, 0, NULL, NULL,1);
+		CONTEXT->conditions[CONTEXT->condition_length++] = condition;
+		// sub_selects_init(&CONTEXT->ssql->sstr.selection);
+    }
     ;
 
 subselect:
@@ -911,8 +943,6 @@ comOp:
     | NE { CONTEXT->comp = NOT_EQUAL; }
     | IS {CONTEXT->comp = EQUAL_IS;}
     | ISNOT{CONTEXT->comp = EQUAL_IS_NOT;}
-    | IN { CONTEXT->comp = EQUAL_IN; }
-    | NOTIN { CONTEXT->comp = NOT_IN; }
     ;
 
 load_data:

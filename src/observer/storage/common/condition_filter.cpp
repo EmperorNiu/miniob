@@ -202,10 +202,12 @@ bool DefaultConditionFilter::filter(const Record &rec) const
   }
 
   switch (comp_op_) {
+    case EQUAL_IN:
     case EQUAL_TO:
       return 0 == cmp_result;
     case LESS_EQUAL:
       return cmp_result <= 0;
+    case NOT_IN:
     case NOT_EQUAL:
       return cmp_result != 0;
     case LESS_THAN:
@@ -214,10 +216,10 @@ bool DefaultConditionFilter::filter(const Record &rec) const
       return cmp_result >= 0;
     case GREAT_THAN:
       return cmp_result > 0;
-      case EQUAL_IS:
-          return false;
-      case EQUAL_IS_NOT:
-          return false;
+    case EQUAL_IS:
+        return false;
+    case EQUAL_IS_NOT:
+        return false;
     default:
       break;
   }
@@ -277,10 +279,41 @@ RC CompositeConditionFilter::init(Table &table, const Condition *conditions, int
 
 bool CompositeConditionFilter::filter(const Record &rec) const
 {
+  std::vector<const ConditionFilter*> orC;
   for (int i = 0; i < filter_num_; i++) {
-    if (!filters_[i]->filter(rec)) {
+    if(filters_[i]->isIn()) {
+      orC.push_back(filters_[i]);
+    }
+  }
+  int flag = 0;
+  for (auto & i : orC) {
+    if (i->filter(rec)) {
+      flag = 1;
+    }
+  }
+  if (flag == 0 && orC.size() > 0) return false;
+
+  for (int i = 0; i < filter_num_; i++) {
+    if (!filters_[i]->filter(rec) && !filters_[i]->isIn()) {
       return false;
     }
   }
   return true;
+}
+
+
+bool DefaultConditionFilter::isIn() const {
+  return comp_op_ == EQUAL_IN;
+}
+
+bool DefaultConditionFilter::isNotIn() const {
+  return comp_op_ == NOT_EQUAL;
+}
+
+bool CompositeConditionFilter::isIn() const {
+  return false;
+}
+
+bool CompositeConditionFilter::isNotIn() const {
+  return false;
 }

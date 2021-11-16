@@ -26,7 +26,7 @@ public:
   TupleValue() = default;
   virtual ~TupleValue() = default;
   virtual void to_string(std::ostream &os) const = 0;
-  virtual char* get_value() const = 0;
+  virtual void* get_value() const = 0;
   virtual int compare(const TupleValue &other) const = 0;
 private:
 };
@@ -39,8 +39,8 @@ public:
   void to_string(std::ostream &os) const override {
     os << value_;
   }
-  char* get_value() const override{
-    return (char *)&value_;
+  void* get_value() const override{
+    return (int *)&value_;
   };
   int compare(const TupleValue &other) const override {
     const IntValue & int_other = (const IntValue &)other;
@@ -62,8 +62,8 @@ public:
     FloatValue::morphNumericString(buffer,2);
     os << buffer;
   }
-  char* get_value() const override{
-    return (char *)&value_;
+  void* get_value() const override{
+    return (float *)&value_;
   };
   int compare(const TupleValue &other) const override {
     const FloatValue & float_other = (const FloatValue &)other;
@@ -114,7 +114,7 @@ public:
   void to_string(std::ostream &os) const override {
     os << value_;
   }
-  char* get_value() const override{
+  void* get_value() const override{
     return (char *)value_.c_str();
   };
   int compare(const TupleValue &other) const override {
