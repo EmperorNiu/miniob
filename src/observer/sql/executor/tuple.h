@@ -50,7 +50,7 @@ public:
     return values_.size();
   }
 
-  const TupleValue &get(int index) const {
+  TupleValue &get(int index) {
     return *values_[index];
   }
 
@@ -139,7 +139,7 @@ public:
 
   bool is_empty() const;
   int size() const;
-  const Tuple &get(int index) const;
+  Tuple &get(int index);
   const std::vector<Tuple> &tuples() const;
 
   void print(std::ostream &os) const;

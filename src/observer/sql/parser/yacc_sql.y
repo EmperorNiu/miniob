@@ -108,6 +108,8 @@ ParserContext *get_context(yyscan_t scanner)
         AND
         SET
         ON
+        IN
+        NOTIN
         LOAD
         DATA
         INFILE
@@ -380,28 +382,13 @@ select:				/*  select 语句的语法解析树*/
 			selects_append_orderOps(&CONTEXT->ssql->sstr.selection,CONTEXT->orderOps,CONTEXT->order_num);
 			CONTEXT->ssql->flag=SCF_SELECT;//"select";
 			// CONTEXT->ssql->sstr.selection.attr_num = CONTEXT->select_length;
-
+			// sub_selects_init(&CONTEXT->ssql->sstr.selection);
 			//临时变量清零
 			CONTEXT->condition_length=0;
 			CONTEXT->from_length=0;
 			CONTEXT->select_length=0;
 			CONTEXT->value_length = 0;
-		} | SELECT aggregate_attr FROM ID rel_list where order group SEMICOLON
-		{
-			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$7;
-			selects_append_relation(&CONTEXT->ssql->sstr.selection, $4);
-			// selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 0);
-			selects_append_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->conditions, CONTEXT->condition_length);
-			selects_append_orderOps(&CONTEXT->ssql->sstr.selection,CONTEXT->orderOps,CONTEXT->order_num);
-			CONTEXT->ssql->flag=SCF_SELECT;//"select";
-			// CONTEXT->ssql->sstr.selection.attr_num = CONTEXT->select_length;
-
-			//临时变量清零
-			CONTEXT->condition_length=0;
-			CONTEXT->from_length=0;
-			CONTEXT->select_length=0;
-			CONTEXT->value_length = 0;
-		} ;
+		};
 
 aggregate_attr:
     MAX LBRACE ID RBRACE aggregate_list {
@@ -489,6 +476,8 @@ select_attr:
 			relation_attr_init(&attr, $1, $3);
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 		}
+    | aggregate_attr {
+    }
     ;
 attr_list:
     /* empty */
@@ -729,7 +718,7 @@ condition:
 									
     }
     |ID DOT ID comOp ID DOT ID
-		{
+	{
 			RelAttr left_attr;
 			relation_attr_init(&left_attr, $1, $3);
 			RelAttr right_attr;
@@ -747,15 +736,167 @@ condition:
 			// $$->right_attr.relation_name=$5;
 			// $$->right_attr.attribute_name=$7;
     }
+    | ID comOp subselect {
+		RelAttr left_attr;
+		relation_attr_init(&left_attr, NULL, $1);
+		Condition condition;
+		condition_init2(&condition, CONTEXT->comp, 1, &left_attr, NULL, 0, NULL, NULL,1);
+		CONTEXT->conditions[CONTEXT->condition_length++] = condition;
+		// sub_selects_init(&CONTEXT->ssql->sstr.selection);
+    }
+    | ID DOT ID comOp subselect {
+		RelAttr left_attr;
+		relation_attr_init(&left_attr, $1, $3);
+		Condition condition;
+		condition_init2(&condition, CONTEXT->comp, 1, &left_attr, NULL, 0, NULL, NULL,1);
+		CONTEXT->conditions[CONTEXT->condition_length++] = condition;
+		// sub_selects_init(&CONTEXT->ssql->sstr.selection);
+    }
     ;
 
+subselect:
+    LBRACE SELECT subselect_attr FROM ID subrel_list where group RBRACE
+		{
+
+			selects_append_relation(CONTEXT->ssql->sstr.selection.subSelect, $5);
+			selects_append_conditions(CONTEXT->ssql->sstr.selection.subSelect, CONTEXT->conditions, CONTEXT->condition_length);
+			//临时变量清零
+			CONTEXT->condition_length=0;
+			CONTEXT->from_length=0;
+			CONTEXT->select_length=0;
+			CONTEXT->value_length = 0;
+		}
+	;
+subselect_attr:
+    STAR {
+    sub_selects_init(&CONTEXT->ssql->sstr.selection);
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, "*");
+			selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+		}
+    | ID DOT STAR subattr_list {
+    sub_selects_init(&CONTEXT->ssql->sstr.selection);
+			RelAttr attr;
+			relation_attr_init(&attr, $1, "*");
+			selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+    }
+    | ID subattr_list {
+    sub_selects_init(&CONTEXT->ssql->sstr.selection);
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, $1);
+			selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+		}
+	| ID DOT ID subattr_list {
+	sub_selects_init(&CONTEXT->ssql->sstr.selection);
+			RelAttr attr;
+			relation_attr_init(&attr, $1, $3);
+			selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+	}
+    | subaggregate_attr {
+    }
+    ;
+
+subaggregate_attr:
+    MAX LBRACE ID RBRACE subaggregate_list {
+    sub_selects_init(&CONTEXT->ssql->sstr.selection);
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, $3);
+			selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+    			selects_append_aggregation_op(CONTEXT->ssql->sstr.selection.subSelect, 1);
+    }
+    | MIN LBRACE ID RBRACE subaggregate_list {
+    sub_selects_init(&CONTEXT->ssql->sstr.selection);
+    			RelAttr attr;
+    			relation_attr_init(&attr, NULL, $3);
+    			selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+    			selects_append_aggregation_op(CONTEXT->ssql->sstr.selection.subSelect, 2);
+    }
+    | AVG LBRACE ID RBRACE subaggregate_list {
+	sub_selects_init(&CONTEXT->ssql->sstr.selection);
+        		RelAttr attr;
+        		relation_attr_init(&attr, NULL, $3);
+        		selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+    			selects_append_aggregation_op(CONTEXT->ssql->sstr.selection.subSelect, 3);
+    }
+    | COUNT LBRACE subcount_attr RBRACE subaggregate_list {
+    sub_selects_init(&CONTEXT->ssql->sstr.selection);
+    			selects_append_aggregation_op(CONTEXT->ssql->sstr.selection.subSelect, 4);
+    }
+    ;
+
+subaggregate_list:
+    /* empty */
+    | COMMA MAX LBRACE ID RBRACE subaggregate_list {
+            		RelAttr attr;
+            		relation_attr_init(&attr, NULL, $4);
+            		selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+    			selects_append_aggregation_op(CONTEXT->ssql->sstr.selection.subSelect, 1);
+    }
+    | COMMA MIN LBRACE ID RBRACE subaggregate_list {
+                	RelAttr attr;
+                	relation_attr_init(&attr, NULL, $4);
+                	selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+    			selects_append_aggregation_op(CONTEXT->ssql->sstr.selection.subSelect, 2);
+    }
+    | COMMA AVG LBRACE ID RBRACE subaggregate_list {
+                	RelAttr attr;
+                	relation_attr_init(&attr, NULL, $4);
+                	selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+    			selects_append_aggregation_op(CONTEXT->ssql->sstr.selection.subSelect, 3);
+    }
+    | COMMA COUNT LBRACE subcount_attr RBRACE subaggregate_list {
+    			selects_append_aggregation_op(CONTEXT->ssql->sstr.selection.subSelect, 4);
+    }
+    ;
+subcount_attr:
+    ID {
+    	            	RelAttr attr;
+                        relation_attr_init(&attr, NULL, $1);
+                        selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+    }
+    | STAR {
+        	        RelAttr attr;
+                        relation_attr_init(&attr, NULL, "*");
+                        selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+        }
+    | NUMBER {
+    			RelAttr attr;
+    			relation_attr_init(&attr, NULL, "*");
+    			selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+    };
+subattr_list:
+    /* empty */
+    | COMMA ID subattr_list {
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, $2);
+			selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+      }
+    | COMMA ID DOT ID subattr_list {
+			RelAttr attr;
+			relation_attr_init(&attr, $2, $4);
+			selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+  	  }
+    | COMMA ID DOT STAR subattr_list {
+      			RelAttr attr;
+      			relation_attr_init(&attr, $2, "*");
+      			selects_append_attribute(CONTEXT->ssql->sstr.selection.subSelect, &attr);
+    }
+  	;
+
+subrel_list:
+    /* empty */
+    | COMMA ID subrel_list {
+			selects_append_relation(CONTEXT->ssql->sstr.selection.subSelect, $2);
+};
 comOp:
-  	  EQ { CONTEXT->comp = EQUAL_TO; }
+      EQ { CONTEXT->comp = EQUAL_TO; }
     | LT { CONTEXT->comp = LESS_THAN; }
     | GT { CONTEXT->comp = GREAT_THAN; }
     | LE { CONTEXT->comp = LESS_EQUAL; }
     | GE { CONTEXT->comp = GREAT_EQUAL; }
     | NE { CONTEXT->comp = NOT_EQUAL; }
+    | IN { CONTEXT->comp = IN; }
+    | NOTIN { CONTEXT->comp = NOT_IN; }
     ;
 
 load_data:

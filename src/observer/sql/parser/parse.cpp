@@ -105,7 +105,29 @@ void condition_init(Condition *condition, CompOp comp,
     } else {
         condition->right_value = *right_value;
     }
+    condition->sub_select = 0;
 }
+
+void condition_init2(Condition *condition, CompOp comp,
+                    int left_is_attr, RelAttr *left_attr, Value *left_value,
+                    int right_is_attr, RelAttr *right_attr, Value *right_value, int sub) {
+  condition->comp = comp;
+  condition->left_is_attr = left_is_attr;
+  if (left_is_attr) {
+    condition->left_attr = *left_attr;
+  } else {
+    condition->left_value = *left_value;
+  }
+
+  condition->right_is_attr = right_is_attr;
+  if (right_is_attr) {
+    condition->right_attr = *right_attr;
+  } else if (sub != 1){
+    condition->right_value = *right_value;
+  }
+  condition->sub_select = sub;
+}
+
 void condition_destroy(Condition *condition) {
     if (condition->left_is_attr) {
         relation_attr_destroy(&condition->left_attr);
@@ -133,11 +155,23 @@ void selects_init(Selects *selects, ...);
 void selects_append_attribute(Selects *selects, RelAttr *rel_attr) {
     selects->attributes[selects->attr_num++] = *rel_attr;
 }
+
+void sub_selects_init(Selects *selects){
+  selects->subSelect = new Selects;
+  selects->subSelect->relation_num = 0;
+  selects->subSelect->attr_num = 0;
+  selects->subSelect->condition_num = 0;
+}
+
 void selects_append_groupBy_attribute(Selects *selects, RelAttr *rel_attr) {
     selects->groupBy_attributes[selects->groupBy_attr_num++] = *rel_attr;
 }
 void selects_append_relation(Selects *selects, const char *relation_name) {
     selects->relations[selects->relation_num++] = strdup(relation_name);
+}
+
+void selects_append_relation2(Selects *selects, const char *relation_name) {
+  selects->relations[selects->relation_num++] = strdup(relation_name);
 }
 
 void selects_append_aggregation_op(Selects *selects, AggregateOp op) {

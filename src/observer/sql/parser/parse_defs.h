@@ -36,6 +36,8 @@ typedef enum {
   LESS_THAN,    //"<"     3
   GREAT_EQUAL,  //">="    4
   GREAT_THAN,   //">"     5
+  IN,           //"in"    6
+  NOT_IN,       //"not in"7
   NO_OP
 } CompOp;
 
@@ -60,8 +62,6 @@ typedef struct {
 //属性值类型
 typedef enum { UNDEFINED, CHARS, INTS, FLOATS, DATES} AttrType;
 
-
-
 //属性值
 typedef struct _Value {
   AttrType type;  // type of value
@@ -78,10 +78,12 @@ typedef struct _Condition {
                        // 1时，操作符右边是属性名，0时，是属性值
   RelAttr right_attr;  // right-hand side attribute if right_is_attr = TRUE 右边的属性
   Value right_value;   // right-hand side value if right_is_attr = FALSE
+  int sub_select;  // 子查询
 } Condition;
 
+
 // struct of select
-typedef struct {
+typedef struct _Selects{
   size_t    attr_num;               // Length of attrs in Select clause
   RelAttr   attributes[MAX_NUM];    // attrs in Select clause
   size_t    relation_num;           // Length of relations in Fro clause
@@ -94,6 +96,7 @@ typedef struct {
   size_t    orderOp_num;
   RelAttr   groupBy_attributes[MAX_NUM];    // group by attrs in Select clause
   size_t    groupBy_attr_num;           // Length of relations in group by clause
+  struct _Selects *subSelect;
 } Selects;
 
 // struct of insert
@@ -216,15 +219,19 @@ void value_destroy(Value *value);
 
 void condition_init(Condition *condition, CompOp comp, int left_is_attr, RelAttr *left_attr, Value *left_value,
     int right_is_attr, RelAttr *right_attr, Value *right_value);
+void condition_init2(Condition *condition, CompOp comp, int left_is_attr, RelAttr *left_attr, Value *left_value,
+                    int right_is_attr, RelAttr *right_attr, Value *right_value, int sub);
 void condition_destroy(Condition *condition);
 
 void attr_info_init(AttrInfo *attr_info, const char *name, AttrType type, size_t length);
 void attr_info_destroy(AttrInfo *attr_info);
 
 void selects_init(Selects *selects, ...);
+void sub_selects_init(Selects *selects);
 void selects_append_attribute(Selects *selects, RelAttr *rel_attr);
 void selects_append_groupBy_attribute(Selects *selects, RelAttr *rel_attr);
 void selects_append_relation(Selects *selects, const char *relation_name);
+void selects_append_relation2(Selects *selects, const char *relation_name);
 void selects_append_aggregation_op(Selects *selects, AggregateOp op);
 void selects_append_conditions(Selects *selects, Condition conditions[], size_t condition_num);
 void selects_destroy(Selects *selects);

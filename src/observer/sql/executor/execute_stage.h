@@ -18,6 +18,7 @@ See the Mulan PSL v2 for more details. */
 #include "common/seda/stage.h"
 #include "sql/parser/parse.h"
 #include "rc.h"
+#include "tuple.h"
 
 class SessionEvent;
 
@@ -39,7 +40,9 @@ protected:
 
   void handle_request(common::StageEvent *event);
   RC do_select(const char *db, Query *sql, SessionEvent *session_event);
+  RC do_sub_select(const char *db, Selects selects, SessionEvent *session_event, TupleSet& sub_tupleSet);
   RC do_create_table(const char *db, Query *sql, SessionEvent *session_event);
+  RC condition_transform(TupleSet& tupleSet, Condition& condition);
 protected:
 private:
   Stage *default_storage_stage_ = nullptr;

@@ -175,3 +175,8 @@ insert into person values(2, 1.61, 't4', '1999-06-19');
 insert into person values(2, 1.21, 't4', '1999-06-27');
 insert into person values(3, 1.83, 't4', '2001-08-11');
 select avg(height) from person group by id;
+
+-- sub select
+select * from j1 where j1.height > (select avg(height) from j2);
+select * from j1 where height > 2;
+0x122009208

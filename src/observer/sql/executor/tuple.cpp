@@ -310,7 +310,7 @@ int TupleSet::size() const {
   return tuples_.size();
 }
 
-const Tuple &TupleSet::get(int index) const {
+Tuple &TupleSet::get(int index) {
   return tuples_[index];
 }
 
