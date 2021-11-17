@@ -51,6 +51,11 @@ void value_init_float(Value *value, float v) {
 void value_init_string(Value *value, const char *v) {
     value->type = CHARS;
     value->data = strdup(v);
+    std::string s = std::string(v);
+    if (s.length()>4096){
+        s = s.substr(0,4096);
+    }
+    value->data = strdup(s.c_str());
 }
 void value_init_date(Value *value, const char *v) {
     int y, m, d = 0;
