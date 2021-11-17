@@ -179,21 +179,24 @@ insert into person values(3, 1.83, 't4', '2001-08-11');
 select avg(height) from person group by id;
 
 -- sub select
-create table t1(id int, col1 int, name char, birthday date);
-create table t2(idd int, col2 int, name char, birthday date);
-insert into t1 values(1, 45, 't2', '1999-03-15'),(2, 378, 't2', '1999-10-15'),(3, 73, 't4', '2001-08-11'),(4, 61, 't5', '1999-06-17'),(5, 16, 't6', '2001-08-11');
-insert into t2 values(1, 17, 't2', '1999-03-15'),(2, 16, 't2', '1999-10-15'),(3, 24, 't4', '2001-08-11'),(4, 11, 't5', '1999-06-17');
+create table t1(id int, col1 int, feat1 float);
+create table t2(idd int, col2 int, feat2 float);
+insert into t1 values(1, 45, 11.3),(2, 78, 21.1),(3, 24, 25.2),(4, 61, 16.5),(5, 16, 19.2);
+insert into t2 values(1, 17, 14.1),(2, 16, 25.6),(3, 24, 23.4),(4, 11, 29.6);
 select * from t1 where t1.height > (select avg(col2) from t2);
 select avg(height) from t2;
 select * from t1 where t1.height > 5.39;
 select * from t1 where t1.id < (select avg(idd) from t2);
 select * from t1 where id in (select t2.idd from t2);
-select * from t1 where col1 NOT IN (select t2.col2 from t2);
-select * from t1 where col1 IN (select t2.col2 from t2);
+select * from t1 where col1 NOT IN (select col2 from t2);
+select * from t1 where col1 IN (select col2 from t2);
 select * from t1 where height > 2;
 create index col2_index on t2(col2);
 create index col1_index on t1(col1);
 create index id_index on t1(id);
+create index id_index on t2(idd);
+select * from t2 where col2 IN (select t1.col1 from t1);
+select * from t1 where id NOT IN (select t2.idd from t2);
 
 simple-sub-query: result file difference(`-` is yours and `+` is base)
  1. SELECT

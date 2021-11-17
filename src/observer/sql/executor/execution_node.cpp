@@ -54,7 +54,6 @@ void record_aggregate(const char *data, void *context) {
 RC SelectExeNode::execute(TupleSet &tuple_set) {
   CompositeConditionFilter condition_filter;
   condition_filter.init((const ConditionFilter **)condition_filters_.data(), condition_filters_.size());
-
   tuple_set.clear();
 
   if (aggregateOps.size() == 0) {
