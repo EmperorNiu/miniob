@@ -182,13 +182,14 @@ select avg(height) from person group by id;
 create table t1(id int, col1 int, feat1 float);
 create table t2(idd int, col2 int, feat2 float);
 insert into t1 values(1, 45, 11.3),(2, 78, 21.1),(3, 24, 25.2),(4, 61, 16.5),(5, 16, 19.2);
+insert into t1 values(6, 45, 11.3),(7, 78, 21.1),(8, 24, 25.2),(9, 61, 16.5),(10, 16, 19.2);
 insert into t2 values(1, 17, 14.1),(2, 16, 25.6),(3, 24, 23.4),(4, 11, 29.6);
-select * from t1 where t1.height > (select avg(col2) from t2);
+select * from t1 where t1.col1 >(select avg(col2) from t2);
 select avg(height) from t2;
 select * from t1 where t1.height > 5.39;
 select * from t1 where t1.id < (select avg(idd) from t2);
 select * from t1 where id in (select t2.idd from t2);
-select * from t1 where col1 NOT IN (select col2 from t2);
+select id,col1 from t1 where col1 NOT IN (select col2 from t2);
 select * from t1 where col1 IN (select col2 from t2);
 select * from t1 where height > 2;
 create index col2_index on t2(col2);
@@ -196,7 +197,9 @@ create index col1_index on t1(col1);
 create index id_index on t1(id);
 create index id_index on t2(idd);
 select * from t2 where col2 IN (select t1.col1 from t1);
-select * from t1 where id NOT IN (select t2.idd from t2);
+select * from t1 where id NOT IN (select max(t2.idd) from t2);
+select max(t2.idd) from t2;
+
 
 simple-sub-query: result file difference(`-` is yours and `+` is base)
  1. SELECT
@@ -204,7 +207,7 @@ SELECT * FROM SSQ_1 WHERE ID IN (SELECT SSQ_2.ID FROM SSQ_2);
 1 | 4 | 11.2
  2 | 2 | 12
  ID | COL1 | FEAT1
-SELECT * FROM SSQ_1 WHERE COL1 NOT IN (SELECT SSQ_2.COL2 FROM SSQ_2);
+SELECT * FROM t1 WHERE col1 NOT IN (SELECT t2.col2 FROM t2);
 +1 | 4 | 11.2
 +ID | COL1 | FEAT1
 

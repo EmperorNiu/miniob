@@ -426,6 +426,24 @@ aggregate_attr:
     | COUNT LBRACE count_attr RBRACE aggregate_list {
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 4);
     }
+    | MAX LBRACE ID DOT ID RBRACE aggregate_list {
+			RelAttr attr;
+			relation_attr_init(&attr, $3, $5);
+			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+    			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 1);
+    }
+    | MIN LBRACE ID DOT ID RBRACE aggregate_list {
+    			RelAttr attr;
+    			relation_attr_init(&attr, $3, $5);
+    			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+    			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 2);
+    }
+    | AVG LBRACE ID DOT ID RBRACE aggregate_list {
+        		RelAttr attr;
+        		relation_attr_init(&attr,$3, $5);
+        		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+    			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 3);
+    }
     ;
 
 aggregate_list:
@@ -450,6 +468,24 @@ aggregate_list:
     }
     | COMMA COUNT LBRACE count_attr RBRACE aggregate_list {
     			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 4);
+    }
+    | COMMA MAX LBRACE ID DOT ID RBRACE aggregate_list {
+            		RelAttr attr;
+            		relation_attr_init(&attr, $4, $6);
+            		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+    			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 1);
+    }
+    | COMMA MIN LBRACE ID DOT ID RBRACE aggregate_list {
+                	RelAttr attr;
+                	relation_attr_init(&attr, $4, $6);
+                	selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+    			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 2);
+    }
+    | COMMA AVG LBRACE ID DOT ID RBRACE aggregate_list {
+                	RelAttr attr;
+                	relation_attr_init(&attr, $4, $6);
+                	selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+    			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 3);
     }
     ;
 count_attr:

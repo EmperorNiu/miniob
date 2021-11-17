@@ -219,7 +219,7 @@ void TupleSet::print(std::ostream &os) const {
   }
 
   schema_.print(os);
-
+  if (tuples_.front().size() == 0) return;
   for (const Tuple &item : tuples_) {
     const std::vector<std::shared_ptr<TupleValue>> &values = item.values();
     for (std::vector<std::shared_ptr<TupleValue>>::const_iterator iter = values.begin(), end = --values.end();
