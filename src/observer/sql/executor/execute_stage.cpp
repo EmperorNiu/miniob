@@ -403,26 +403,26 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
   for (size_t i = 0; i < selects.condition_num; i++) {
     Condition condition = selects.conditions[i];
     if (condition.sub_select == 1) {
-      // do sub select
-      TupleSet* sub_tupleSet = new TupleSet;
-      rc = do_sub_select(db, *sql->sstr.selection.subSelect,session_event,*sub_tupleSet);
-      if (rc != RC::SUCCESS){
-        return rc;
-      }
-      // modify the condition
-      if (condition.comp == EQUAL_IN || condition.comp == NOT_IN) {
-        rc = in_condition_transform(*sub_tupleSet, condition,in_conditions,*sql->sstr.selection.subSelect);
-        if (rc != RC::SUCCESS){
-          return rc;
-        }
-      }
-      else {
-        rc = condition_transform(*sub_tupleSet,condition);
-        if (rc != RC::SUCCESS){
-          return rc;
-        }
-        selects.conditions[i] = condition;
-      }
+//      // do sub select
+//      TupleSet* sub_tupleSet = new TupleSet;
+//      rc = do_sub_select(db, *sql->sstr.selection.subSelect,session_event,*sub_tupleSet);
+//      if (rc != RC::SUCCESS){
+//        return rc;
+//      }
+//      // modify the condition
+//      if (condition.comp == EQUAL_IN || condition.comp == NOT_IN) {
+//        rc = in_condition_transform(*sub_tupleSet, condition,in_conditions,*sql->sstr.selection.subSelect);
+//        if (rc != RC::SUCCESS){
+//          return rc;
+//        }
+//      }
+//      else {
+//        rc = condition_transform(*sub_tupleSet,condition);
+//        if (rc != RC::SUCCESS){
+//          return rc;
+//        }
+//        selects.conditions[i] = condition;
+//      }
     }
     if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
         strcmp(condition.left_attr.relation_name,condition.right_attr.relation_name) != 0) {
