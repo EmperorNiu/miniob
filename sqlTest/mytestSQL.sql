@@ -184,6 +184,8 @@ create table t2(idd int, col2 int, feat2 float);
 insert into t1 values(1, 4, 11.2),(2, 2, 12.0),(3, 3, 13.5);
 insert into t1 values(4, 61, 16.5),(5, 16, 19.2)
 insert into t1 values(6, 45, 11.3),(7, 78, 21.1),(8, 24, 25.2),(9, 61, 16.5),(10, 16, 19.2);
+
+insert into t2 values(1, 2, 13.0),(2, 7, 10.5),(5, 3, 12.6);
 insert into t2 values(1, 17, 14.1),(2, 16, 25.6),(3, 24, 23.4),(4, 11, 29.6);
 select * from t1 where t1.col1 >(select avg(col2) from t2);
 select avg(height) from t2;

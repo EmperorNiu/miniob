@@ -256,7 +256,7 @@ RC ExecuteStage::do_sub_select(const char *db, Selects selects, SessionEvent *se
     end_trx_if_need(session, trx, false);
     return RC::SQL_SYNTAX;
   }
-  std::stringstream ss;
+//  std::stringstream ss;
   std::vector<TupleSet> tuple_sets;
   for (SelectExeNode *&node: select_nodes) {
     TupleSet tuple_set;
@@ -286,7 +286,7 @@ RC ExecuteStage::do_sub_select(const char *db, Selects selects, SessionEvent *se
     sub_tupleSet = std::move(tuple_sets.front());
   }
 //  sub_tupleSet.print(ss);
-  session_event->set_response(ss.str());
+//  session_event->set_response(ss.str());
   return rc;
 }
 
@@ -409,27 +409,27 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
   for (size_t i = 0; i < selects.condition_num; i++) {
     Condition condition = selects.conditions[i];
     if (condition.sub_select == 1) {
-//      // do sub select
+      // do sub select
       TupleSet* sub_tupleSet = new TupleSet;
       rc = do_sub_select(db, *sql->sstr.selection.subSelect,session_event,*sub_tupleSet);
-      sub_tupleSet->print(ss);
-//      if (rc != RC::SUCCESS){
-//        return rc;
-//      }
-//      // modify the condition
-//      if (condition.comp == EQUAL_IN || condition.comp == NOT_IN) {
-//        rc = in_condition_transform(*sub_tupleSet, condition,in_conditions,*sql->sstr.selection.subSelect);
-//        if (rc != RC::SUCCESS){
-//          return rc;
-//        }
-//      }
-//      else {
-//        rc = condition_transform(*sub_tupleSet,condition);
-//        if (rc != RC::SUCCESS){
-//          return rc;
-//        }
-//        selects.conditions[i] = condition;
-//      }
+//      sub_tupleSet->print(ss);
+      if (rc != RC::SUCCESS){
+        return rc;
+      }
+      // modify the condition
+      if (condition.comp == EQUAL_IN || condition.comp == NOT_IN) {
+        rc = in_condition_transform(*sub_tupleSet, condition,in_conditions,*sql->sstr.selection.subSelect);
+        if (rc != RC::SUCCESS){
+          return rc;
+        }
+      }
+      else {
+        rc = condition_transform(*sub_tupleSet,condition);
+        if (rc != RC::SUCCESS){
+          return rc;
+        }
+        selects.conditions[i] = condition;
+      }
     }
     if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
         strcmp(condition.left_attr.relation_name,condition.right_attr.relation_name) != 0) {
