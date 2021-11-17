@@ -256,6 +256,7 @@ RC ExecuteStage::do_sub_select(const char *db, Selects selects, SessionEvent *se
     end_trx_if_need(session, trx, false);
     return RC::SQL_SYNTAX;
   }
+  std::stringstream ss;
   std::vector<TupleSet> tuple_sets;
   for (SelectExeNode *&node: select_nodes) {
     TupleSet tuple_set;
@@ -279,9 +280,13 @@ RC ExecuteStage::do_sub_select(const char *db, Selects selects, SessionEvent *se
         }
       }
       tuple_sets.front().sort(selects.orderOps, selects.orderOp_num);
+
     }
+
     sub_tupleSet = std::move(tuple_sets.front());
   }
+//  sub_tupleSet.print(ss);
+  session_event->set_response(ss.str());
   return rc;
 }
 
@@ -379,6 +384,7 @@ RC ExecuteStage::in_condition_transform(TupleSet& tupleSet, Condition condition,
 RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_event) {
 
   RC rc = RC::SUCCESS;
+  std::stringstream ss;
   Session *session = session_event->get_client()->session;
   Trx *trx = session->current_trx();
   Selects &selects = sql->sstr.selection;
@@ -404,8 +410,9 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
     Condition condition = selects.conditions[i];
     if (condition.sub_select == 1) {
 //      // do sub select
-//      TupleSet* sub_tupleSet = new TupleSet;
-//      rc = do_sub_select(db, *sql->sstr.selection.subSelect,session_event,*sub_tupleSet);
+      TupleSet* sub_tupleSet = new TupleSet;
+      rc = do_sub_select(db, *sql->sstr.selection.subSelect,session_event,*sub_tupleSet);
+      sub_tupleSet->print(ss);
 //      if (rc != RC::SUCCESS){
 //        return rc;
 //      }
@@ -468,7 +475,7 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
     }
   }
 
-  std::stringstream ss;
+
   if (tuple_sets.size() > 1) {
     // 本次查询了多张表，需要做join操作
     // 循环 join

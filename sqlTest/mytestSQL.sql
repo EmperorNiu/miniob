@@ -181,7 +181,8 @@ select avg(height) from person group by id;
 -- sub select
 create table t1(id int, col1 int, feat1 float);
 create table t2(idd int, col2 int, feat2 float);
-insert into t1 values(1, 45, 11.3),(2, 78, 21.1),(3, 24, 25.2),(4, 61, 16.5),(5, 16, 19.2);
+insert into t1 values(1, 4, 11.2),(2, 2, 12.0),(3, 3, 13.5);
+insert into t1 values(4, 61, 16.5),(5, 16, 19.2)
 insert into t1 values(6, 45, 11.3),(7, 78, 21.1),(8, 24, 25.2),(9, 61, 16.5),(10, 16, 19.2);
 insert into t2 values(1, 17, 14.1),(2, 16, 25.6),(3, 24, 23.4),(4, 11, 29.6);
 select * from t1 where t1.col1 >(select avg(col2) from t2);
