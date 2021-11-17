@@ -23,12 +23,25 @@ RC BplusTreeIndex::create(const char *file_name, const IndexMeta &index_meta, co
   if (inited_) {
     return RC::RECORD_OPENNED;
   }
-
   RC rc = Index::init(index_meta, field_meta);
   if (rc != RC::SUCCESS) {
     return rc;
   }
+  rc = index_handler_.create(file_name, field_meta.type(), field_meta.len());
+  if (RC::SUCCESS == rc) {
+    inited_ = true;
+  }
+  return rc;
+}
 
+RC BplusTreeIndex::create(const char *file_name, const IndexMeta &index_meta, std::vector<FieldMeta> &field_metas) {
+  if (inited_) {
+    return RC::RECORD_OPENNED;
+  }
+  RC rc = Index::init(index_meta, field_metas);
+  if (rc != RC::SUCCESS) {
+    return rc;
+  }
   rc = index_handler_.create(file_name, field_meta.type(), field_meta.len());
   if (RC::SUCCESS == rc) {
     inited_ = true;

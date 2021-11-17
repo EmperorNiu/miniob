@@ -17,6 +17,7 @@ See the Mulan PSL v2 for more details. */
 #include "record_manager.h"
 #include "storage/default/disk_buffer_pool.h"
 #include "sql/parser/parse_defs.h"
+#include "field_meta.h"
 
 struct IndexFileHeader {
   int attr_length;
@@ -57,6 +58,7 @@ public:
    * attrType描述被索引属性的类型，attrLength描述被索引属性的长度
    */
   RC create(const char *file_name, AttrType attr_type, int attr_length);
+  RC create(const char *file_name, std::vector<FieldMeta *> field_metas);
 
   /**
    * 打开名为fileName的索引文件。
