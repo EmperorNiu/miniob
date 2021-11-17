@@ -105,6 +105,21 @@ RC Table::create(const char *path, const char *name, const char *base_dir, int a
         return rc;
     }
 
+    std::string text_file = std::string(base_dir) + "/" + name + TABLE_TEXT_SUFFIX;
+    fd = ::open(text_file.c_str(), O_RDWR | O_CREAT | O_EXCL, S_IREAD | S_IWRITE);
+    if (fd < 0) {
+        LOG_ERROR("Failed to create %s, due to %s.", text_file.c_str(), strerror(errno));
+        return RC::SCHEMA_DB_EXIST;
+    }
+    close(fd);
+    if ((fd = ::open(text_file.c_str(), O_RDWR)) >= 0) {
+        long_fd_=fd;
+    } else {
+        LOG_ERROR("Failed to open file %s, because %s.", text_file.c_str(), strerror(errno));
+        return RC::IOERR_ACCESS;
+    }
+
+
     rc = init_record_handler(base_dir);
 
     base_dir_ = base_dir;
@@ -285,7 +300,7 @@ const TableMeta &Table::table_meta() const {
     return table_meta_;
 }
 
-RC Table::make_record(int value_num, const Value *values, char *&record_out) {
+RC Table:: make_record(int value_num, const Value *values, char *&record_out) {
     // 检查字段类型是否一致
     if (value_num + table_meta_.sys_field_num() != table_meta_.field_num()) {
         return RC::SCHEMA_FIELD_MISSING;
@@ -314,6 +329,15 @@ RC Table::make_record(int value_num, const Value *values, char *&record_out) {
     for (int i = 0; i < value_num; i++) {
         const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
         const Value &value = values[i];
+        if(field->is_text()){
+            long file_len = ::lseek(long_fd_,0L,SEEK_END);
+            if (write(long_fd_,value.data, 4096) != 4096) {
+                LOG_ERROR("Failed to write header to file, due to %s.", strerror(errno));
+                return RC::IOERR_WRITE;
+            }
+            memcpy(record + field->offset(), &file_len, field->len());
+            continue;
+        }
         memcpy(record + field->offset(), value.data, field->len());
     }
 
@@ -326,7 +350,6 @@ RC Table::change_record(const char *attribute, const Value *v, Record *record) {
     int null_bitmap = *(int *)(record->data+4);
     for (int i = 0; i < table_meta_.field_num() - normal_field_start_index; i++) {
         const FieldMeta *field = table_meta_.field(i + normal_field_start_index);
-
         if (strcmp(field->name(), attribute) == 0) {
 //      memcpy(record->data + field->offset(), v->data, field->len());
             if (field->type() == INTS && v->type == FLOATS) {
@@ -349,6 +372,7 @@ RC Table::change_record(const char *attribute, const Value *v, Record *record) {
 
 RC Table::init_record_handler(const char *base_dir) {
     std::string data_file = std::string(base_dir) + "/" + table_meta_.name() + TABLE_DATA_SUFFIX;
+    std::string text_file = std::string(base_dir) + "/" + table_meta_.name() + TABLE_TEXT_SUFFIX;
     if (nullptr == data_buffer_pool_) {
         data_buffer_pool_ = theGlobalDiskBufferPool();
     }
@@ -369,6 +393,14 @@ RC Table::init_record_handler(const char *base_dir) {
     }
 
     file_id_ = data_buffer_pool_file_id;
+    int fd;
+    if ((fd = ::open(text_file.c_str(), O_RDWR)) >= 0) {
+        long_fd_ = fd;
+    } else {
+        LOG_ERROR("Failed to open file %s, because %s.", text_file.c_str(), strerror(errno));
+        return RC::IOERR_ACCESS;
+    }
+
     return rc;
 }
 
@@ -947,4 +979,8 @@ RC Table::sync() {
     }
     LOG_INFO("Sync table over. table=%s", name());
     return rc;
+}
+
+const int Table::get_long_fd() const {
+    return long_fd_;
 }

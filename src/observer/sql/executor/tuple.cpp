@@ -338,6 +338,7 @@ void TupleSet::sort(OrderOp orderOps[],size_t orderOp_num) {
     });
 }
 
+
 ////////////////////////////////////////////////////;/////////////////////////
 //ConditionRecordConverter::ConditionRecordConverter(Table *table, std::vector<DefaultConditionFilter*> &condition_set,char *field_name) :
 //        table_(table), condition_set_(condition_set), field_name_(field_name){
@@ -414,8 +415,18 @@ void TupleRecordConverter::add_record(const char *record) {
       }
         break;
       case CHARS: {
-        const char *s = record + field_meta->offset();  // 现在当做Cstring来处理
-        tuple.add(s, strlen(s));
+          if(!field_meta->is_text()){
+              const char *s;
+              s = record + field_meta->offset();
+          }
+          else{
+              char *s = new char[4096]();
+              int fd = table_->get_long_fd();
+              long pos = *(long*)(record+field_meta->offset());
+              lseek(fd,pos,SEEK_SET);
+              read(fd,s,4096);
+              tuple.add(s, strlen(s));
+          }
       }
       break;
     case DATES:{

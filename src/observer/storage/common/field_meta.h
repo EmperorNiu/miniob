@@ -29,7 +29,7 @@ public:
   FieldMeta();
   ~FieldMeta() = default;
 
-  RC init(const char *name, AttrType attr_type, int attr_offset, int attr_len, bool visible, bool nullable, int index_num);
+  RC init(const char *name, AttrType attr_type, int attr_offset, int attr_len, bool visible, bool nullable, int index_num, bool is_text_);
 
 public:
   const char *name() const;
@@ -39,6 +39,7 @@ public:
   bool        visible() const;
   bool        nullable() const;
   int         index_num() const;
+  bool        is_text()    const;
 
 public:
   void desc(std::ostream &os) const;
@@ -54,5 +55,6 @@ private:
   bool         visible_;
   bool         nullable_;
   int          index_num_;
+  bool         is_text_;
 };
 #endif // __OBSERVER_STORAGE_COMMON_FIELD_META_H__
