@@ -418,6 +418,7 @@ void TupleRecordConverter::add_record(const char *record) {
           if(!field_meta->is_text()){
               const char *s;
               s = record + field_meta->offset();
+              tuple.add(s, strlen(s));
           }
           else{
               char *s = new char[4096]();
