@@ -184,6 +184,7 @@ insert into t1 values(1, 4, 11.2),(2, 2, 12.0),(3, 3, 13.5);
 insert into t2 values(1, 2, 13.0),(2, 7, 10.5),(5, 3, 12.6);
 insert into t3 values(1, 2, 13.0),(2, 7, 10.5),(5, 3, 12.6);
 select * from t1 inner join t2 on t1.id=t2.idd;
+select t2.feat2 from t1 inner join t2 on t1.id=t2.idd;
 select * from t1 inner join t2 on t1.id=t2.idd inner join t3 on t1.id=t3.id;
 select * from t1 inner join t2 on t1.id=t2.idd and t2.col2>5 where t1.id >=2;
 

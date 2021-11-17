@@ -170,7 +170,9 @@ void TupleSchema::print(std::ostream &os, std::vector<int> is_show) const {
     }
   }
   if (is_show[i] == 1) {
-    os << " | ";
+    if (i != first) {
+      os << " | ";
+    }
     if (table_names.size() > 1) {
       os << fields_.back().table_name() << ".";
     }
@@ -283,7 +285,9 @@ void TupleSet::print(std::ostream &os, const Selects selects) const {
       }
     }
     if (is_show[i] == 1) {
-      os << " | ";
+      if (i != first) {
+        os << " | ";
+      }
       values.back()->to_string(os);
     }
     os << std::endl;
