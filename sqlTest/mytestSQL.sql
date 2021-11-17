@@ -57,8 +57,6 @@ update a set id=4 where age=30.1;
 update j1 set age=30 where id=3;
 update j1 set age="31" where id=2;
 
-
-
 show tables;
 create table person(id int, height float, name char, birthday date);
 create index id_index on person(id);
@@ -177,6 +175,17 @@ insert into person values(2, 1.61, 't4', '1999-06-19');
 insert into person values(2, 1.21, 't4', '1999-06-27');
 insert into person values(3, 1.83, 't4', '2001-08-11');
 select avg(height) from person group by id;
+
+-- inner join
+create table t1(id int, col1 int, feat1 float);
+create table t2(id int, col2 int, feat2 float);
+create table t3(id int, col2 int, feat2 float);
+insert into t1 values(1, 4, 11.2),(2, 2, 12.0),(3, 3, 13.5);
+insert into t2 values(1, 2, 13.0),(2, 7, 10.5),(5, 3, 12.6);
+insert into t3 values(1, 2, 13.0),(2, 7, 10.5),(5, 3, 12.6);
+select * from t1 inner join t2 on t1.id=t2.idd;
+select * from t1 inner join t2 on t1.id=t2.idd inner join t3 on t1.id=t3.id;
+select * from t1 inner join t2 on t1.id=t2.idd and t2.col2>5 where t1.id >=2;
 
 -- sub select
 create table t1(id int, col1 int, feat1 float);

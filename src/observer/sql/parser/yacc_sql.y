@@ -408,7 +408,7 @@ select:				/*  select 语句的语法解析树*/
 		};
 join:
     /* empty */
-    | INNERJOIN ID ON condition condition_list {
+    | INNERJOIN ID ON condition condition_list join{
     	selects_append_relation(&CONTEXT->ssql->sstr.selection, $2);
     }
 aggregate_attr:

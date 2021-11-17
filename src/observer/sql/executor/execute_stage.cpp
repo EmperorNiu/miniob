@@ -750,6 +750,17 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
       }
       condition_filters.push_back(condition_filter);
     }
+    if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
+        strcmp(condition.left_attr.relation_name,condition.right_attr.relation_name) != 0) {
+      if (strcmp(condition.left_attr.relation_name,table_name) == 0){
+        const FieldMeta *field_meta = table->table_meta().field(condition.left_attr.attribute_name);
+        if (nullptr == field_meta) return RC::SCHEMA_FIELD_MISSING;
+      }
+      if (strcmp(condition.right_attr.relation_name,table_name) == 0){
+        const FieldMeta *field_meta = table->table_meta().field(condition.right_attr.attribute_name);
+        if (nullptr == field_meta) return RC::SCHEMA_FIELD_MISSING;
+      }
+    }
   }
   for (int i = 0; i < in_conditions.size(); ++i) {
     const Condition &condition = in_conditions[i];
