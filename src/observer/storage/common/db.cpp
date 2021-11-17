@@ -87,9 +87,12 @@ RC Db::drop_table(const char *table_name) {
   }
   std::string data_file_path = table_data_file(path_.c_str(), table_name);
   std::string table_file_path = table_meta_file(path_.c_str(), table_name);
+    std::string text_file_path = table_text_file(path_.c_str(), table_name);
+
   // 删除data文件和table文件
   std::remove(data_file_path.c_str());
   std::remove(table_file_path.c_str());
+  std::remove(text_file_path.c_str());
   // 删除 opened_tables_ 中的对应内容
   table = opened_tables_[table_name];
   delete table;
