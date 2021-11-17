@@ -140,10 +140,15 @@ RC BplusTreeHandler::create(const char *file_name, std::vector<const FieldMeta *
     LOG_ERROR("Failed to get page num. file name=%s, rc=%d:%s", file_name, rc, strrc(rc));
     return rc;
   }
-  IndexFileHeader *file_header = (IndexFileHeader *) pdata;
-  file_header->attr_length = attr_length;
-  file_header->key_length = attr_length + sizeof(RID);
-  file_header->attr_type = attr_type;
+  int key_length = 0;
+  IndexFileHeader2 *file_header = (IndexFileHeader2 *) pdata;
+  file_header->attr_num = 0;
+  for (int i = 0; i < field_metas.size(); ++i) {
+    file_header->attr_length[file_header->attr_num] = field_metas[i]->len();
+    key_length += field_metas[i]->len();
+    file_header->attr_type[file_header->attr_num] = field_metas[i]->type();
+  }
+  file_header->key_length = key_length + sizeof(RID);
   file_header->node_num = 1;
   file_header->order =
           ((int) BP_PAGE_DATA_SIZE - sizeof(IndexFileHeader) - sizeof(IndexNode)) / (attr_length + 2 * sizeof(RID));

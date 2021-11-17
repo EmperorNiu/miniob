@@ -28,6 +28,17 @@ struct IndexFileHeader {
   int order;
 };
 
+struct IndexFileHeader2 {
+  int attr_num;
+  int attr_length[MAX_NUM];
+  int key_length;
+  AttrType attr_type[MAX_NUM];
+  PageNum root_page; // 初始时，root_page一定是1
+  int node_num;
+  int order;
+};
+
+
 struct IndexNode {
   int is_leaf;
   int key_num;
