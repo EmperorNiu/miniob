@@ -51,7 +51,6 @@ RC DiskBufferPool::create_file(const char *file_name)
     LOG_ERROR("Failed to open for readwrite %s, due to %s.", file_name, strerror(errno));
     return RC::IOERR_ACCESS;
   }
-
   Page page;
   memset(&page, 0, sizeof(Page));
 
@@ -63,16 +62,17 @@ RC DiskBufferPool::create_file(const char *file_name)
   char *bitmap = page.data + (int)BP_FILE_SUB_HDR_SIZE;
   bitmap[0] |= 0x01;
   if (lseek(fd, 0, SEEK_SET) == -1) {
-    LOG_ERROR("Failed to seek file %s to position 0, due to %s .", file_name, strerror(errno));
-    close(fd);
-    return RC::IOERR_SEEK;
+      LOG_ERROR("Failed to seek file %s to position 0, due to %s .", file_name, strerror(errno));
+      close(fd);
+      return RC::IOERR_SEEK;
   }
 
   if (write(fd, (char *)&page, sizeof(Page)) != sizeof(Page)) {
-    LOG_ERROR("Failed to write header to file %s, due to %s.", file_name, strerror(errno));
-    close(fd);
-    return RC::IOERR_WRITE;
+      LOG_ERROR("Failed to write header to file %s, due to %s.", file_name, strerror(errno));
+      close(fd);
+      return RC::IOERR_WRITE;
   }
+
 
   close(fd);
   LOG_INFO("Successfully create %s.", file_name);

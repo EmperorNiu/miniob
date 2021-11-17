@@ -153,6 +153,10 @@ void attr_info_init(AttrInfo *attr_info, const char *name, AttrType type, size_t
     attr_info->type = type;
     attr_info->length = length;
     attr_info->nullable = nullable;
+    if(type==TEXTS){
+        attr_info->type=CHARS;
+        attr_info->length=4096;
+    }
 }
 void attr_info_destroy(AttrInfo *attr_info) {
     free(attr_info->name);
