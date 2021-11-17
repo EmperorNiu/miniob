@@ -98,6 +98,7 @@ private:
   Index *find_index(const char *index_name) const;
 
 private:
+  int                     long_fd_;
   std::string             base_dir_;
   TableMeta               table_meta_;
   DiskBufferPool *        data_buffer_pool_; /// 数据文件关联的buffer pool
