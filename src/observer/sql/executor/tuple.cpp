@@ -425,7 +425,7 @@ void TupleRecordConverter::add_record(const char *record) {
               long pos = *(long*)(record+field_meta->offset());
               lseek(fd,pos,SEEK_SET);
               read(fd,s,4096);
-              tuple.add(s, strlen(s));
+              tuple.add(s,4096);
           }
       }
       break;
