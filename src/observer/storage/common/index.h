@@ -59,13 +59,11 @@ public:
 
 protected:
   RC init(const IndexMeta &index_meta, const FieldMeta &field_meta);
-  RC init(const IndexMeta &index_meta, const std::vector<FieldMeta> &field_metas);
 
 protected:
   int         isUnique_;
   IndexMeta   index_meta_;
   FieldMeta   field_meta_;    /// 当前实现仅考虑一个字段的索引
-  std::vector<FieldMeta> field_metas_;
 };
 
 class IndexScanner {

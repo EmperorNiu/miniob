@@ -45,18 +45,6 @@ RC IndexMeta::init(const char *name, const FieldMeta &field, const int isUnique)
   return RC::SUCCESS;
 }
 
-RC IndexMeta::init(const char *name, std::vector<const FieldMeta*> &fields, const int isUnique) {
-  if (nullptr == name || common::is_blank(name)) {
-    return RC::INVALID_ARGUMENT;
-  }
-  name_ = name;
-  for(const auto & field : fields){
-    fields_.emplace_back(field->name());
-  }
-  isUnique_ = isUnique;
-  return RC::SUCCESS;
-}
-
 void IndexMeta::to_json(Json::Value &json_value) const {
   json_value[FIELD_NAME] = name_;
   json_value[FIELD_FIELD_NAME] = field_;
@@ -93,14 +81,6 @@ const char *IndexMeta::name() const {
 
 const char *IndexMeta::field() const {
   return field_.c_str();
-}
-
-const char *IndexMeta::field(int i) const {
-  return fields_[i].c_str();
-}
-
-std::vector<std::string> IndexMeta::get_fields() const{
-  return fields_;
 }
 
 const int IndexMeta::isUnique() const{
