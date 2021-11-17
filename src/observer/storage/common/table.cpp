@@ -359,7 +359,11 @@ RC Table::change_record(const char *attribute, const Value *v, Record *record) {
             } else if (field->type() == FLOATS && v->type == INTS) {
                 float t = (float) (*(int *) v->data);
                 memcpy(record->data + field->offset(), &t, field->len());
-            } else {
+            } else if (field->is_text()){
+                long pos = *(long*)(record->data+field->offset());
+                lseek(long_fd_,pos,SEEK_SET);
+                write(long_fd_,(char *)v->data,4096);
+            }else {
                 memcpy(record->data + field->offset(), v->data, field->len());
             }
             if (v->type==NULLS) null_bitmap = null_bitmap|(1<<i);

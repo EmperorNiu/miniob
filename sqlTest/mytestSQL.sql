@@ -187,6 +187,7 @@ insert into t1 values(6, 45, 11.3),(7, 78, 21.1),(8, 24, 25.2),(9, 61, 16.5),(10
 
 insert into t2 values(1, 2, 13.0),(2, 7, 10.5),(5, 3, 12.6);
 insert into t2 values(1, 17, 14.1),(2, 16, 25.6),(3, 24, 23.4),(4, 11, 29.6);
+
 select * from t1 where t1.col1 >(select avg(col2) from t2);
 select avg(height) from t2;
 select * from t1 where t1.height > 5.39;
@@ -206,7 +207,7 @@ select max(t2.idd) from t2;
 
 simple-sub-query: result file difference(`-` is yours and `+` is base)
  1. SELECT
-SELECT * FROM SSQ_1 WHERE ID IN (SELECT SSQ_2.ID FROM SSQ_2);
+SELECT * FROM t1 WHERE id IN (SELECT t2.idd FROM t2);
 1 | 4 | 11.2
  2 | 2 | 12
  ID | COL1 | FEAT1
@@ -262,6 +263,6 @@ insert into text_table values(1,"this is a long text"),(3,"this is also a long t
 select * from text_table where name < 'this';
 create index name_index on text_table(name);
 
-
+update text_table set name = 'wowowowowowowo' where id=1;
 
 
