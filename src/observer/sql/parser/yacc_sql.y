@@ -69,6 +69,7 @@ ParserContext *get_context(yyscan_t scanner)
 //标识tokens
 %token  SEMICOLON
 	IS
+	TEXT_T
 	ISNOT
 	ANULL
 	NULLABLE
@@ -304,6 +305,7 @@ type:
        | STRING_T { $$=CHARS; }
        | FLOAT_T { $$=FLOATS; }
        | DATE_T {$$=DATES; }
+       | TEXT_T {$$=TEXTS; }
        ;
 ID_get:
 	ID 

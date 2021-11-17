@@ -235,4 +235,9 @@ insert into t2 values(1,"aaa","2020-1-19"),(2,"bbb","1987-4-5"),(3,null,null),(4
 select * from t1,t2 where t1.birthday>t2.birthday;
 
 
+create table text_table(id int,name text);
+insert into text_table values(1,"this is a long text");
+
+
+
 

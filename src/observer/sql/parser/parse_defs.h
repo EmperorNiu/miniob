@@ -63,7 +63,7 @@ typedef struct {
 } OrderOp;
 
 //属性值类型
-typedef enum { UNDEFINED, CHARS, INTS, FLOATS,DATES,NULLS} AttrType;
+typedef enum { UNDEFINED, CHARS, INTS, FLOATS,DATES,NULLS,TEXTS} AttrType;
 
 //属性值
 typedef struct _Value {

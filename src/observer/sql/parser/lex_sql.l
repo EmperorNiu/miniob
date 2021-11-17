@@ -39,6 +39,7 @@ QUOTE            [\'\"]
 [\-]?{DIGIT}+{DOT}{DIGIT}+				       yylval->floats=(float)(atof(yytext)); RETURN_TOKEN(FLOAT);
 
 ";"                 	 				           RETURN_TOKEN(SEMICOLON);
+[Tt][Ee][Xx][Tt]                                RETURN_TOKEN(TEXT_T);
 {DOT}                 					         RETURN_TOKEN(DOT);
 "*"                   					         RETURN_TOKEN(STAR);
 [Nn][Uu][Ll][Ll][Aa][Bb][Ll][Ee]                RETURN_TOKEN(NULLABLE);
