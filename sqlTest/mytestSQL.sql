@@ -208,6 +208,22 @@ SELECT * FROM SSQ_1 WHERE COL1 NOT IN (SELECT SSQ_2.COL2 FROM SSQ_2);
 +1 | 4 | 11.2
 +ID | COL1 | FEAT1
 
+create table t1(a int, b int);
+create table t2(a int, b int);
+create table t3(a int, b int, c int);
+insert into t2 values(1,4),(2,4);
+insert into t1 values(1,2),(3,4);
+insert into t3 values(3,2,1),(1,2,3),(2,3,4),(3,4,5);
+select * from t1 where a in (select a from t2);
+select * from t1 where a not in (select a from t2);
+select a from t1 where b in (select b from t2);
+select * from t1 where b >= (select min(t2.b) from t2);
+select * from t1 where b = (select avg(t2.b) from t2);
+select * from t1 where b < (select max(t2.c) from t2 where 1=0);
+select * from t1 where t1.a>(select max(t2.a) from t2);
+select * from t1 where t1.b > (select avg(t2.b) from t2) and t1.b > 2;
+select * from t1 where id in (select max(t2.id) from t2 where t1.f > t2.f)
+
 -- null
 insert into person values(4, 1.71, 't5', '1999-06-17');
 insert into person values(5, 1.83, 't6', '2001-08-11');

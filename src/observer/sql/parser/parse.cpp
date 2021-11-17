@@ -169,6 +169,7 @@ void sub_selects_init(Selects *selects){
   selects->subSelect->relation_num = 0;
   selects->subSelect->attr_num = 0;
   selects->subSelect->condition_num = 0;
+  selects->aggregateOp_num = 0;
 }
 
 void selects_append_groupBy_attribute(Selects *selects, RelAttr *rel_attr) {

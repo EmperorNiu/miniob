@@ -301,6 +301,9 @@ RC ExecuteStage::condition_transform(TupleSet& tupleSet, Condition& condition) {
   }
   else if (!condition.right_is_attr && condition.left_is_attr) {
     Value value = {.type=tupleSet.get_schema().field(0).type()};
+    if (tupleSet.get(0).size() != 1) {
+      return RC::SCHEMA_FIELD_NAME_ILLEGAL;
+    }
     value.data = tupleSet.get(0).get(0).get_value();
     condition.right_value = value;
   }
