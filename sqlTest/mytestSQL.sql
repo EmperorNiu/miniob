@@ -181,14 +181,18 @@ select avg(height) from person group by id;
 -- sub select
 create table t1(id int, col1 int, feat1 float);
 create table t2(idd int, col2 int, feat2 float);
-insert into t1 values(1, 45, 11.3),(2, 78, 21.1),(3, 24, 25.2),(4, 61, 16.5),(5, 16, 19.2);
+insert into t1 values(1, 4, 11.2),(2, 2, 12.0),(3, 3, 13.5);
+insert into t1 values(4, 61, 16.5),(5, 16, 19.2)
+insert into t1 values(6, 45, 11.3),(7, 78, 21.1),(8, 24, 25.2),(9, 61, 16.5),(10, 16, 19.2);
+
+insert into t2 values(1, 2, 13.0),(2, 7, 10.5),(5, 3, 12.6);
 insert into t2 values(1, 17, 14.1),(2, 16, 25.6),(3, 24, 23.4),(4, 11, 29.6);
-select * from t1 where t1.height > (select avg(col2) from t2);
+select * from t1 where t1.col1 >(select avg(col2) from t2);
 select avg(height) from t2;
 select * from t1 where t1.height > 5.39;
 select * from t1 where t1.id < (select avg(idd) from t2);
 select * from t1 where id in (select t2.idd from t2);
-select * from t1 where col1 NOT IN (select col2 from t2);
+select id,col1 from t1 where col1 NOT IN (select col2 from t2);
 select * from t1 where col1 IN (select col2 from t2);
 select * from t1 where height > 2;
 create index col2_index on t2(col2);
@@ -196,7 +200,9 @@ create index col1_index on t1(col1);
 create index id_index on t1(id);
 create index id_index on t2(idd);
 select * from t2 where col2 IN (select t1.col1 from t1);
-select * from t1 where id NOT IN (select t2.idd from t2);
+select * from t1 where id NOT IN (select max(t2.idd) from t2);
+select max(t2.idd) from t2;
+
 
 simple-sub-query: result file difference(`-` is yours and `+` is base)
  1. SELECT
@@ -204,9 +210,25 @@ SELECT * FROM SSQ_1 WHERE ID IN (SELECT SSQ_2.ID FROM SSQ_2);
 1 | 4 | 11.2
  2 | 2 | 12
  ID | COL1 | FEAT1
-SELECT * FROM SSQ_1 WHERE COL1 NOT IN (SELECT SSQ_2.COL2 FROM SSQ_2);
+SELECT * FROM t1 WHERE col1 NOT IN (SELECT t2.col2 FROM t2);
 +1 | 4 | 11.2
 +ID | COL1 | FEAT1
+
+create table t1(a int, b int);
+create table t2(a int, b int);
+create table t3(a int, b int, c int);
+insert into t2 values(1,4),(2,4);
+insert into t1 values(1,2),(3,4);
+insert into t3 values(3,2,1),(1,2,3),(2,3,4),(3,4,5);
+select * from t1 where a in (select a from t2);
+select * from t1 where a not in (select a from t2);
+select a from t1 where b in (select b from t2);
+select * from t1 where b >= (select min(t2.b) from t2);
+select * from t1 where b = (select avg(t2.b) from t2);
+select * from t1 where b < (select max(t2.c) from t2 where 1=0);
+select * from t1 where t1.a>(select max(t2.a) from t2);
+select * from t1 where t1.b > (select avg(t2.b) from t2) and t1.b > 2;
+select * from t1 where id in (select max(t2.id) from t2 where t1.f > t2.f)
 
 -- null
 insert into person values(4, 1.71, 't5', '1999-06-17');
