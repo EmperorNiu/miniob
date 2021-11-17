@@ -89,6 +89,7 @@ ParserContext *get_context(yyscan_t scanner)
         ASC
         ORDERBY
         GROUPBY
+        INNERJOIN
         SHOW
         SYNC
         INSERT
@@ -389,7 +390,7 @@ update:			/*  update 语句的语法解析树*/
 		}
     ;
 select:				/*  select 语句的语法解析树*/
-    SELECT select_attr FROM ID rel_list where order group SEMICOLON
+    SELECT select_attr FROM ID rel_list join where order group SEMICOLON
 		{
 			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$4;
 			selects_append_relation(&CONTEXT->ssql->sstr.selection, $4);
@@ -405,7 +406,11 @@ select:				/*  select 语句的语法解析树*/
 			CONTEXT->select_length=0;
 			CONTEXT->value_length = 0;
 		};
-
+join:
+    /* empty */
+    | INNERJOIN ID ON condition condition_list {
+    	selects_append_relation(&CONTEXT->ssql->sstr.selection, $2);
+    }
 aggregate_attr:
     MAX LBRACE ID RBRACE aggregate_list {
 			RelAttr attr;

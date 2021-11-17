@@ -51,6 +51,7 @@ QUOTE            [\'\"]
 [Hh][Ee][Ll][Pp]                    	   RETURN_TOKEN(HELP);
 [Dd][Ee][Ss][Cc]                         RETURN_TOKEN(DESC);
 [Aa][Ss][Cc]                         RETURN_TOKEN(ASC);
+[Ii][Nn][Nn][Ee][Rr]{WHITE_SAPCE}[Jj][Oo][Ii][Nn]                 RETURN_TOKEN(INNERJOIN);
 [Oo][Rr][Dd][Ee][Rr]{WHITE_SAPCE}[Bb][Yy]                         RETURN_TOKEN(ORDERBY);
 [Cc][Rr][Ee][Aa][Tt][Ee]                 RETURN_TOKEN(CREATE);
 [Dd][Rr][Oo][Pp]                    	   RETURN_TOKEN(DROP);
