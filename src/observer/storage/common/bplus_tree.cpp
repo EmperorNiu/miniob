@@ -105,7 +105,8 @@ RC BplusTreeHandler::create(const char *file_name, AttrType attr_type, int attr_
     return SUCCESS;
 }
 
-RC BplusTreeHandler::create(const char *file_name, std::vector<FieldMeta *> field_metas) {
+// 多值索引create
+RC BplusTreeHandler::create(const char *file_name, std::vector<const FieldMeta *> field_metas) {
   BPPageHandle page_handle;
   IndexNode *root;
   char *pdata;

@@ -34,7 +34,8 @@ RC BplusTreeIndex::create(const char *file_name, const IndexMeta &index_meta, co
   return rc;
 }
 
-RC BplusTreeIndex::create(const char *file_name, const IndexMeta &index_meta, std::vector<FieldMeta> &field_metas) {
+// 多值索引create
+RC BplusTreeIndex::create(const char *file_name, const IndexMeta &index_meta, std::vector<const FieldMeta *> &field_metas) {
   if (inited_) {
     return RC::RECORD_OPENNED;
   }
@@ -42,7 +43,8 @@ RC BplusTreeIndex::create(const char *file_name, const IndexMeta &index_meta, st
   if (rc != RC::SUCCESS) {
     return rc;
   }
-  rc = index_handler_.create(file_name, field_meta.type(), field_meta.len());
+
+  rc = index_handler_.create(file_name, field_metas);
   if (RC::SUCCESS == rc) {
     inited_ = true;
   }
