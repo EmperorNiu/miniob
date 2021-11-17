@@ -491,16 +491,29 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
           Tuple t2 = tuple_sets[i + 1].get(k);
           int flag = 0;
           for (int m = 0; m < join_conditions.size(); ++m) {
-            int c1 = strcmp(join_conditions[m].left_attr.relation_name, table_names[i]);
+            int c1 = 1;
+            int c3 = 1;
+            int l_index = i;
+            for (int l = 0; l <=i; ++l) {
+              if(strcmp(join_conditions[m].left_attr.relation_name, table_names[l])==0){
+                c1 = 0;
+                l_index = l;
+              }
+              if(strcmp(join_conditions[m].right_attr.relation_name, table_names[l])==0){
+                c3 = 0;
+                l_index = l;
+              }
+            }
+//            int c1 = strcmp(join_conditions[m].left_attr.relation_name, table_names[i]);
             int c2 = strcmp(join_conditions[m].left_attr.relation_name, table_names[i + 1]);
-            int c3 = strcmp(join_conditions[m].right_attr.relation_name, table_names[i]);
+//            int c3 = strcmp(join_conditions[m].right_attr.relation_name, table_names[i]);
             int c4 = strcmp(join_conditions[m].right_attr.relation_name, table_names[i + 1]);
             char *l_name = join_conditions[m].left_attr.attribute_name;
             char *r_name = join_conditions[m].right_attr.attribute_name;
             CompOp compOp = join_conditions[m].comp;
             if (c1 == 0 && c4 == 0) {
               flag = 1;
-              int l_i = tuple_result_.get_schema().index_of_field(table_names[i],l_name);
+              int l_i = tuple_result_.get_schema().index_of_field(table_names[l_index],l_name);
               int r_i = tuple_sets[i + 1].get_schema().index_of_field(table_names[i+1],r_name);
               switch (compOp) {
                 case EQUAL_TO:
@@ -559,7 +572,7 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
             else if (c2 == 0 && c3 == 0) {
               flag = 1;
               int l_i = tuple_sets[i + 1].get_schema().index_of_field(table_names[i+1],l_name);
-              int r_i = tuple_result_.get_schema().index_of_field(table_names[i],r_name);
+              int r_i = tuple_result_.get_schema().index_of_field(table_names[l_index],r_name);
               switch (compOp) {
                 case EQUAL_TO:
                   if(!t2.get(l_i).compare(t1.get(r_i))){

@@ -182,11 +182,40 @@ create table t2(id int, col2 int, feat2 float);
 create table t3(id int, col2 int, feat2 float);
 insert into t1 values(1, 4, 11.2),(2, 2, 12.0),(3, 3, 13.5);
 insert into t2 values(1, 2, 13.0),(2, 7, 10.5),(5, 3, 12.6);
-insert into t3 values(1, 2, 13.0),(2, 7, 10.5),(5, 3, 12.6);
+insert into t3 values(1, 2, 13.0),(6, 7, 10.5),(5, 3, 12.6);
 select * from t1 inner join t2 on t1.id=t2.idd;
 select t2.feat2 from t1 inner join t2 on t1.id=t2.idd;
 select * from t1 inner join t2 on t1.id=t2.idd inner join t3 on t1.id=t3.id;
+select * from t1,t2,t3 where t1.id=t2.idd and t1.id=t3.id;
 select * from t1 inner join t2 on t1.id=t2.idd and t2.col2>5 where t1.id >=2;
+
+
+join-tables: result file difference(`-` is yours and `+` is base)
+SELECT JOIN_TABLE_1.NAME FROM JOIN_TABLE_1 INNER JOIN JOIN_TABLE_2 ON JOIN_TABLE_1.ID=JOIN_TABLE_2.ID;
+A
+B
+ JOIN_TABLE_1.NAME
+SELECT JOIN_TABLE_2.NUM FROM JOIN_TABLE_1 INNER JOIN JOIN_TABLE_2 ON JOIN_TABLE_1.ID=JOIN_TABLE_2.ID;
+15
+ 2
+ JOIN_TABLE_2.NUM
+SELECT * FROM JOIN_TABLE_1 INNER JOIN JOIN_TABLE_2 ON JOIN_TABLE_1.ID=JOIN_TABLE_2.ID INNER JOIN JOIN_TABLE_3 ON JOIN_TABLE_1.ID=JOIN_TABLE_3.ID;
+1 | A | 1 | 2 | 1 | 120
+-1 | A | 1 | 2 | 3 | 800
+-2 | B | 2 | 15 | 1 | 120
+-2 | B | 2 | 15 | 3 | 800
+ JOIN_TABLE_1.ID | JOIN_TABLE_1.NAME | JOIN_TABLE_2.ID | JOIN_TABLE_2.NUM | JOIN_TABLE_3.ID | JOIN_TABLE_3.NUM2
+SELECT * FROM JOIN_TABLE_1 INNER JOIN JOIN_TABLE_2 ON JOIN_TABLE_1.ID=JOIN_TABLE_2.ID AND JOIN_TABLE_2.NUM>13 WHERE JOIN_TABLE_1.NAME='B';
+2 | B | 2 | 15
+ JOIN_TABLE_1.ID | JOIN_TABLE_1.NAME | JOIN_TABLE_2.ID | JOIN_TABLE_2.NUM
+SELECT * FROM JOIN_TABLE_1 INNER JOIN JOIN_TABLE_2 ON JOIN_TABLE_1.ID=JOIN_TABLE_2.ID AND JOIN_TABLE_2.NUM>13 WHERE JOIN_TABLE_1.NAME='A';
+JOIN_TABLE_1.ID | JOIN_TABLE_1.NAME | JOIN_TABLE_2.ID | JOIN_TABLE_2.NUM
+SELECT * FROM JOIN_TABLE_1 INNER JOIN JOIN_TABLE_2 ON JOIN_TABLE_1.ID=JOIN_TABLE_2.ID AND JOIN_TABLE_2.NUM>23 WHERE JOIN_TABLE_1.NAME='B';
+JOIN_TABLE_1.ID | JOIN_TABLE_1.NAME | JOIN_TABLE_2.ID | JOIN_TABLE_2.NUM
+
+
+
+
 
 -- sub select
 create table t1(id int, col1 int, feat1 float);
