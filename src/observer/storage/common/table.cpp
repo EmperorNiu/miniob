@@ -15,7 +15,7 @@ See the Mulan PSL v2 for more details. */
 #include <limits.h>
 #include <string.h>
 #include <algorithm>
-
+//#include <vector>
 #include "storage/common/table.h"
 #include "storage/common/table_meta.h"
 #include "common/log/log.h"
@@ -150,17 +150,30 @@ RC Table::open(const char *meta_file, const char *base_dir) {
     const int index_num = table_meta_.index_num();
     for (int i = 0; i < index_num; i++) {
         const IndexMeta *index_meta = table_meta_.index(i);
-        const FieldMeta *field_meta = table_meta_.field(index_meta->field());
-        if (field_meta == nullptr) {
-            LOG_PANIC("Found invalid index meta info which has a non-exists field. table=%s, index=%s, field=%s",
-                      name(), index_meta->name(), index_meta->field());
-            return RC::GENERIC_ERROR;
+        std::vector<std::string> field_names = index_meta->get_fields();
+        // 获取索引元信息
+        std::vector<const FieldMeta *> field_metas;
+        for(int i = 0; i< field_names.size(); i++){
+          const FieldMeta *field_meta = table_meta_.field(field_names[i].c_str());
+          if(!field_meta){
+            return RC::SCHEMA_FIELD_MISSING;
+          }
+          field_metas.push_back(field_meta);
         }
+        if (field_metas.size() == 0){
+          return RC::GENERIC_ERROR;
+        }
+//        const FieldMeta *field_meta = table_meta_.field(index_meta->field());
+//        if (field_meta == nullptr) {
+//            LOG_PANIC("Found invalid index meta info which has a non-exists field. table=%s, index=%s, field=%s",
+//                      name(), index_meta->name(), index_meta->field());
+//            return RC::GENERIC_ERROR;
+//        }
 
         BplusTreeIndex *index = new BplusTreeIndex();
         index->setUnique(index_meta->isUnique());
         std::string index_file = index_data_file(base_dir, name(), index_meta->name());
-        rc = index->open(index_file.c_str(), *index_meta, *field_meta);
+        rc = index->open(index_file.c_str(), *index_meta, field_metas);
         if (rc != RC::SUCCESS) {
             delete index;
             LOG_ERROR("Failed to open index. table=%s, index=%s, file=%s, rc=%d:%s",
@@ -615,7 +628,7 @@ RC Table::create_index(Trx *trx, const char *index_name, char *attribute_names[]
   // 创建索引相关数据
   BplusTreeIndex *index = new BplusTreeIndex();
   std::string index_file = index_data_file(base_dir_.c_str(), name(), index_name);
-  rc = index->create(index_file.c_str(), new_index_meta, *field_meta);
+  rc = index->create(index_file.c_str(), new_index_meta, field_metas);
   index->setUnique(isUnique);
   if (rc != RC::SUCCESS) {
       delete index;

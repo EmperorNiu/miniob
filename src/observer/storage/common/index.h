@@ -59,7 +59,7 @@ public:
 
 protected:
   RC init(const IndexMeta &index_meta, const FieldMeta &field_meta);
-  RC init(const IndexMeta &index_meta, const std::vector<FieldMeta> &field_metas);
+  RC init(const IndexMeta &index_meta, const std::vector<const FieldMeta*> &field_metas);
 
 protected:
   int         isUnique_;

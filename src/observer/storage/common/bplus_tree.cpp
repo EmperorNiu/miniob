@@ -36,76 +36,77 @@ RC BplusTreeHandler::sync() {
     return disk_buffer_pool_->flush_all_pages(file_id_);
 }
 
-RC BplusTreeHandler::create(const char *file_name, AttrType attr_type, int attr_length) {
-    BPPageHandle page_handle;
-    IndexNode *root;
-    char *pdata;
-    RC rc;
-    DiskBufferPool *disk_buffer_pool = theGlobalDiskBufferPool();
-    rc = disk_buffer_pool->create_file(file_name);
-    if (rc != SUCCESS) {
-        return rc;
-    }
+//RC BplusTreeHandler::create(const char *file_name, AttrType attr_type, int attr_length) {
+//    BPPageHandle page_handle;
+//    IndexNode *root;
+//    char *pdata;
+//    RC rc;
+//    DiskBufferPool *disk_buffer_pool = theGlobalDiskBufferPool();
+//    rc = disk_buffer_pool->create_file(file_name);
+//    if (rc != SUCCESS) {
+//        return rc;
+//    }
+//
+//    int file_id;
+//    rc = disk_buffer_pool->open_file(file_name, &file_id);
+//    if (rc != SUCCESS) {
+//        LOG_ERROR("Failed to open file. file name=%s, rc=%d:%s", file_name, rc, strrc(rc));
+//        return rc;
+//    }
+//    rc = disk_buffer_pool->allocate_page(file_id, &page_handle);
+//    if (rc != SUCCESS) {
+//        LOG_ERROR("Failed to allocate page. file name=%s, rc=%d:%s", file_name, rc, strrc(rc));
+//        return rc;
+//    }
+//    rc = disk_buffer_pool->get_data(&page_handle, &pdata);
+//    if (rc != SUCCESS) {
+//        LOG_ERROR("Failed to get data. file name=%s, rc=%d:%s", file_name, rc, strrc(rc));
+//        return rc;
+//    }
+//
+//    PageNum page_num;
+//    rc = disk_buffer_pool->get_page_num(&page_handle, &page_num);
+//    if (rc != SUCCESS) {
+//        LOG_ERROR("Failed to get page num. file name=%s, rc=%d:%s", file_name, rc, strrc(rc));
+//        return rc;
+//    }
+//    IndexFileHeader *file_header = (IndexFileHeader *) pdata;
+//    file_header->attr_length = attr_length;
+//    file_header->key_length = attr_length + sizeof(RID);
+//    file_header->attr_type = attr_type;
+//    file_header->node_num = 1;
+//    file_header->order =
+//            ((int) BP_PAGE_DATA_SIZE - sizeof(IndexFileHeader) - sizeof(IndexNode)) / (attr_length + 2 * sizeof(RID));
+//    file_header->root_page = page_num;
+//
+//    root = get_index_node(pdata);
+//    root->is_leaf = 1;
+//    root->key_num = 0;
+//    root->parent = -1;
+//    root->keys = nullptr;
+//    root->rids = nullptr;
+//
+//    rc = disk_buffer_pool->mark_dirty(&page_handle);
+//    if (rc != SUCCESS) {
+//        return rc;
+//    }
+//
+//    rc = disk_buffer_pool->unpin_page(&page_handle);
+//    if (rc != SUCCESS) {
+//        return rc;
+//    }
+//
+//    disk_buffer_pool_ = disk_buffer_pool;
+//    file_id_ = file_id;
+//
+//    memcpy(&file_header_, pdata, sizeof(file_header_));
+//    header_dirty_ = false;
+//
+//    return SUCCESS;
+//}
 
-    int file_id;
-    rc = disk_buffer_pool->open_file(file_name, &file_id);
-    if (rc != SUCCESS) {
-        LOG_ERROR("Failed to open file. file name=%s, rc=%d:%s", file_name, rc, strrc(rc));
-        return rc;
-    }
-    rc = disk_buffer_pool->allocate_page(file_id, &page_handle);
-    if (rc != SUCCESS) {
-        LOG_ERROR("Failed to allocate page. file name=%s, rc=%d:%s", file_name, rc, strrc(rc));
-        return rc;
-    }
-    rc = disk_buffer_pool->get_data(&page_handle, &pdata);
-    if (rc != SUCCESS) {
-        LOG_ERROR("Failed to get data. file name=%s, rc=%d:%s", file_name, rc, strrc(rc));
-        return rc;
-    }
-
-    PageNum page_num;
-    rc = disk_buffer_pool->get_page_num(&page_handle, &page_num);
-    if (rc != SUCCESS) {
-        LOG_ERROR("Failed to get page num. file name=%s, rc=%d:%s", file_name, rc, strrc(rc));
-        return rc;
-    }
-    IndexFileHeader *file_header = (IndexFileHeader *) pdata;
-    file_header->attr_length = attr_length;
-    file_header->key_length = attr_length + sizeof(RID);
-    file_header->attr_type = attr_type;
-    file_header->node_num = 1;
-    file_header->order =
-            ((int) BP_PAGE_DATA_SIZE - sizeof(IndexFileHeader) - sizeof(IndexNode)) / (attr_length + 2 * sizeof(RID));
-    file_header->root_page = page_num;
-
-    root = get_index_node(pdata);
-    root->is_leaf = 1;
-    root->key_num = 0;
-    root->parent = -1;
-    root->keys = nullptr;
-    root->rids = nullptr;
-
-    rc = disk_buffer_pool->mark_dirty(&page_handle);
-    if (rc != SUCCESS) {
-        return rc;
-    }
-
-    rc = disk_buffer_pool->unpin_page(&page_handle);
-    if (rc != SUCCESS) {
-        return rc;
-    }
-
-    disk_buffer_pool_ = disk_buffer_pool;
-    file_id_ = file_id;
-
-    memcpy(&file_header_, pdata, sizeof(file_header_));
-    header_dirty_ = false;
-
-    return SUCCESS;
-}
-
-RC BplusTreeHandler::create(const char *file_name, std::vector<FieldMeta *> field_metas) {
+// 多值索引create
+RC BplusTreeHandler::create(const char *file_name, std::vector<const FieldMeta *> field_metas) {
   BPPageHandle page_handle;
   IndexNode *root;
   char *pdata;
@@ -139,13 +140,18 @@ RC BplusTreeHandler::create(const char *file_name, std::vector<FieldMeta *> fiel
     LOG_ERROR("Failed to get page num. file name=%s, rc=%d:%s", file_name, rc, strrc(rc));
     return rc;
   }
+  int key_length = 0;
   IndexFileHeader *file_header = (IndexFileHeader *) pdata;
-  file_header->attr_length = attr_length;
-  file_header->key_length = attr_length + sizeof(RID);
-  file_header->attr_type = attr_type;
+  file_header->attr_num = 0;
+  for (int i = 0; i < field_metas.size(); ++i) {
+    file_header->attr_length[file_header->attr_num] = field_metas[i]->len();
+    key_length += field_metas[i]->len();
+    file_header->attr_type[file_header->attr_num] = field_metas[i]->type();
+  }
+  file_header->key_length = key_length + sizeof(RID);
   file_header->node_num = 1;
   file_header->order =
-          ((int) BP_PAGE_DATA_SIZE - sizeof(IndexFileHeader) - sizeof(IndexNode)) / (attr_length + 2 * sizeof(RID));
+          ((int) BP_PAGE_DATA_SIZE - sizeof(IndexFileHeader) - sizeof(IndexNode)) / (key_length + 2 * sizeof(RID));
   file_header->root_page = page_num;
 
   root = get_index_node(pdata);
@@ -285,6 +291,23 @@ int CmpKey(AttrType attr_type, int attr_length, const char *pdata, const char *p
     return CmpRid(rid1, rid2);
 }
 
+
+int CmpKey(AttrType attr_type[], int attr_length[], int attr_num, const char *pdata, char *pkey) {
+  char *p1 = const_cast<char *>(pdata);
+  char *p2 = pkey;
+  for (int i = 0; i < attr_num; ++i) {
+    int result = CompareKey(pdata, pkey, attr_type[i], attr_length[i]);
+    if (0 != result) {
+      return result;
+    }
+    p1 = p1 + attr_length[i];
+    p2 = p2 + attr_length[i];
+  }
+  RID *rid1 = (RID *) (p1);
+  RID *rid2 = (RID *) (p2);
+  return CmpRid(rid1, rid2);
+}
+
 RC BplusTreeHandler::find_leaf(const char *pkey, PageNum *leaf_page) {
     RC rc;
     BPPageHandle page_handle;
@@ -303,10 +326,10 @@ RC BplusTreeHandler::find_leaf(const char *pkey, PageNum *leaf_page) {
     node = get_index_node(pdata);
     while (0 == node->is_leaf) {
         for (i = 0; i < node->key_num; i++) {
-            tmp = CmpKey(file_header_.attr_type, file_header_.attr_length, pkey,
+            tmp = CmpKey(file_header_.attr_type, file_header_.attr_length,file_header_.attr_num, pkey,
                          node->keys + i * file_header_.key_length);
             if (tmp < 0)
-                break;
+              break;
         }
         rc = disk_buffer_pool_->unpin_page(&page_handle);
         if (rc != SUCCESS) {
@@ -352,13 +375,14 @@ RC BplusTreeHandler::insert_into_leaf(PageNum leaf_page, const char *pkey, const
     node = get_index_node(pdata);
 
     for (insert_pos = 0; insert_pos < node->key_num; insert_pos++) {
-        tmp = CmpKey(file_header_.attr_type, file_header_.attr_length, pkey,
+
+        tmp = CmpKey(file_header_.attr_type, file_header_.attr_length,file_header_.attr_num, pkey,
                      node->keys + insert_pos * file_header_.key_length);
         if (tmp == 0) {
-            return RC::RECORD_DUPLICATE_KEY;
+          return RC::RECORD_DUPLICATE_KEY;
         }
         if (tmp < 0)
-            break;
+          break;
     }
     for (i = node->key_num; i > insert_pos; i--) {
         from = node->keys + (i - 1) * file_header_.key_length;
@@ -474,7 +498,7 @@ RC BplusTreeHandler::insert_into_leaf_after_split(PageNum leaf_page, const char 
     }
 
     for (insert_pos = 0; insert_pos < leaf->key_num; insert_pos++) {
-        tmp = CmpKey(file_header_.attr_type, file_header_.attr_length, pkey,
+        tmp = CmpKey(file_header_.attr_type, file_header_.attr_length,file_header_.attr_num, pkey,
                      leaf->keys + insert_pos * file_header_.key_length);
         if (tmp < 0)
             break;
@@ -894,8 +918,12 @@ RC BplusTreeHandler::insert_entry(const char *pkey, const RID *rid) {
         LOG_ERROR("Failed to alloc memory for key. size=%d", file_header_.key_length);
         return RC::NOMEM;
     }
-    memcpy(key, pkey, file_header_.attr_length);
-    memcpy(key + file_header_.attr_length, rid, sizeof(*rid));
+    int total_length = 0;
+    for (int i = 0; i < file_header_.attr_num; ++i) {
+      total_length += file_header_.attr_length[i];
+    }
+    memcpy(key, pkey, total_length);
+    memcpy(key + total_length, rid, sizeof(*rid));
     rc = find_leaf(key, &leaf_page);
     if (rc != SUCCESS) {
         free(key);
@@ -956,8 +984,12 @@ RC BplusTreeHandler::get_entry(const char *pkey, RID *rid) {
         LOG_ERROR("Failed to alloc memory for key. size=%d", file_header_.key_length);
         return RC::NOMEM;
     }
-    memcpy(key, pkey, file_header_.attr_length);
-    memcpy(key + file_header_.attr_length, rid, sizeof(RID));
+    int total_length = 0;
+    for (int i = 0; i < file_header_.attr_num; ++i) {
+      total_length += file_header_.attr_length[i];
+    }
+    memcpy(key, pkey, total_length);
+    memcpy(key + total_length, rid, sizeof(RID));
 
     rc = find_leaf(key, &leaf_page);
     if (rc != SUCCESS) {
@@ -978,7 +1010,7 @@ RC BplusTreeHandler::get_entry(const char *pkey, RID *rid) {
 
     leaf = get_index_node(pdata);
     for (i = 0; i < leaf->key_num; i++) {
-        if (CmpKey(file_header_.attr_type, file_header_.attr_length, key, leaf->keys + (i * file_header_.key_length)) ==
+        if (CmpKey(file_header_.attr_type, file_header_.attr_length,file_header_.attr_num, key, leaf->keys + (i * file_header_.key_length)) ==
             0) {
             memcpy(rid, leaf->rids + i, sizeof(RID));
             free(key);
@@ -1009,7 +1041,7 @@ RC BplusTreeHandler::delete_entry_from_node(PageNum node_page, const char *pkey)
     node = get_index_node(pdata);
 
     for (delete_index = 0; delete_index < node->key_num; delete_index++) {
-        tmp = CmpKey(file_header_.attr_type, file_header_.attr_length, pkey,
+        tmp = CmpKey(file_header_.attr_type, file_header_.attr_length,file_header_.attr_num, pkey,
                      node->keys + delete_index * file_header_.key_length);
         if (tmp == 0)
             break;
@@ -1537,8 +1569,12 @@ RC BplusTreeHandler::delete_entry(const char *data, const RID *rid) {
         LOG_ERROR("Failed to alloc memory for key. size=%d", file_header_.key_length);
         return RC::NOMEM;
     }
-    memcpy(pkey, data, file_header_.attr_length);
-    memcpy(pkey + file_header_.attr_length, rid, sizeof(*rid));
+    int total_length = 0;
+    for (int i = 0; i < file_header_.attr_num; ++i) {
+      total_length += file_header_.attr_length[i];
+    }
+    memcpy(pkey, data, total_length);
+    memcpy(pkey + total_length, rid, sizeof(*rid));
 
     rc = find_leaf(pkey, &leaf_page);
     if (rc != SUCCESS) {
@@ -1652,8 +1688,12 @@ RC BplusTreeHandler::find_first_index_satisfied(CompOp compop, const char *key, 
         LOG_ERROR("Failed to alloc memory for key. size=%d", file_header_.key_length);
         return RC::NOMEM;
     }
-    memcpy(pkey, key, file_header_.attr_length);
-    memcpy(pkey + file_header_.attr_length, &rid, sizeof(RID));
+    int total_length = 0;
+    for (int i = 0; i < file_header_.attr_num; ++i) {
+      total_length += file_header_.attr_length[i];
+    }
+    memcpy(pkey, key, total_length);
+    memcpy(pkey + total_length, &rid, sizeof(RID));
 
     rc = find_leaf(pkey, &leaf_page);
     if (rc != SUCCESS) {
@@ -1676,8 +1716,19 @@ RC BplusTreeHandler::find_first_index_satisfied(CompOp compop, const char *key, 
 
         node = get_index_node(pdata);
         for (i = 0; i < node->key_num; i++) {
-            tmp = CompareKey(node->keys + i * file_header_.key_length, key, file_header_.attr_type,
-                             file_header_.attr_length);
+          char *p1 = const_cast<char *>(pdata);
+          char *p2 = pkey;
+          tmp = 0;
+          for (int i = 0; i < file_header_.attr_num; ++i) {
+            tmp = CompareKey(pdata, pkey, file_header_.attr_type[i], file_header_.attr_length[i]);
+            if (tmp !=0){
+              break;
+            }
+            p1 = p1 + file_header_.attr_length[i];
+            p2 = p2 + file_header_.attr_length[i];
+          }
+//            tmp = CompareKey(node->keys + i * file_header_.key_length, key, file_header_.attr_type,
+//                             file_header_.attr_length);
             if (compop == EQUAL_TO || compop == GREAT_EQUAL || compop == EQUAL_IN) {
                 if (tmp >= 0) {
                     rc = disk_buffer_pool_->get_page_num(&page_handle, page_num);
@@ -1774,13 +1825,16 @@ RC BplusTreeScanner::open(CompOp comp_op, const char *value) {
     }
 
     comp_op_ = comp_op;
-
-    char *value_copy = (char *) malloc(index_handler_.file_header_.attr_length);
+    int total_length = 0;
+    for (int i = 0; i < index_handler_.file_header_.attr_num; ++i) {
+      total_length += index_handler_.file_header_.attr_length[i];
+    }
+    char *value_copy = (char *) malloc(total_length);
     if (value_copy == nullptr) {
         LOG_ERROR("Failed to alloc memory for value. size=%d", index_handler_.file_header_.attr_length);
         return RC::NOMEM;
     }
-    memcpy(value_copy, value, index_handler_.file_header_.attr_length);
+    memcpy(value_copy, value, total_length);
     value_ = value_copy; // free value_
     rc = index_handler_.find_first_index_satisfied(comp_op, value, &next_page_num_, &index_in_node_);
     if (rc != SUCCESS) {
@@ -1907,145 +1961,153 @@ bool BplusTreeScanner::satisfy_condition(const char *pkey) {
     if (comp_op_ == NO_OP) {
         return true;
     }
-
-    AttrType attr_type = index_handler_.file_header_.attr_type;
-    switch (attr_type) {
+    bool flag = true;
+    char *p1 = const_cast<char *>(pkey);
+    char *p2 = const_cast<char *>(value_);
+    for (int i = 0; i < index_handler_.file_header_.attr_num; ++i) {
+      AttrType attr_type = index_handler_.file_header_.attr_type[i];
+      switch (attr_type) {
         case INTS:
-            i1 = *(int *) pkey;
-            i2 = *(int *) value_;
-            break;
+          i1 = *(int *) p1;
+          i2 = *(int *) p2;
+          break;
         case FLOATS:
-            f1 = *(float *) pkey;
-            f2 = *(float *) value_;
-            break;
+          f1 = *(float *) p1;
+          f2 = *(float *) p2;
+          break;
         case CHARS:
-            s1 = pkey;
-            s2 = value_;
-            break;
+          s1 = p1;
+          s2 = p2;
+          break;
         case DATES:
-            i1 = *(int *) pkey;
-            i2 = *(int *) value_;
-            break;
+          i1 = *(int *) p1;
+          i2 = *(int *) p2;
+          break;
         default:
-            LOG_PANIC("Unknown attr type: %d", attr_type);
-    }
+          LOG_PANIC("Unknown attr type: %d", attr_type);
+      }
 
-    bool flag = false;
-
-    int attr_length = index_handler_.file_header_.attr_length;
-    switch (comp_op_) {
-      case EQUAL_IN:
+      int attr_length = index_handler_.file_header_.attr_length[i];
+      switch (comp_op_) {
+        case EQUAL_IN:
         case EQUAL_TO:
-            switch (attr_type) {
-                case INTS:
-                    flag = (i1 == i2);
-                    break;
-                case FLOATS:
-                    flag = 0 == float_compare(f1, f2);
-                    break;
-                case CHARS:
-                    flag = (strncmp(s1, s2, attr_length) == 0);
-                    break;
-                case DATES:
-                    flag = (i1 == i2);
-                    break;
-                default:
-                    LOG_PANIC("Unknown attr type: %d", attr_type);
-            }
-            break;
+          switch (attr_type) {
+            case INTS:
+              flag = (i1 == i2);
+              break;
+            case FLOATS:
+              flag = 0 == float_compare(f1, f2);
+              break;
+            case CHARS:
+              flag = (strncmp(s1, s2, attr_length) == 0);
+              break;
+            case DATES:
+              flag = (i1 == i2);
+              break;
+            default:
+              LOG_PANIC("Unknown attr type: %d", attr_type);
+          }
+          break;
         case LESS_THAN:
-            switch (attr_type) {
-                case INTS:
-                    flag = (i1 < i2);
-                    break;
-                case FLOATS:
-                    flag = (f1 < f2);
-                    break;
-                case CHARS:
-                    flag = (strncmp(s1, s2, attr_length) < 0);
-                    break;
-                case DATES:
-                    flag = (i1 < i2);
-                    break;
-                default:
-                    LOG_PANIC("Unknown attr type: %d", attr_type);
-            }
-            break;
+          switch (attr_type) {
+            case INTS:
+              flag = (i1 < i2);
+              break;
+            case FLOATS:
+              flag = (f1 < f2);
+              break;
+            case CHARS:
+              flag = (strncmp(s1, s2, attr_length) < 0);
+              break;
+            case DATES:
+              flag = (i1 < i2);
+              break;
+            default:
+              LOG_PANIC("Unknown attr type: %d", attr_type);
+          }
+          break;
         case GREAT_THAN:
-            switch (attr_type) {
-                case INTS:
-                    flag = (i1 > i2);
-                    break;
-                case FLOATS:
-                    flag = (f1 > f2);
-                    break;
-                case CHARS:
-                    flag = (strncmp(s1, s2, attr_length) > 0);
-                    break;
-                case DATES:
-                    flag = (i1 > i2);
-                    break;
-                default:
-                    LOG_PANIC("Unknown attr type: %d", attr_type);
-            }
-            break;
+          switch (attr_type) {
+            case INTS:
+              flag = (i1 > i2);
+              break;
+            case FLOATS:
+              flag = (f1 > f2);
+              break;
+            case CHARS:
+              flag = (strncmp(s1, s2, attr_length) > 0);
+              break;
+            case DATES:
+              flag = (i1 > i2);
+              break;
+            default:
+              LOG_PANIC("Unknown attr type: %d", attr_type);
+          }
+          break;
         case LESS_EQUAL:
-            switch (attr_type) {
-                case INTS:
-                    flag = (i1 <= i2);
-                    break;
-                case FLOATS:
-                    flag = (f1 <= f2);
-                    break;
-                case CHARS:
-                    flag = (strncmp(s1, s2, attr_length) <= 0);
-                    break;
-                case DATES:
-                    flag = (i1 <= i2);
-                    break;
-                default:
-                    LOG_PANIC("Unknown attr type: %d", attr_type);
-            }
-            break;
+          switch (attr_type) {
+            case INTS:
+              flag = (i1 <= i2);
+              break;
+            case FLOATS:
+              flag = (f1 <= f2);
+              break;
+            case CHARS:
+              flag = (strncmp(s1, s2, attr_length) <= 0);
+              break;
+            case DATES:
+              flag = (i1 <= i2);
+              break;
+            default:
+              LOG_PANIC("Unknown attr type: %d", attr_type);
+          }
+          break;
         case GREAT_EQUAL:
-            switch (attr_type) {
-                case INTS:
-                    flag = (i1 >= i2);
-                    break;
-                case FLOATS:
-                    flag = (f1 >= f2);
-                    break;
-                case CHARS:
-                    flag = (strncmp(s1, s2, attr_length) >= 0);
-                    break;
-                case DATES:
-                    flag = (i1 >= i2);
-                    break;
-                default:
-                    LOG_PANIC("Unknown attr type: %d", attr_type);
-            }
-            break;
-      case NOT_IN:
+          switch (attr_type) {
+            case INTS:
+              flag = (i1 >= i2);
+              break;
+            case FLOATS:
+              flag = (f1 >= f2);
+              break;
+            case CHARS:
+              flag = (strncmp(s1, s2, attr_length) >= 0);
+              break;
+            case DATES:
+              flag = (i1 >= i2);
+              break;
+            default:
+              LOG_PANIC("Unknown attr type: %d", attr_type);
+          }
+          break;
+        case NOT_IN:
         case NOT_EQUAL:
-            switch (attr_type) {
-                case INTS:
-                    flag = (i1 != i2);
-                    break;
-                case FLOATS:
-                    flag = 0 != float_compare(f1, f2);
-                    break;
-                case CHARS:
-                    flag = (strncmp(s1, s2, attr_length) != 0);
-                    break;
-                case DATES:
-                    flag = (i1 != i2);
-                    break;
-                default:
-                    LOG_PANIC("Unknown attr type: %d", attr_type);
-            }
-            break;
+          switch (attr_type) {
+            case INTS:
+              flag = (i1 != i2);
+              break;
+            case FLOATS:
+              flag = 0 != float_compare(f1, f2);
+              break;
+            case CHARS:
+              flag = (strncmp(s1, s2, attr_length) != 0);
+              break;
+            case DATES:
+              flag = (i1 != i2);
+              break;
+            default:
+              LOG_PANIC("Unknown attr type: %d", attr_type);
+          }
+          break;
         default:
-            LOG_PANIC("Unknown comp op: %d", comp_op_);
+          LOG_PANIC("Unknown comp op: %d", comp_op_);
+      }
+      p1 += attr_length;
+      p2 += attr_length;
+      if (flag == false){
+        return flag;
+      }
     }
+
     return flag;
 }

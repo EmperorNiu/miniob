@@ -59,7 +59,12 @@ RC IndexMeta::init(const char *name, std::vector<const FieldMeta*> &fields, cons
 
 void IndexMeta::to_json(Json::Value &json_value) const {
   json_value[FIELD_NAME] = name_;
-  json_value[FIELD_FIELD_NAME] = field_;
+  std::string fields = "";
+  for (int i = 0; i < fields_.size(); ++i) {
+    fields += fields_[i];
+    fields += ' ';
+  }
+  json_value[FIELD_FIELD_NAME] = fields;
   json_value[IS_UNIQUE] = isUnique_;
 }
 
@@ -77,14 +82,26 @@ RC IndexMeta::from_json(const TableMeta &table, const Json::Value &json_value, I
               name_value.asCString(), field_value.toStyledString().c_str());
     return RC::GENERIC_ERROR;
   }
-
-  const FieldMeta *field = table.field(field_value.asCString());
-  if (nullptr == field) {
-    LOG_ERROR("Deserialize index [%s]: no such field: %s", name_value.asCString(), field_value.asCString());
-    return RC::SCHEMA_FIELD_MISSING;
+  std::vector<std::string> fields;
+  std::string s = field_value.asCString();
+  size_t pos = 0;
+  std::string token;
+  std::string delimiter = " ";
+  while ((pos = s.find(delimiter)) != std::string::npos) {
+    token = s.substr(0, pos);
+    fields.push_back(token);
+    s.erase(0, pos + delimiter.length());
   }
-
-  return index.init(name_value.asCString(), *field, unique_value.asInt());
+  std::vector<const FieldMeta *> field_metas;
+  for (int i = 0; i < fields.size(); ++i) {
+    const FieldMeta *field = table.field(fields[i].c_str());
+    if (nullptr == field) {
+      LOG_ERROR("Deserialize index [%s]: no such field: %s", name_value.asCString(), field_value.asCString());
+      return RC::SCHEMA_FIELD_MISSING;
+    }
+    field_metas.push_back(field);
+  }
+  return index.init(name_value.asCString(), field_metas, unique_value.asInt());
 }
 
 const char *IndexMeta::name() const {
