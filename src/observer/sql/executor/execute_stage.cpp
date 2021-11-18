@@ -325,6 +325,7 @@ RC ExecuteStage::in_condition_transform(TupleSet& tupleSet, Condition condition,
   for (int i = 0; i < tupleSet.get_schema().fields().size(); ++i) {
     is_show.push_back(0);
   }
+  // 筛选列
   for (size_t i = 0; i < selects.relation_num; i++) {
     const char *table_name = selects.relations[i];
     for (int k = 0; k < selects.attr_num; k++) {
@@ -355,13 +356,6 @@ RC ExecuteStage::in_condition_transform(TupleSet& tupleSet, Condition condition,
   if (schema_size != 1) {
     return RC::SCHEMA_FIELD_NAME_ILLEGAL;
   }
-  CompOp op = condition.comp;
-//  if (condition.comp == EQUAL_IN){
-//    op = EQUAL_TO;
-//  }
-//  if(condition.comp == NOT_IN) {
-//    op = NOT_EQUAL;
-//  }
   for (int i = 0; i < data_size; ++i) {
     if (condition.right_is_attr && !condition.left_is_attr) {
       Value value = {.type=tupleSet.get_schema().field(show_index).type()};
@@ -373,7 +367,6 @@ RC ExecuteStage::in_condition_transform(TupleSet& tupleSet, Condition condition,
       value.data = tupleSet.get(i).get(show_index).get_value();
       condition.right_value = value;
     }
-    condition.comp = op;
     in_conditions.push_back(condition);
   }
   return RC::SUCCESS;
@@ -413,7 +406,7 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
       TupleSet* sub_tupleSet = new TupleSet;
       rc = do_sub_select(db, *sql->sstr.selection.subSelect,session_event,*sub_tupleSet);
 //      sub_tupleSet->print(ss);
-      if (rc != RC::SUCCESS){
+      if (rc != RC::SUCCESS) {
         return rc;
       }
       // modify the condition
@@ -649,7 +642,8 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
       tuple_result_.sort(selects.orderOps, selects.orderOp_num);
     }
     tuple_result_.print(ss, selects);
-  } else {
+  }
+  else {
     // 当前只查询一张表，直接返回结果即可
     if (selects.orderOp_num > 0) {
       for (int i = 0; i < selects.orderOp_num; ++i) {
