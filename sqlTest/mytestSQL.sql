@@ -148,7 +148,7 @@ select count(birthday) from person;
 -- Unique test
 create table person(id int, height float, name char, birthday date);
 create unique index id_index on person(id);
-create index id_index on person(id);
+create index id_index on person(height);
 insert into person values(0, 1.73, 't1', '1999-01-13');
 insert into person values(1, 1.78, 't2', '1999-03-15');
 insert into person values(2, 1.51, 't3', '1999-06-17');
@@ -272,9 +272,15 @@ SELECT * FROM t1 WHERE col1 NOT IN (SELECT t2.col2 FROM t2);
 +1 | 4 | 11.2
 +ID | COL1 | FEAT1
 
+
 --multi-index
 create table t1(id int, age int, feat1 float);
+create unique index id_index on t1(id);
+create unique index age_index on t1(age);
 create table t2(id int, age int, feat1 float);
+insert into t1 values(1, 45, 21.1);
+insert into t1 values(2, 47, 21.1);
+insert into t1 values(4, 50, 21.1);
 insert into t1 values(1, 45, 11.3),(2, 78, 21.1),(3, 24, 25.2),(4, 61, 16.5),(5, 16, 19.2);
 insert into t1 values(6, 45, 11.3),(7, 78, 21.1),(3, 24, 25.2);
 insert into t2 values(1, 17, 14.1),(2, 16, 25.6),(3, 24, 23.4),(4, 11, 29.6);
