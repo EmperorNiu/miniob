@@ -251,7 +251,7 @@ create_index:		/*create index 语句的语法解析树*/
 
 index_list:
     /* empty */
-    | COMMA ID  {
+    | COMMA ID index_list{
   		add_index_attr(&CONTEXT->ssql->sstr.create_index, $2);
 	}
     ;

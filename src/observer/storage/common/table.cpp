@@ -599,10 +599,6 @@ RC Table::create_index(Trx *trx, const char *index_name, char *attribute_names[]
     return RC::SCHEMA_INDEX_EXIST;
   }
 
-  if (table_meta_.index(index_name) != nullptr ||
-    table_meta_.find_index_by_field((attribute_names[0]))) {
-    return RC::SCHEMA_INDEX_EXIST;
-  }
   // 获取索引元信息
   std::vector<const FieldMeta *> field_metas;
   for(int i = 0; i< attr_num; i++){

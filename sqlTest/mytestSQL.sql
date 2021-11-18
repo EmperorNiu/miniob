@@ -265,6 +265,7 @@ select * from t1;
 select * from t1 where age = 45;
 select * from t1 where id=1 and age = 50;
 update t1 set age=50 where id=1;
+create index i_id_age_feat on t1(id, age,feat1);
 -- null
 insert into person values(4, 1.71, 't5', '1999-06-17');
 insert into person values(5, 1.83, 't6', '2001-08-11');
