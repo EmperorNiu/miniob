@@ -870,15 +870,17 @@ RC Table::insert_entry_of_indexes(const char *record, const RID &rid) {
     for (Index *index: indexes_) {
       if (index->isUnique()) {
         FieldMeta f = index->field_meta();
-//        char data[f.len()];
-        char *data = new char(f.len());
+        char data[f.len()];
+//        char *data = new char(f.len());
         memcpy(data,record+f.offset(),f.len());
         IndexScanner *scanner = index->create_scanner(EQUAL_TO, data);
         RID rid_n;
         rc = scanner->next_entry(&rid_n);
         if (rc != RC::SUCCESS) {
-          if (RC::RECORD_EOF == rc) {
-            rc = index->insert_entry(record, &rid);
+          if (RC::RECORD_EOF == rc || RC::RECORD_NO_MORE_IDX_IN_MEM == rc) {
+            char data[f.len()];
+            memcpy(data,record+f.offset(),f.len());
+            rc = index->insert_entry(data, &rid);
             if (rc != RC::SUCCESS) {
               return rc;
             }
@@ -888,7 +890,14 @@ RC Table::insert_entry_of_indexes(const char *record, const RID &rid) {
           return RC::SCHEMA_INDEX_EXIST;
       }
       else {
-        rc = index->insert_entry(record, &rid);
+        std::vector<FieldMeta> fieldmetas = index->field_metas();
+        char r[table_meta_.record_size()];
+        int offset = 0;
+        for(auto & field_meta : fieldmetas){
+          memcpy(r + offset, record + field_meta.offset(), field_meta.len());
+          offset += field_meta.len();
+        }
+        rc = index->insert_entry(r, &rid);
         if (rc != RC::SUCCESS) {
             break;
         }

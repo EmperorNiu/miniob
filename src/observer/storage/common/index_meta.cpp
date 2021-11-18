@@ -51,7 +51,7 @@ RC IndexMeta::init(const char *name, std::vector<const FieldMeta*> &fields, cons
   }
   name_ = name;
   for(const auto & field : fields){
-    fields_.emplace_back(field->name());
+    fields_.push_back(field->name());
   }
   isUnique_ = isUnique;
   return RC::SUCCESS;
