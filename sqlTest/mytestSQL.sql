@@ -208,6 +208,14 @@ SELECT * FROM SSQ_1 WHERE COL1 NOT IN (SELECT SSQ_2.COL2 FROM SSQ_2);
 +1 | 4 | 11.2
 +ID | COL1 | FEAT1
 
+--multi-index
+create table t1(id int, age int, feat1 float);
+create table t2(id int, age int, feat1 float);
+insert into t1 values(1, 45, 11.3),(2, 78, 21.1),(3, 24, 25.2),(4, 61, 16.5),(5, 16, 19.2);
+insert into t1 values(6, 45, 11.3),(7, 78, 21.1),(3, 24, 25.2);
+insert into t2 values(1, 17, 14.1),(2, 16, 25.6),(3, 24, 23.4),(4, 11, 29.6);
+create index i_id_age on t1(id, age);
+select * from t1 where age = 45;
 -- null
 insert into person values(4, 1.71, 't5', '1999-06-17');
 insert into person values(5, 1.83, 't6', '2001-08-11');
