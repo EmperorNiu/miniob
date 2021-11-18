@@ -1078,49 +1078,43 @@ IndexScanner *Table::find_index_for_scan_multi(const ConditionFilter *filter){
   }
 }
 
-IndexScanner *Table::find_index_for_scan(const ConditionFilter *filter) {
-  if (nullptr == filter) {
-    return nullptr;
-  }
-  
-  /*const DefaultConditionFilter *default_condition_filter = dynamic_cast<const DefaultConditionFilter *>(filter);
-  if (default_condition_filter != nullptr) {
-    return find_index_for_scan(*default_condition_filter);
-  }*/
-
-
-  IndexScanner *scanner= find_index_for_scan_multi(filter);
-  if (scanner != nullptr) {
-    return scanner;
-  }
-
-  return nullptr;
-}
-
 //IndexScanner *Table::find_index_for_scan(const ConditionFilter *filter) {
-//    if (nullptr == filter) {
-//        return nullptr;
-//    }
-//    if (!filter->isIn()){
-//      // remove dynamic_cast
-//      const DefaultConditionFilter *default_condition_filter = dynamic_cast<const DefaultConditionFilter *>(filter);
-//      if (default_condition_filter != nullptr) {
-//        return find_index_for_scan(*default_condition_filter);
-//      }
-//    }
-//
-//    const CompositeConditionFilter *composite_condition_filter = dynamic_cast<const CompositeConditionFilter *>(filter);
-//    if (composite_condition_filter != nullptr) {
-//        int filter_num = composite_condition_filter->filter_num();
-//        for (int i = 0; i < filter_num; i++) {
-//            IndexScanner *scanner = find_index_for_scan(&composite_condition_filter->filter(i));
-//            if (scanner != nullptr) {
-//                return scanner; // 可以找到一个最优的，比如比较符号是=
-//            }
-//        }
-//    }
+//  if (nullptr == filter) {
 //    return nullptr;
+//  }
+//
+//  IndexScanner *scanner= find_index_for_scan_multi(filter);
+//  if (scanner != nullptr) {
+//    return scanner;
+//  }
+//
+//  return nullptr;
 //}
+
+IndexScanner *Table::find_index_for_scan(const ConditionFilter *filter) {
+    if (nullptr == filter) {
+        return nullptr;
+    }
+    if (!filter->isIn()){
+      // remove dynamic_cast
+      const DefaultConditionFilter *default_condition_filter = dynamic_cast<const DefaultConditionFilter *>(filter);
+      if (default_condition_filter != nullptr) {
+        return find_index_for_scan(*default_condition_filter);
+      }
+    }
+
+    const CompositeConditionFilter *composite_condition_filter = dynamic_cast<const CompositeConditionFilter *>(filter);
+    if (composite_condition_filter != nullptr) {
+        int filter_num = composite_condition_filter->filter_num();
+        for (int i = 0; i < filter_num; i++) {
+            IndexScanner *scanner = find_index_for_scan(&composite_condition_filter->filter(i));
+            if (scanner != nullptr) {
+                return scanner; // 可以找到一个最优的，比如比较符号是=
+            }
+        }
+    }
+    return nullptr;
+}
 
 RC Table::sync() {
     RC rc = data_buffer_pool_->flush_all_pages(file_id_);
