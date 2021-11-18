@@ -571,37 +571,57 @@ static RC insert_index_record_reader_adapter(Record *record, void *context) {
     return inserter.insert_index(record);
 }
 
-RC Table::create_index(Trx *trx, const char *index_name, const char *attribute_name, int isUnique) {
-    if (index_name == nullptr || common::is_blank(index_name) ||
-        attribute_name == nullptr || common::is_blank(attribute_name)) {
-        return RC::INVALID_ARGUMENT;
+RC Table::create_index(Trx *trx, const char *index_name, char *attribute_names[], int attr_num, int isUnique) {
+  // 数据校验
+  if (index_name == nullptr || common::is_blank(index_name) ||
+      attribute_names == nullptr) {
+    return RC::INVALID_ARGUMENT;
+  }
+  for (int i = 0; i < attr_num; ++i) {
+    if (common::is_blank(attribute_names[i])) {
+      return RC::INVALID_ARGUMENT;
     }
-    if (table_meta_.index(index_name) != nullptr ||
-        table_meta_.find_index_by_field((attribute_name))) {
-        return RC::SCHEMA_INDEX_EXIST;
-    }
+  }
+  if (table_meta_.index(index_name) != nullptr){
+    return RC::SCHEMA_INDEX_EXIST;
+  }
 
-    const FieldMeta *field_meta = table_meta_.field(attribute_name);
-    if (!field_meta) {
-        return RC::SCHEMA_FIELD_MISSING;
+  if (table_meta_.index(index_name) != nullptr ||
+    table_meta_.find_index_by_field((attribute_names[0]))) {
+    return RC::SCHEMA_INDEX_EXIST;
+  }
+  // 获取索引元信息
+  std::vector<const FieldMeta *> field_metas;
+  for(int i = 0; i< attr_num; i++){
+    if(attribute_names[i] == nullptr || common::is_blank(attribute_names[i])){
+      return RC::INVALID_ARGUMENT;
     }
+    const FieldMeta *field_meta = table_meta_.field(attribute_names[i]);
+    if(!field_meta){
+      return RC::SCHEMA_FIELD_MISSING;
+    }
+    field_metas.push_back(field_meta);
+  }
+  if(table_meta_.find_index_by_field(field_metas)){
+    return RC::SCHEMA_INDEX_EXIST;
+  }
 
-    IndexMeta new_index_meta;
-    RC rc = new_index_meta.init(index_name, *field_meta, isUnique);
-    if (rc != RC::SUCCESS) {
-        return rc;
-    }
+  IndexMeta new_index_meta;
+  RC rc = new_index_meta.init(index_name, field_metas, isUnique);
+  if (rc != RC::SUCCESS) {
+      return rc;
+  }
 
-    // 创建索引相关数据
-    BplusTreeIndex *index = new BplusTreeIndex();
-    std::string index_file = index_data_file(base_dir_.c_str(), name(), index_name);
-    rc = index->create(index_file.c_str(), new_index_meta, *field_meta);
-    index->setUnique(isUnique);
-    if (rc != RC::SUCCESS) {
-        delete index;
-        LOG_ERROR("Failed to create bplus tree index. file name=%s, rc=%d:%s", index_file.c_str(), rc, strrc(rc));
-        return rc;
-    }
+  // 创建索引相关数据
+  BplusTreeIndex *index = new BplusTreeIndex();
+  std::string index_file = index_data_file(base_dir_.c_str(), name(), index_name);
+  rc = index->create(index_file.c_str(), new_index_meta, *field_meta);
+  index->setUnique(isUnique);
+  if (rc != RC::SUCCESS) {
+      delete index;
+      LOG_ERROR("Failed to create bplus tree index. file name=%s, rc=%d:%s", index_file.c_str(), rc, strrc(rc));
+      return rc;
+  }
 
     // 遍历当前的所有数据，插入这个索引
     IndexInserter index_inserter(index, isUnique);

@@ -166,7 +166,19 @@ const IndexMeta * TableMeta::find_index_by_field(const char *field) const {
   return nullptr;
 }
 
-const IndexMeta * TableMeta::index(int i ) const {
+const IndexMeta * TableMeta::find_index_by_field(std::vector<const FieldMeta *> field_metas) const {
+  for (const IndexMeta &index : indexes_) {
+    if (index.get_fields().size() != field_metas.size()) return nullptr;
+    for (int i = 0; i < field_metas.size(); ++i) {
+      if(index.field(i) == nullptr) break;
+      if(strcmp(index.field(i),field_metas[i]->name()) != 0) break;
+      if(i == field_metas.size()) return &index;
+    }
+  }
+  return nullptr;
+}
+
+const IndexMeta * TableMeta::index(int i) const {
   return &indexes_[i];
 }
 
