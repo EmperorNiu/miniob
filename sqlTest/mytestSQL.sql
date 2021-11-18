@@ -261,7 +261,10 @@ insert into t1 values(1, 45, 11.3),(2, 78, 21.1),(3, 24, 25.2),(4, 61, 16.5),(5,
 insert into t1 values(6, 45, 11.3),(7, 78, 21.1),(3, 24, 25.2);
 insert into t2 values(1, 17, 14.1),(2, 16, 25.6),(3, 24, 23.4),(4, 11, 29.6);
 create index i_id_age on t1(id, age);
+select * from t1;
 select * from t1 where age = 45;
+select * from t1 where id=1 and age = 50;
+update t1 set age=50 where id=1;
 -- null
 insert into person values(4, 1.71, 't5', '1999-06-17');
 insert into person values(5, 1.83, 't6', '2001-08-11');

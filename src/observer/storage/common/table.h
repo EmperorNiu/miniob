@@ -57,7 +57,7 @@ public:
 
   RC scan_record(Trx *trx, ConditionFilter *filter, int limit, void *context, void (*record_reader)(const char *data, void *context));
 
-  RC create_index(Trx *trx, const char *index_name, const char *attribute_name, int isUnique);
+  RC create_index(Trx *trx, const char *index_name, char *attribute_names[], int attr_num, int isUnique);
   const int get_long_fd() const;
 
 public:
