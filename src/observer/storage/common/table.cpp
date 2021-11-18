@@ -887,7 +887,7 @@ RC Table::insert_entry_of_indexes(const char *record, const RID &rid) {
         RID rid_n;
         rc = scanner->next_entry(&rid_n);
         if (rc != RC::SUCCESS) {
-          if (RC::RECORD_EOF == rc || RC::RECORD_NO_MORE_IDX_IN_MEM == rc) {
+          if (RC::RECORD_EOF == rc) {
             char data[f.len()];
             memcpy(data,record+f.offset(),f.len());
             rc = index->insert_entry(data, &rid);
