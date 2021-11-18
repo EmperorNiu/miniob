@@ -151,7 +151,7 @@ create unique index id_index on person(id);
 insert into person values(0, 1.73, 't1', '1999-01-13');
 insert into person values(1, 1.78, 't2', '1999-03-15');
 insert into person values(2, 1.51, 't3', '1999-06-17');
-insert into person values(2, 1.51, 't3', '1999-06-17');
+insert into person values(4, 1.51, 't3', '1999-06-17');
 insert into person values(3, 1.83, 't4', '2001-08-11');
 drop table person;
 create table person(id int, height float, name char, birthday date);
@@ -162,6 +162,23 @@ insert into person values(2, 1.51, 't3', '1999-06-17');
 insert into person values(3, 1.83, 't4', '2001-08-11');
 create unique index id_index on person(id);
 drop table person;
+
+unique: result file difference(`-` is yours and `+` is base)
+ 1. UNIQUE TEST
+CREATE UNIQUE INDEX INDEX_ID ON UNIQUE_TABLE(ID);
+SUCCESS
+INSERT INTO UNIQUE_TABLE VALUES (2,1,1);
+-FAILURE
++SUCCESS
+CREATE UNIQUE INDEX INDEX_ID ON UNIQUE_TABLE(ID);
+FAILURE
+INSERT INTO UNIQUE_TABLE VALUES (3,2,1);
+-FAILURE
++SUCCESS
+ INSERT INTO UNIQUE_TABLE VALUES (1,2,1);
+ FAILURE
+
+
 
 
 -- Group by test

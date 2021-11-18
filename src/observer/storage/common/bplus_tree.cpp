@@ -147,6 +147,7 @@ RC BplusTreeHandler::create(const char *file_name, std::vector<const FieldMeta *
     file_header->attr_length[file_header->attr_num] = field_metas[i]->len();
     key_length += field_metas[i]->len();
     file_header->attr_type[file_header->attr_num] = field_metas[i]->type();
+    file_header->attr_num++;
   }
   file_header->key_length = key_length + sizeof(RID);
   file_header->node_num = 1;
@@ -1716,7 +1717,8 @@ RC BplusTreeHandler::find_first_index_satisfied(CompOp compop, const char *key, 
 
         node = get_index_node(pdata);
         for (i = 0; i < node->key_num; i++) {
-          char *p1 = const_cast<char *>(pdata);
+//          char *p1 = const_cast<char *>(pdata);
+          char *p1 = node->keys + i * file_header_.key_length;
           char *p2 = pkey;
           tmp = 0;
           for (int i = 0; i < file_header_.attr_num; ++i) {

@@ -41,8 +41,11 @@ public:
   const IndexMeta &index_meta() const {
     return index_meta_;
   }
-  const FieldMeta &field_meta() const {
-      return field_meta_;
+  FieldMeta field_meta() const {
+      return field_metas_[0];
+  }
+  const std::vector<FieldMeta> &field_metas() const {
+    return field_metas_;
   }
   int isUnique() const {
       return isUnique_;

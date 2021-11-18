@@ -869,8 +869,10 @@ RC Table::insert_entry_of_indexes(const char *record, const RID &rid) {
     RC rc = RC::SUCCESS;
     for (Index *index: indexes_) {
       if (index->isUnique()) {
-        char data[index->field_meta().len()];
-        memcpy(data,record+index->field_meta().offset(),index->field_meta().len());
+        FieldMeta f = index->field_meta();
+//        char data[f.len()];
+        char *data = new char(f.len());
+        memcpy(data,record+f.offset(),f.len());
         IndexScanner *scanner = index->create_scanner(EQUAL_TO, data);
         RID rid_n;
         rc = scanner->next_entry(&rid_n);
