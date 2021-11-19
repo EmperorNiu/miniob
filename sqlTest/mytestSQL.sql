@@ -185,13 +185,12 @@ INSERT INTO UNIQUE_TABLE VALUES (3,2,1);
 -- Group by test
 drop table person;
 create table person(id int, height float, name char, birthday date);
-insert into person values(0, 1.73, 't1', '1999-01-13');
-insert into person values(1, 1.78, 't2', '1999-03-15');
-insert into person values(1, 1.93, 't2', '1999-03-25');
-insert into person values(2, 1.51, 't4', '1899-03-17');
-insert into person values(2, 1.61, 't4', '1999-06-19');
+insert into person values(0, 1.73, 't1', '1999-01-13'),(1, 1.78, 't2', '1999-03-15');
+insert into person values(1, 1.93, 't2', '1999-03-25'),(1, 1.51, 't4', '1899-03-17');
+insert into person values(2, 1.51, 't4', '1899-03-17'),(2, 1.61, 't4', '1999-06-19');
 insert into person values(2, 1.21, 't4', '1999-06-27');
 insert into person values(3, 1.83, 't4', '2001-08-11');
+
 select avg(height) from person group by id;
 
 -- inner join
@@ -272,7 +271,17 @@ SELECT * FROM t1 WHERE col1 NOT IN (SELECT t2.col2 FROM t2);
 +1 | 4 | 11.2
 +ID | COL1 | FEAT1
 
-
+create table person1(id int, height float, name char, birthday date);
+create table person2(id int, height float, name char, birthday date);
+insert into person1 values(0, 1.73, 't1', '1999-01-13'),(1, 1.78, 't2', '1999-03-15'),(2, 1.78, 't3', '1999-03-15');
+insert into person2 values(0, 1.73, 't1', '1999-01-13'),(1, 1.83, 't2', '1999-03-15'),(3, 2.1, 't4', '1999-03-15');
+create index id_index on person1(id);
+create index id_index on person2(id);
+create index name_index on person1(name);
+create index name_index on person2(name);
+select * from person1 where name NOT IN (select person2.name from person2);
+select * from person2 where name NOT IN (select person1.name from person1);
+select * from person1 where (select max(person2.id) from person2) < id;
 --multi-index
 create table t1(id int, age int, feat1 float);
 create table t2(id int, age int, feat1 float);

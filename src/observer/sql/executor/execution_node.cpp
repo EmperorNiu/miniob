@@ -39,6 +39,12 @@ RC SelectExeNode::set_aggregate_schema(TupleSchema && tuple_schema){
   return RC::SUCCESS;
 }
 
+RC SelectExeNode::set_group_schema(TupleSchema && tuple_schema){
+  group_schema_ = tuple_schema;
+  return RC::SUCCESS;
+}
+
+
 void record_reader(const char *data, void *context) {
   TupleRecordConverter *converter = (TupleRecordConverter *)context;
   converter->add_record(data);
@@ -64,6 +70,14 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
     tuple_set.set_schema(aggregate_schema_);
     TupleSchema schema;
     Tuple tuple = Tuple();
+    if (group_schema_.fields().size() > 0){
+      std::string combine_key = "";
+      for (int i = 0; i < group_schema_.fields().size(); ++i) {
+        combine_key += group_schema_.field(i).field_name();
+      }
+      return RC::SUCCESS;
+    }
+
     for (int i = 0; i < aggregateOps.size(); ++i) {
       const char *field_name2 = aggregate_schema_.field(i).field_name();
       TupleRecordAggregateConverter converter(table_, tuple_set, aggregateOps[i], field_name2);

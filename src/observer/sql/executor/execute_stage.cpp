@@ -697,6 +697,7 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
   // 列出跟这张表关联的Attr
   TupleSchema schema;
   TupleSchema agg_schema;
+  TupleSchema group_schema;
   Table * table = DefaultHandler::get_default().find_table(db, table_name);
   if (nullptr == table) {
     LOG_WARN("No such table [%s] in db [%s]", table_name, db);
@@ -704,7 +705,8 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
   }
   // 添加聚合操作的信息
   for (int j = selects.aggregateOp_num - 1; j >= 0; --j) {
-    select_node.aggregateOps.push_back(selects.aggregateOp[j]);
+    const AggregateOp &tmpOp = selects.aggregateOp[j];
+    select_node.aggregateOps.emplace_back(tmpOp);
     if (0 != strcmp("*",selects.attributes[j].attribute_name)){
       RC rc = schema_add_field(table,selects.attributes[j].attribute_name,agg_schema);
       if (rc != RC::SUCCESS) {
@@ -714,6 +716,16 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
       agg_schema.add(UNDEFINED,table_name,"*");
     } else {
       return RC::SCHEMA_FIELD_NOT_EXIST;
+    }
+  }
+  // 添加 group by 信息 （校验是否有错误属性）
+  for (int i = 0; i < selects.groupBy_attr_num; ++i) {
+    const RelAttr &groupAttr = selects.groupBy_attributes[i];
+    if (groupAttr.relation_name == nullptr || 0 == strcmp(table_name,groupAttr.relation_name)){
+      RC rc = schema_add_field(table,groupAttr.attribute_name,group_schema);
+      if (rc != RC::SUCCESS) {
+        return rc;
+      }
     }
   }
   // 校验是否存在不在表中的属性
@@ -785,5 +797,6 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
     }
   }
   select_node.set_aggregate_schema(std::move(agg_schema));
+  select_node.set_group_schema(std::move(group_schema));
   return select_node.init(trx, table, std::move(schema), std::move(condition_filters));
 }
