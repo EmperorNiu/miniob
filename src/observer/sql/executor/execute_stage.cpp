@@ -808,7 +808,7 @@ RC create_sub_selection_executor(Trx *trx, Selects *selects, const char *db, con
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
   // 添加聚合操作的信息
-  select_node.aggregateOps = selects->aggregateOps;
+  *(select_node.aggregateOps) = *(selects->aggregateOp);
   for (int j = selects->aggregateOp_num - 1; j >= 0; --j) {
 //    AggregateOp tmpOp = selects->aggregateOp[j];
 //    select_node.aggregateOps[select_node.aggregateOp_num++] = selects->aggregateOp[j];
