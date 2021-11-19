@@ -887,7 +887,7 @@ RC Table::insert_entry_of_indexes(const char *record, const RID &rid) {
         RID rid_n;
         rc = scanner->next_entry(&rid_n);
         if (rc != RC::SUCCESS) {
-          if (RC::RECORD_EOF == rc) {
+          if (RC::RECORD_EOF == rc || RC::RECORD_NO_MORE_IDX_IN_MEM == rc) {
             char data[f.len()];
             memcpy(data,record+f.offset(),f.len());
             rc = index->insert_entry(data, &rid);
@@ -1102,13 +1102,13 @@ IndexScanner *Table::find_index_for_scan(const ConditionFilter *filter) {
     if (nullptr == filter) {
         return nullptr;
     }
-    int flag = 0;
-    for (int i = 0; i < indexes_.size(); ++i) {
-      if (indexes_[i]->isUnique()){
-        flag = 1;
-      }
-    }
-    if (flag == 1) return find_index_for_scan_multi(filter);
+//    int flag = 0;
+//    for (int i = 0; i < indexes_.size(); ++i) {
+//      if (indexes_[i]->isUnique()){
+//        flag = 1;
+//      }
+//    }
+//    if (flag == 1) return find_index_for_scan_multi(filter);
     if (!filter->isIn()){
       // remove dynamic_cast
       const DefaultConditionFilter *default_condition_filter = dynamic_cast<const DefaultConditionFilter *>(filter);
