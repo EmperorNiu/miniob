@@ -1092,12 +1092,11 @@ IndexScanner *Table::find_index_for_scan(const ConditionFilter *filter) {
   for (int i = 0; i < indexes_.size(); ++i) {
     if(indexes_[i]->field_metas().size() >1){
       flag = 1;
-      break;
     }
   }
   IndexScanner *scanner;
-  if (flag == 1) scanner=find_index_for_scan2(filter);
-  else scanner=find_index_for_scan_multi(filter);
+  if (flag == 0) scanner= find_index_for_scan2(filter);
+  else scanner= find_index_for_scan_multi(filter);
   if (scanner != nullptr) {
     return scanner;
   }
