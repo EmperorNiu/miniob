@@ -36,7 +36,7 @@ See the Mulan PSL v2 for more details. */
 using namespace common;
 
 RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, const char *table_name, SelectExeNode &select_node,std::vector<Condition> in_conditions);
-
+RC create_sub_selection_executor(Trx *trx, Selects *selects, const char *db, const char *table_name, SelectExeNode &select_node,std::vector<Condition> in_conditions);
 //! Constructor
 ExecuteStage::ExecuteStage(const char *tag) : Stage(tag) {}
 
@@ -240,7 +240,7 @@ RC ExecuteStage::do_sub_select(const char *db,Selects *selects, SessionEvent *se
   for (int i = selects->relation_num-1; i >=0; i--) {
     const char *table_name = selects->relations[i];
     SelectExeNode *select_node = new SelectExeNode;
-    rc = create_selection_executor(trx, *selects, db, table_name, *select_node, std::vector<Condition>());
+    rc = create_sub_selection_executor(trx, selects, db, table_name, *select_node, std::vector<Condition>());
     if (rc != RC::SUCCESS) {
       delete select_node;
       for (SelectExeNode *& tmp_node: select_nodes) {
@@ -780,6 +780,107 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
     const Condition &condition = in_conditions[i];
     if ((condition.left_is_attr == 1 && condition.right_is_attr == 0 && match_table(selects, condition.left_attr.relation_name, table_name)) ||  // 左边是属性右边是值
         (condition.left_is_attr == 0 && condition.right_is_attr == 1 && match_table(selects, condition.right_attr.relation_name, table_name))) {
+      DefaultConditionFilter *condition_filter = new DefaultConditionFilter();
+      RC rc = condition_filter->init(*table, condition);
+      if (rc != RC::SUCCESS) {
+        delete condition_filter;
+        for (DefaultConditionFilter * &filter : condition_filters) {
+          delete filter;
+        }
+        return rc;
+      }
+      condition_filters.push_back(condition_filter);
+    }
+  }
+  select_node.set_aggregate_schema(std::move(agg_schema));
+  select_node.set_group_schema(std::move(group_schema));
+  return select_node.init(trx, table, std::move(schema), std::move(condition_filters));
+}
+
+
+// 把所有的表和只跟这张表关联的condition都拿出来，生成最底层的select 执行节点
+RC create_sub_selection_executor(Trx *trx, Selects *selects, const char *db, const char *table_name, SelectExeNode &select_node, std::vector<Condition> in_conditions) {
+  // 列出跟这张表关联的Attr
+  TupleSchema schema;
+  TupleSchema agg_schema;
+  TupleSchema group_schema;
+  Table * table = DefaultHandler::get_default().find_table(db, table_name);
+  if (nullptr == table) {
+    LOG_WARN("No such table [%s] in db [%s]", table_name, db);
+    return RC::SCHEMA_TABLE_NOT_EXIST;
+  }
+  // 添加聚合操作的信息
+  for (int j = selects->aggregateOp_num - 1; j >= 0; --j) {
+    AggregateOp tmpOp = selects->aggregateOp[j];
+    select_node.aggregateOps.push_back(tmpOp);
+    if (0 != strcmp("*",selects->attributes[j].attribute_name)){
+      RC rc = schema_add_field(table,selects->attributes[j].attribute_name,agg_schema);
+      if (rc != RC::SUCCESS) {
+        return rc;
+      }
+    } else if(selects->aggregateOp[j] == COUNT_OP) {
+      agg_schema.add(UNDEFINED,table_name,"*");
+    } else {
+      return RC::SCHEMA_FIELD_NOT_EXIST;
+    }
+  }
+
+  // 校验是否存在不在表中的属性
+  for (int i = selects->attr_num - 1; i >= 0; i--) {
+    const RelAttr &attr = selects->attributes[i];
+    if (nullptr == attr.relation_name || 0 == strcmp(table_name, attr.relation_name)) {
+      if (0 != strcmp("*", attr.attribute_name)) {
+        const FieldMeta *field_meta = table->table_meta().field(attr.attribute_name);
+        if (nullptr == field_meta) {
+          LOG_WARN("No such field. %s.%s", table->name(), attr.attribute_name);
+          return RC::SCHEMA_FIELD_MISSING;
+        }
+      }
+    }
+  }
+
+  TupleSchema::from_table(table, schema);
+
+  // 找出仅与此表相关的过滤条件, 或者都是值的过滤条件
+  std::vector<DefaultConditionFilter *> condition_filters;
+  for (size_t i = 0; i < selects->condition_num; i++) {
+    const Condition &condition = selects->conditions[i];
+    if (condition.comp == EQUAL_IN || condition.comp == NOT_IN){
+      continue;
+    }
+    if ((condition.left_is_attr == 0 && condition.right_is_attr == 0) || // 两边都是值
+        (condition.left_is_attr == 1 && condition.right_is_attr == 0 && match_table(*selects, condition.left_attr.relation_name, table_name)) ||  // 左边是属性右边是值
+        (condition.left_is_attr == 0 && condition.right_is_attr == 1 && match_table(*selects, condition.right_attr.relation_name, table_name)) ||  // 左边是值，右边是属性名
+        (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
+         match_table(*selects, condition.left_attr.relation_name, table_name) && match_table(*selects, condition.right_attr.relation_name, table_name)) // 左右都是属性名，并且表名都符合
+            ) {
+      DefaultConditionFilter *condition_filter = new DefaultConditionFilter();
+      RC rc = condition_filter->init(*table, condition);
+      if (rc != RC::SUCCESS) {
+        delete condition_filter;
+        for (DefaultConditionFilter * &filter : condition_filters) {
+          delete filter;
+        }
+        return rc;
+      }
+      condition_filters.push_back(condition_filter);
+    }
+    if (condition.left_is_attr == 1 && condition.right_is_attr == 1 &&
+        strcmp(condition.left_attr.relation_name,condition.right_attr.relation_name) != 0) {
+      if (strcmp(condition.left_attr.relation_name,table_name) == 0){
+        const FieldMeta *field_meta = table->table_meta().field(condition.left_attr.attribute_name);
+        if (nullptr == field_meta) return RC::SCHEMA_FIELD_MISSING;
+      }
+      if (strcmp(condition.right_attr.relation_name,table_name) == 0){
+        const FieldMeta *field_meta = table->table_meta().field(condition.right_attr.attribute_name);
+        if (nullptr == field_meta) return RC::SCHEMA_FIELD_MISSING;
+      }
+    }
+  }
+  for (int i = 0; i < in_conditions.size(); ++i) {
+    const Condition &condition = in_conditions[i];
+    if ((condition.left_is_attr == 1 && condition.right_is_attr == 0 && match_table(*selects, condition.left_attr.relation_name, table_name)) ||  // 左边是属性右边是值
+        (condition.left_is_attr == 0 && condition.right_is_attr == 1 && match_table(*selects, condition.right_attr.relation_name, table_name))) {
       DefaultConditionFilter *condition_filter = new DefaultConditionFilter();
       RC rc = condition_filter->init(*table, condition);
       if (rc != RC::SUCCESS) {
