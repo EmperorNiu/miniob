@@ -701,7 +701,6 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
   }
   // 添加聚合操作的信息
   for (int j = selects.aggregateOp_num - 1; j >= 0; --j) {
-    AggregateOp tmpOp = std::move(selects.aggregateOp[j]);
 //    AggregateOp tmpOp = selects.aggregateOp[j];
     select_node.aggregateOps[select_node.aggregateOp_num++] = selects.aggregateOp[j];
     if (0 != strcmp("*",selects.attributes[j].attribute_name)){
