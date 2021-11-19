@@ -219,17 +219,17 @@ void end_trx_if_need(Session *session, Trx *trx, bool all_right) {
 }
 
 // 子查询
-RC ExecuteStage::do_sub_select(const char *db,Selects &selects, SessionEvent *session_event, TupleSet& sub_tupleSet) {
+RC ExecuteStage::do_sub_select(const char *db,Selects *selects, SessionEvent *session_event, TupleSet& sub_tupleSet) {
   RC rc = RC::SUCCESS;
   Session *session = session_event->get_client()->session;
   Trx *trx = session->current_trx();
   std::vector<SelectExeNode *> select_nodes;
   // 元数据校验
-  for (size_t i = 0; i < selects.attr_num; i++) {
+  for (size_t i = 0; i < selects->attr_num; i++) {
     int flag = 0;
-    const RelAttr &attr = selects.attributes[i];
-    for (int j = 0; j < selects.relation_num; ++j) {
-      if (nullptr == attr.relation_name || 0 == strcmp(selects.relations[j], attr.relation_name))
+    const RelAttr &attr = selects->attributes[i];
+    for (int j = 0; j < selects->relation_num; ++j) {
+      if (nullptr == attr.relation_name || 0 == strcmp(selects->relations[j], attr.relation_name))
         flag = 1;
     }
     if (flag == 0) {
@@ -237,10 +237,10 @@ RC ExecuteStage::do_sub_select(const char *db,Selects &selects, SessionEvent *se
     }
   }
   // 把所有的表和只跟这张表关联的condition都拿出来，生成最底层的select 执行节点
-  for (int i = selects.relation_num-1; i >=0; i--) {
-    const char *table_name = selects.relations[i];
+  for (int i = selects->relation_num-1; i >=0; i--) {
+    const char *table_name = selects->relations[i];
     SelectExeNode *select_node = new SelectExeNode;
-    rc = create_selection_executor(trx, selects, db, table_name, *select_node, std::vector<Condition>());
+    rc = create_selection_executor(trx, *selects, db, table_name, *select_node, std::vector<Condition>());
     if (rc != RC::SUCCESS) {
       delete select_node;
       for (SelectExeNode *& tmp_node: select_nodes) {
@@ -272,20 +272,16 @@ RC ExecuteStage::do_sub_select(const char *db,Selects &selects, SessionEvent *se
     }
   }
   if (tuple_sets.size() == 1) {
-    // 当前只查询一张表，直接返回结果即可
-    if (selects.orderOp_num > 0) {
-      for (int i = 0; i < selects.orderOp_num; ++i) {
-        if (selects.orderOps[i].attr->relation_name == nullptr) {
-          selects.orderOps[i].attr->relation_name = selects.relations[0];
+    if (selects->orderOp_num > 0) {
+      for (int i = 0; i < selects->orderOp_num; ++i) {
+        if (selects->orderOps[i].attr->relation_name == nullptr) {
+          selects->orderOps[i].attr->relation_name = selects->relations[0];
         }
       }
-      tuple_sets.front().sort(selects.orderOps, selects.orderOp_num);
-
+      tuple_sets.front().sort(selects->orderOps, selects->orderOp_num);
     }
-
     sub_tupleSet = std::move(tuple_sets.front());
   }
-
   return rc;
 }
 
@@ -403,7 +399,7 @@ RC ExecuteStage::do_select(const char *db, Query *sql, SessionEvent *session_eve
     if (condition.sub_select == 1) {
       // do sub select
       TupleSet* sub_tupleSet = new TupleSet;
-      rc = do_sub_select(db, *sql->sstr.selection.subSelect,session_event,*sub_tupleSet);
+      rc = do_sub_select(db, sql->sstr.selection.subSelect, session_event,*sub_tupleSet);
 //      sub_tupleSet->print(ss);
       if (rc != RC::SUCCESS) {
         return rc;
