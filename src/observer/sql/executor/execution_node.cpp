@@ -62,7 +62,7 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
   condition_filter.init((const ConditionFilter **)condition_filters_.data(), condition_filters_.size());
   tuple_set.clear();
 
-  if (aggregateOps.size() == 0) {
+  if (aggregateOp_num == 0) {
     tuple_set.set_schema(tuple_schema_);
     TupleRecordConverter converter(table_, tuple_set);
     return table_->scan_record(trx_, &condition_filter, -1, (void *)&converter, record_reader);
@@ -78,7 +78,7 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
       return RC::SUCCESS;
     }
 
-    for (int i = 0; i < aggregateOps.size(); ++i) {
+    for (int i = 0; i < aggregateOp_num; ++i) {
       const char *field_name2 = aggregate_schema_.field(i).field_name();
       TupleRecordAggregateConverter converter(table_, tuple_set, aggregateOps[i], field_name2);
       RC rc = table_->scan_record(trx_, &condition_filter, -1, (void *)&converter, record_aggregate);
