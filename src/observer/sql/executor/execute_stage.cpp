@@ -219,7 +219,7 @@ void end_trx_if_need(Session *session, Trx *trx, bool all_right) {
 }
 
 // 子查询
-RC ExecuteStage::do_sub_select(const char *db, Selects selects, SessionEvent *session_event, TupleSet& sub_tupleSet) {
+RC ExecuteStage::do_sub_select(const char *db,Selects &selects, SessionEvent *session_event, TupleSet& sub_tupleSet) {
   RC rc = RC::SUCCESS;
   Session *session = session_event->get_client()->session;
   Trx *trx = session->current_trx();
@@ -706,7 +706,7 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
   // 添加聚合操作的信息
   for (int j = selects.aggregateOp_num - 1; j >= 0; --j) {
     AggregateOp tmpOp = selects.aggregateOp[j];
-    select_node.aggregateOps.emplace_back(tmpOp);
+    select_node.aggregateOps.push_back(tmpOp);
     if (0 != strcmp("*",selects.attributes[j].attribute_name)){
       RC rc = schema_add_field(table,selects.attributes[j].attribute_name,agg_schema);
       if (rc != RC::SUCCESS) {
