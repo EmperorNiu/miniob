@@ -808,10 +808,10 @@ RC create_sub_selection_executor(Trx *trx, Selects *selects, const char *db, con
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
   // 添加聚合操作的信息
-  *(select_node.aggregateOps) = *(selects->aggregateOp);
+//  *(select_node.aggregateOps) = *(selects->aggregateOp);
   for (int j = selects->aggregateOp_num - 1; j >= 0; --j) {
 //    AggregateOp tmpOp = selects->aggregateOp[j];
-//    select_node.aggregateOps[select_node.aggregateOp_num++] = selects->aggregateOp[j];
+    select_node.aggregateOps[select_node.aggregateOp_num++] = selects->aggregateOp[j];
     if (0 != strcmp("*",selects->attributes[j].attribute_name)){
       RC rc = schema_add_field(table,selects->attributes[j].attribute_name,agg_schema);
       if (rc != RC::SUCCESS) {
