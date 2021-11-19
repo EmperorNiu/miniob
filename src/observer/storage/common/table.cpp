@@ -936,7 +936,14 @@ RC Table::update_entry_of_indexes(const char *record, const RID &rid) {
 RC Table::delete_entry_of_indexes(const char *record, const RID &rid, bool error_on_not_exists) {
     RC rc = RC::SUCCESS;
     for (Index *index: indexes_) {
-        rc = index->delete_entry(record, &rid);
+      std::vector<FieldMeta> fieldmetas = index->field_metas();
+      char r[table_meta_.record_size()];
+      int offset = 0;
+      for(auto & field_meta : fieldmetas){
+        memcpy(r + offset, record + field_meta.offset(), field_meta.len());
+        offset += field_meta.len();
+      }
+        rc = index->delete_entry(r, &rid);
         if (rc != RC::SUCCESS) {
             if (rc != RC::RECORD_INVALID_KEY || !error_on_not_exists) {
                 break;
@@ -991,130 +998,130 @@ IndexScanner *Table::find_index_for_scan(const DefaultConditionFilter &filter) {
     return index->create_scanner(filter.comp_op(), (const char *) value_cond_desc->value);
 }
 
-IndexScanner *Table::find_index_for_scan_multi(const ConditionFilter *filter){
-  const CompositeConditionFilter *composite = dynamic_cast<const CompositeConditionFilter *>(filter);
-  if(composite == nullptr){
-    return nullptr;
-  }
-  char target_s[table_meta_.record_size()];
-
-
-  Index * target_index = nullptr;
-  CompOp target_op = EQUAL_TO;
-  //目前支持两种情况
-  //单列索引，支持<，>，。。。。
-  //多列索引，只支持======
-  for(Index *index : indexes_){
-    //最长前缀能否匹配
-    //匹配的前缀个数
-    std::vector<FieldMeta> fields = index->field_metas();
-    int i;
-    int offset = 0;
-    char s[table_meta_.record_size()];
-    CompOp op ;
-    bool succ = false;
-    for(i = 0; i < fields.size(); i++){
-      FieldMeta &field = fields[i];
-
-      int j;
-      for(j = 0; j < composite->filter_num(); j++){
-        const DefaultConditionFilter * deffilter = dynamic_cast<const DefaultConditionFilter *>
-        (&(composite->filter(j)));
-        const ConDesc *field_cond_desc = nullptr;
-        const ConDesc *value_cond_desc = nullptr;
-        if (deffilter->left().is_attr && !deffilter->right().is_attr) {//一边值，一边属性
-          field_cond_desc = &deffilter->left();
-          value_cond_desc = &deffilter->right();
-        } else if (deffilter->right().is_attr && !deffilter->left().is_attr) {
-          field_cond_desc = &deffilter->right();
-          value_cond_desc = &deffilter->left();
-        }
-        if (field_cond_desc->attr_offset != field.offset() || field_cond_desc == nullptr || value_cond_desc == nullptr) {
-          continue;
-        }
-
-        if(deffilter->comp_op() == EQUAL_TO){//find it
-          memcpy(s + offset, value_cond_desc->value, field_cond_desc->attr_length);
-          offset += field_cond_desc->attr_length;
-          op = deffilter->comp_op();
-          break;
-        }else if(deffilter->comp_op() != NOT_EQUAL && deffilter->comp_op() <= GREAT_THAN){
-          memcpy(s + offset, value_cond_desc->value, field_cond_desc->attr_length);
-          offset += field_cond_desc->attr_length;
-          op = deffilter->comp_op();
-          break;
-        }
-      }
-      if(j == composite->filter_num()){//没找到
-        break;
-      }else{
-        if(op == EQUAL_TO){
-
-        }else{
-          if(i == 0){//只有一个，可以不为等于号
-            i++;
-          }
-          break;
-        }
-      }
-    }
-
-    //寻找最优的索引
-    //目前两种情况，单索引
-    //多列==查找索引
-    if(i == fields.size()){
-      target_index = index;
-      target_op = op;
-      memcpy(target_s, s, sizeof(s));
-      break;
-    }
-
-  }
-
-  if(target_index == nullptr){
-    return nullptr;
-  }else{
-    return target_index->create_scanner(target_op, target_s);
-  }
-}
-
-IndexScanner *Table::find_index_for_scan(const ConditionFilter *filter) {
-  if (nullptr == filter) {
-    return nullptr;
-  }
-
-  IndexScanner *scanner= find_index_for_scan_multi(filter);
-  if (scanner != nullptr) {
-    return scanner;
-  }
-
-  return nullptr;
-}
-
-//IndexScanner *Table::find_index_for_scan(const ConditionFilter *filter) {
-//    if (nullptr == filter) {
-//        return nullptr;
-//    }
-//    if (!filter->isIn()){
-//      // remove dynamic_cast
-//      const DefaultConditionFilter *default_condition_filter = dynamic_cast<const DefaultConditionFilter *>(filter);
-//      if (default_condition_filter != nullptr) {
-//        return find_index_for_scan(*default_condition_filter);
+//IndexScanner *Table::find_index_for_scan_multi(const ConditionFilter *filter){
+//  const CompositeConditionFilter *composite = dynamic_cast<const CompositeConditionFilter *>(filter);
+//  if(composite == nullptr){
+//    return nullptr;
+//  }
+//  char target_s[table_meta_.record_size()];
+//
+//
+//  Index * target_index = nullptr;
+//  CompOp target_op = EQUAL_TO;
+//  //目前支持两种情况
+//  //单列索引，支持<，>，。。。。
+//  //多列索引，只支持======
+//  for(Index *index : indexes_){
+//    //最长前缀能否匹配
+//    //匹配的前缀个数
+//    std::vector<FieldMeta> fields = index->field_metas();
+//    int i;
+//    int offset = 0;
+//    char s[table_meta_.record_size()];
+//    CompOp op ;
+//    bool succ = false;
+//    for(i = 0; i < fields.size(); i++){
+//      FieldMeta &field = fields[i];
+//
+//      int j;
+//      for(j = 0; j < composite->filter_num(); j++){
+//        const DefaultConditionFilter * deffilter = dynamic_cast<const DefaultConditionFilter *>
+//        (&(composite->filter(j)));
+//        const ConDesc *field_cond_desc = nullptr;
+//        const ConDesc *value_cond_desc = nullptr;
+//        if (deffilter->left().is_attr && !deffilter->right().is_attr) {//一边值，一边属性
+//          field_cond_desc = &deffilter->left();
+//          value_cond_desc = &deffilter->right();
+//        } else if (deffilter->right().is_attr && !deffilter->left().is_attr) {
+//          field_cond_desc = &deffilter->right();
+//          value_cond_desc = &deffilter->left();
+//        }
+//        if (field_cond_desc->attr_offset != field.offset() || field_cond_desc == nullptr || value_cond_desc == nullptr) {
+//          continue;
+//        }
+//
+//        if(deffilter->comp_op() == EQUAL_TO){//find it
+//          memcpy(s + offset, value_cond_desc->value, field_cond_desc->attr_length);
+//          offset += field_cond_desc->attr_length;
+//          op = deffilter->comp_op();
+//          break;
+//        }else if(deffilter->comp_op() != NOT_EQUAL && deffilter->comp_op() <= GREAT_THAN){
+//          memcpy(s + offset, value_cond_desc->value, field_cond_desc->attr_length);
+//          offset += field_cond_desc->attr_length;
+//          op = deffilter->comp_op();
+//          break;
+//        }
+//      }
+//      if(j == composite->filter_num()){//没找到
+//        break;
+//      }else{
+//        if(op == EQUAL_TO){
+//
+//        }else{
+//          if(i == 0){//只有一个，可以不为等于号
+//            i++;
+//          }
+//          break;
+//        }
 //      }
 //    }
 //
-//    const CompositeConditionFilter *composite_condition_filter = dynamic_cast<const CompositeConditionFilter *>(filter);
-//    if (composite_condition_filter != nullptr) {
-//        int filter_num = composite_condition_filter->filter_num();
-//        for (int i = 0; i < filter_num; i++) {
-//            IndexScanner *scanner = find_index_for_scan(&composite_condition_filter->filter(i));
-//            if (scanner != nullptr) {
-//                return scanner; // 可以找到一个最优的，比如比较符号是=
-//            }
-//        }
+//    //寻找最优的索引
+//    //目前两种情况，单索引
+//    //多列==查找索引
+//    if(i == fields.size()){
+//      target_index = index;
+//      target_op = op;
+//      memcpy(target_s, s, sizeof(s));
+//      break;
 //    }
+//
+//  }
+//
+//  if(target_index == nullptr){
 //    return nullptr;
+//  }else{
+//    return target_index->create_scanner(target_op, target_s);
+//  }
 //}
+//
+//IndexScanner *Table::find_index_for_scan(const ConditionFilter *filter) {
+//  if (nullptr == filter) {
+//    return nullptr;
+//  }
+//
+//  IndexScanner *scanner= find_index_for_scan_multi(filter);
+//  if (scanner != nullptr) {
+//    return scanner;
+//  }
+//
+//  return nullptr;
+//}
+
+IndexScanner *Table::find_index_for_scan(const ConditionFilter *filter) {
+    if (nullptr == filter) {
+        return nullptr;
+    }
+    if (!filter->isIn()){
+      // remove dynamic_cast
+      const DefaultConditionFilter *default_condition_filter = dynamic_cast<const DefaultConditionFilter *>(filter);
+      if (default_condition_filter != nullptr) {
+        return find_index_for_scan(*default_condition_filter);
+      }
+    }
+
+    const CompositeConditionFilter *composite_condition_filter = dynamic_cast<const CompositeConditionFilter *>(filter);
+    if (composite_condition_filter != nullptr) {
+        int filter_num = composite_condition_filter->filter_num();
+        for (int i = 0; i < filter_num; i++) {
+            IndexScanner *scanner = find_index_for_scan(&composite_condition_filter->filter(i));
+            if (scanner != nullptr) {
+                return scanner; // 可以找到一个最优的，比如比较符号是=
+            }
+        }
+    }
+    return nullptr;
+}
 
 RC Table::sync() {
     RC rc = data_buffer_pool_->flush_all_pages(file_id_);

@@ -293,6 +293,7 @@ create table person(id int, height float, name char, birthday date);
 create index i_id_age on person(height, name);
 insert into person values(0, 1.73, 't1', '1999-01-13');
 insert into person values(1, 1.78, 't2', '1999-03-15');
+DELETE FROM person WHERE height = 1.78 AND name = 't2';
 insert into person values(1, 1.93, 't2', '1999-03-25');
 insert into person values(2, 1.51, 't4', '1899-03-17');
 insert into person values(2, 1.61, 't4', '1999-06-19');
