@@ -705,8 +705,8 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
   }
   // 添加聚合操作的信息
   for (int j = selects.aggregateOp_num - 1; j >= 0; --j) {
-    const AggregateOp &tmpOp = selects.aggregateOp[j];
-    select_node.aggregateOps.emplace_back(tmpOp);
+//    const AggregateOp &tmpOp = selects.aggregateOp[j];
+//    select_node.aggregateOps.emplace_back(tmpOp);
     if (0 != strcmp("*",selects.attributes[j].attribute_name)){
       RC rc = schema_add_field(table,selects.attributes[j].attribute_name,agg_schema);
       if (rc != RC::SUCCESS) {
