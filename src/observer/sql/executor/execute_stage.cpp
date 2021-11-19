@@ -701,7 +701,8 @@ RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, c
   }
   // 添加聚合操作的信息
   for (int j = selects.aggregateOp_num - 1; j >= 0; --j) {
-    AggregateOp tmpOp = selects.aggregateOp[j];
+    AggregateOp tmpOp = std::move(selects.aggregateOp[j]);
+//    AggregateOp tmpOp = selects.aggregateOp[j];
     select_node.aggregateOps.push_back(tmpOp);
     if (0 != strcmp("*",selects.attributes[j].attribute_name)){
       RC rc = schema_add_field(table,selects.attributes[j].attribute_name,agg_schema);
@@ -811,7 +812,8 @@ RC create_sub_selection_executor(Trx *trx, Selects *selects, const char *db, con
   }
   // 添加聚合操作的信息
   for (int j = selects->aggregateOp_num - 1; j >= 0; --j) {
-    AggregateOp tmpOp = selects->aggregateOp[j];
+//    AggregateOp tmpOp = selects->aggregateOp[j];
+    AggregateOp tmpOp = std::move(selects->aggregateOp[j]);
     select_node.aggregateOps.push_back(tmpOp);
     if (0 != strcmp("*",selects->attributes[j].attribute_name)){
       RC rc = schema_add_field(table,selects->attributes[j].attribute_name,agg_schema);
