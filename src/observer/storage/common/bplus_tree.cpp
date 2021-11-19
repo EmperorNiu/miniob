@@ -225,14 +225,18 @@ int CompAttrs(AttrType attr_type[], int attr_length[], int len, const char *p1, 
 }
 
 int CmpKey(AttrType attr_type[], int attr_length[], int attr_num, const char *pdata, char *pkey) {
-  char *p1 = const_cast<char *>(pdata);
+  const char *p1 = pdata;
   char *p2 = pkey;
   int res = CompAttrs(attr_type, attr_length, attr_num, p1, p2);
   if(res != 0){
     return res;
   }
-  RID *rid1 = (RID *) (p1);
-  RID *rid2 = (RID *) (p2);
+  int length = 0;
+  for (int i = 0; i < attr_num; ++i) {
+    length+=attr_length[i];
+  }
+  RID *rid1 = (RID *) (p1+length);
+  RID *rid2 = (RID *) (p2+length);
   return CmpRid(rid1, rid2);
 }
 
@@ -846,15 +850,15 @@ RC BplusTreeHandler::insert_entry(const char *pkey, const RID *rid) {
         LOG_ERROR("Failed to alloc memory for key. size=%d", file_header_.key_length);
         return RC::NOMEM;
     }
-//  memcpy(key, pkey, file_header_.key_length - sizeof(*rid));
-//  //复制rid信息
-//  memcpy(key + file_header_.key_length - sizeof(*rid), rid, sizeof(*rid));
-    int total_length = 0;
-    for (int i = 0; i < file_header_.attr_num; ++i) {
-      total_length += file_header_.attr_length[i];
-    }
-    memcpy(key, pkey, total_length);
-    memcpy(key + total_length, rid, sizeof(*rid));
+    memcpy(key, pkey, file_header_.key_length - sizeof(*rid));
+    //复制rid信息
+    memcpy(key + file_header_.key_length - sizeof(*rid), rid, sizeof(*rid));
+//    int total_length = 0;
+//    for (int i = 0; i < file_header_.attr_num; ++i) {
+//      total_length += file_header_.attr_length[i];
+//    }
+//    memcpy(key, pkey, total_length);
+//    memcpy(key + total_length, rid, sizeof(*rid));
     rc = find_leaf(key, &leaf_page);
     if (rc != SUCCESS) {
         free(key);

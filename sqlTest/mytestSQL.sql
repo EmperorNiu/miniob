@@ -59,7 +59,7 @@ update j1 set age="31" where id=2;
 
 show tables;
 create table person(id int, height float, name char, birthday date);
-create index id_index on person(id);
+create index date_index on person(birthday);
 insert into person values(0, 1.73, 't1', '2020-01-1');
 insert into person values(1, 1.78, 't2', '2020-1-01');
 insert into person values(2, 1.51, 't3', '1999-06-17');
