@@ -35,7 +35,7 @@ See the Mulan PSL v2 for more details. */
 
 using namespace common;
 
-RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, const char *table_name, SelectExeNode &select_node,std::vector<Condition> in_conditions);
+RC create_selection_executor(Trx *trx, Selects &selects, const char *db, const char *table_name, SelectExeNode &select_node,std::vector<Condition> in_conditions);
 RC create_sub_selection_executor(Trx *trx, Selects *selects, const char *db, const char *table_name, SelectExeNode &select_node,std::vector<Condition> in_conditions);
 //! Constructor
 ExecuteStage::ExecuteStage(const char *tag) : Stage(tag) {}
@@ -689,7 +689,7 @@ static RC schema_add_field(Table *table, const char *field_name, TupleSchema &sc
 
 
 // 把所有的表和只跟这张表关联的condition都拿出来，生成最底层的select 执行节点
-RC create_selection_executor(Trx *trx, const Selects &selects, const char *db, const char *table_name, SelectExeNode &select_node, std::vector<Condition> in_conditions) {
+RC create_selection_executor(Trx *trx, Selects &selects, const char *db, const char *table_name, SelectExeNode &select_node, std::vector<Condition> in_conditions) {
   // 列出跟这张表关联的Attr
   TupleSchema schema;
   TupleSchema agg_schema;
