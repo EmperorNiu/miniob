@@ -810,6 +810,14 @@ condition:
 		CONTEXT->conditions[CONTEXT->condition_length++] = condition;
 		// sub_selects_init(&CONTEXT->ssql->sstr.selection);
     }
+    | subselect comOp ID {
+		RelAttr left_attr;
+		relation_attr_init(&left_attr, NULL, $3);
+		Condition condition;
+		condition_init2(&condition, CONTEXT->comp, 1, &left_attr, NULL, 0, NULL, NULL,1);
+		CONTEXT->conditions[CONTEXT->condition_length++] = condition;
+		// sub_selects_init(&CONTEXT->ssql->sstr.selection);
+    }
     | ID DOT ID comOp subselect {
 		RelAttr left_attr;
 		relation_attr_init(&left_attr, $1, $3);

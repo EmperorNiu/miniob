@@ -256,7 +256,7 @@ RC ExecuteStage::do_sub_select(const char *db, Selects selects, SessionEvent *se
     end_trx_if_need(session, trx, false);
     return RC::SQL_SYNTAX;
   }
-//  std::stringstream ss;
+
   std::vector<TupleSet> tuple_sets;
   for (SelectExeNode *&node: select_nodes) {
     TupleSet tuple_set;
@@ -285,8 +285,7 @@ RC ExecuteStage::do_sub_select(const char *db, Selects selects, SessionEvent *se
 
     sub_tupleSet = std::move(tuple_sets.front());
   }
-//  sub_tupleSet.print(ss);
-//  session_event->set_response(ss.str());
+
   return rc;
 }
 
