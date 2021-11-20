@@ -198,6 +198,7 @@ select id,name,avg(height) from person group by id,name;
 create index id_index on person(id);
 select * from person;
 select id,avg(height) from person group by id;
+SELECT name, MIN(id), MAX(height) FROM person GROUP BY name;
 
 select id,name,max(height) from person group by id,name;
 

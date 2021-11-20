@@ -249,9 +249,9 @@ void TupleSet::print(std::ostream &os, const Selects selects) const {
     if (schema_.field(i).isAgg()){
       is_show.push_back(1);
     } else {
-
+      is_show.push_back(0);
     }
-    is_show.push_back(0);
+
   }
 
   for (size_t i = 0; i < selects.relation_num; i++) {
