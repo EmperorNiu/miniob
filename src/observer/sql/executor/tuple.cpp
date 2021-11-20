@@ -615,7 +615,6 @@ int float_compare2(float f1, float f2) {
 int CompareKey2(const char *pdata, const char *pkey, AttrType attr_type, int attr_length) {
   int i1, i2;
   float f1, f2;
-  const char *s1, *s2;
   switch (attr_type) {
     case DATES:
     case INTS: {
@@ -636,9 +635,7 @@ int CompareKey2(const char *pdata, const char *pkey, AttrType attr_type, int att
     }
       break;
     case CHARS: {
-      s1 = pdata;
-      s2 = pkey;
-      return strcmp(s1, s2);
+      return strncmp(pdata, pkey, attr_length);
     }
       break;
     default: {
