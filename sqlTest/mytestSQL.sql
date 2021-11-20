@@ -219,6 +219,17 @@ insert into gr values(3, 'B', 12),(3, 'A', 11);
 insert into gr values(2, 'C', 17),(2, 'A', 29);
 select id,name,avg(col2) from gr GROUP BY id,name;
 
+group-by: result file difference(`-` is yours and `+` is base)
+SELECT ID, NAME, AVG(SCORE) FROM T_GROUP_BY GROUP BY ID, NAME;
+1 | B | 2
+ 3 | A | 1
+-3 | C | 2
+-3 | C | 4
++3 | C | 3
+ 3 | D | 3
+ 3 | F | 2
+ 4 | C | 3
+ ID | NAME | AVG(SCORE)
 
 3. PRIMARY GROUP BY
 SELECT ID, AVG(SCORE) FROM T_GROUP_BY GROUP BY ID;
