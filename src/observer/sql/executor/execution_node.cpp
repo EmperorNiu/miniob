@@ -130,7 +130,7 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
       }
 
       // 添加 agg 列
-      for (int i = aggregateOp_num-1; i >=0; --i) {
+      for (int i = 0; i <aggregateOp_num; ++i) {
         TupleSet tupleSet_;
         const char *aggregation_field = aggregate_schema_.field(i).field_name();
         TupleRecordAggregateGroupByConverter converter(table_,
@@ -146,7 +146,6 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
 
           Tuple tuple = group_tupleSet.tuples()[j];
           int total_length=0;
-
           int offset = 0;
           AttrType ts[group_schema_.fields().size()];
           int tns[group_schema_.fields().size()];

@@ -743,13 +743,7 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
   std::unordered_map<char *,int>::iterator int_iter;
   std::unordered_map<char *,float>::iterator float_iter;
   std::unordered_map<char *,std::string>::iterator string_iter;
-//  if (count_map.find(key) != count_map.end()) {
-//    count_map[key] += 1;
-//  } else {
-//    count_map[key] = 1;
-//    count_ += 1;
-//    keys.push_back(key);
-//  }
+
   switch (aggregateOp_) {
     case MAX_OP: {
       switch (agg_field_meta->type()) {
