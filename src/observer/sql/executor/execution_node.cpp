@@ -129,9 +129,8 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
         group_tupleSet.add(std::move(tuple));
       }
 
-
       // 添加 agg 列
-      for (int i = 0; i < aggregateOp_num; ++i) {
+      for (int i = aggregateOp_num-1; i >=0; --i) {
         TupleSet tupleSet_;
         const char *aggregation_field = aggregate_schema_.field(i).field_name();
         TupleRecordAggregateGroupByConverter converter(table_,
