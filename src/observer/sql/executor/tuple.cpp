@@ -911,7 +911,6 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
 //            if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0) {
               flag = 1;
               float_iter->second += (float)value;
-              break;
             }
           }
           if (flag == 0) {
@@ -921,13 +920,12 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
           break;
         case FLOATS: {
           float value = *(float*)(record + agg_field_meta->offset());
-          float agg_float;
+          int flag = 0;
           for(float_iter=agg_float_map.begin(); float_iter!=agg_float_map.end(); float_iter++) {
             if(memcmp(key,float_iter->first,total_length) == 0){
 //            if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0) {
               flag = 1;
               float_iter->second += value;
-              break;
             }
           }
           if (flag == 0) {

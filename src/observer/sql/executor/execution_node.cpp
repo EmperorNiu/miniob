@@ -265,7 +265,7 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
                 field_name = "AVG(" + (std::string)aggregation_field + ")";
                 for(float_iter=converter.agg_float_map.begin(); float_iter!=converter.agg_float_map.end(); float_iter++){
                   for(int_iter2=converter.count_map.begin(); int_iter2!=converter.count_map.end(); int_iter2++){
-                    if(memcmp(key,float_iter->first,total_length) == 0 && memcmp(key,int_iter2->first,total_length)){
+                    if(memcmp(key,float_iter->first,total_length) == 0 && memcmp(key,int_iter2->first,total_length)==0){
 //                    if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0
 //                        && CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter2->first) == 0){
                       tuple.add(float_iter->second/int_iter2->second);

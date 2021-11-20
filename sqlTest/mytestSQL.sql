@@ -201,6 +201,7 @@ select id,name,avg(height) from person group by id,name;
 select id,name,min(height),max(height),avg(height) from person group by id,name;
 
 create index id_index on person(id);
+create index h_index on person(height);
 create index name_index on person(name);
 select * from person;
 select id,avg(height) from person group by id;
