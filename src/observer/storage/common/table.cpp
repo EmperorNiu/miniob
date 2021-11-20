@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details. */
 #include <limits.h>
 #include <string.h>
 #include <algorithm>
+#include <sql/executor/tuple.h>
 //#include <vector>
 #include "storage/common/table.h"
 #include "storage/common/table_meta.h"
@@ -467,6 +468,8 @@ RC Table::scan_record(Trx *trx, ConditionFilter *filter, int limit, void *contex
     }
 
     IndexScanner *index_scanner = find_index_for_scan(filter);
+
+    // if (typeid(*context).name() == typeid(TupleRecordAggregateGroupByConverter).name())
     if (index_scanner != nullptr) {
         return scan_record_by_index(trx, index_scanner, filter, limit, context, record_reader);
     }

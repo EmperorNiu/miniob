@@ -660,7 +660,7 @@ int CompAttrs2(AttrType attr_type[], int attr_length[], int len, char *p1, char 
   return 0;
 }
 
-int TupleRecordAggregateGroupByConverter::iterComp(std::map<char *, int>::iterator iter,AttrType attr_type[], char *p1, int attr_length[], int len){
+int TupleRecordAggregateGroupByConverter::iterComp(std::unordered_map<char *, int>::iterator iter,AttrType attr_type[], char *p1, int attr_length[], int len){
   int flag = 0;
   for(iter=count_map.begin(); iter!=count_map.end(); iter++) {
     if (CompAttrs2(attr_type,attr_length,group_schema_.fields().size(),p1,iter->first) == 0) {
@@ -675,7 +675,7 @@ void TupleRecordAggregateGroupByConverter::group_record(const char *record){
   int total_length = 0;
   AttrType ts[group_schema_.fields().size()];
   int tns[group_schema_.fields().size()];
-  for (int i = 0; i < group_schema_.fields().size(); ++i) {
+  for (int i = group_schema_.fields().size()-1; i >=0; --i) {
     const FieldMeta *field_meta = table_meta.field(group_schema_.field(i).field_name());
     total_length += field_meta->len();
     ts[i] = field_meta->type();
@@ -688,7 +688,7 @@ void TupleRecordAggregateGroupByConverter::group_record(const char *record){
     memcpy(key + offset, record + field_meta->offset(), field_meta->len());
     offset += field_meta->len();
   }
-  std::map<char *, int>::iterator iter;
+  std::unordered_map<char *, int>::iterator iter;
   int flag = 0;
   for(iter=count_map.begin(); iter!=count_map.end(); iter++) {
     if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,iter->first) == 0) {
@@ -712,7 +712,7 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
   int total_length = 0;
   AttrType ts[group_schema_.fields().size()];
   int tns[group_schema_.fields().size()];
-  for (int i = 0; i < group_schema_.fields().size(); ++i) {
+  for (int i = group_schema_.fields().size()-1; i >=0; --i) {
     const FieldMeta *field_meta = table_meta.field(group_schema_.field(i).field_name());
     total_length += field_meta->len();
     ts[i] = field_meta->type();
@@ -723,11 +723,11 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
   for (int i = group_schema_.fields().size()-1; i >=0; --i) {
     const FieldMeta *field_meta = table_meta.field(group_schema_.field(i).field_name());
     memcpy(key + offset, record + field_meta->offset(), field_meta->len());
-    offset += field_meta->offset();
+    offset += field_meta->len();
   }
 //  std::string key_ = (std::string) key;
 
-  std::map<char *, int>::iterator iter;
+  std::unordered_map<char *, int>::iterator iter;
   int flag = 0;
   for(iter=count_map.begin(); iter!=count_map.end(); iter++) {
     if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,iter->first) == 0) {
@@ -741,9 +741,9 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
     keys.push_back(key);
   }
 
-  std::map<char *,int>::iterator int_iter;
-  std::map<char *,float>::iterator float_iter;
-  std::map<char *,std::string>::iterator string_iter;
+  std::unordered_map<char *,int>::iterator int_iter;
+  std::unordered_map<char *,float>::iterator float_iter;
+  std::unordered_map<char *,std::string>::iterator string_iter;
 //  if (count_map.find(key) != count_map.end()) {
 //    count_map[key] += 1;
 //  } else {
@@ -762,9 +762,9 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
           for(int_iter=agg_int_map.begin(); int_iter!=agg_int_map.end(); int_iter++) {
             if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter->first) == 0) {
               flag = 1;
-              agg_int = agg_int_map[key];
+              agg_int = int_iter->second;
               if (value > agg_int) {
-                agg_int_map[key] = value;
+                int_iter->second = value;
               }
             }
           }
@@ -780,10 +780,11 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
           for(float_iter=agg_float_map.begin(); float_iter!=agg_float_map.end(); float_iter++) {
             if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0) {
               flag = 1;
-              agg_float = agg_float_map[key];
+              agg_float = float_iter->second;
               if (value > agg_float) {
-                agg_float_map[key] = value;
+                float_iter->second = value;
               }
+              break;
             }
           }
           if (flag == 0) {
@@ -798,9 +799,9 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
           for(string_iter=agg_string_map.begin(); string_iter!=agg_string_map.end(); string_iter++) {
             if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,string_iter->first) == 0) {
               flag = 1;
-              agg_string = agg_string_map[key];
+              agg_string = string_iter->second;
               if (strcmp(value,agg_string.c_str()) > 0) {
-                agg_string_map[key] = value;
+                string_iter->second = value;
               }
             }
           }
@@ -825,9 +826,9 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
           for(int_iter=agg_int_map.begin(); int_iter!=agg_int_map.end(); int_iter++) {
             if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter->first) == 0) {
               flag = 1;
-              agg_int = agg_int_map[key];
+              agg_int = int_iter->second;
               if (value < agg_int) {
-                agg_int_map[key] = value;
+                int_iter->second = value;
               }
             }
           }
@@ -842,9 +843,9 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
           for(float_iter=agg_float_map.begin(); float_iter!=agg_float_map.end(); float_iter++) {
             if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0) {
               flag = 1;
-              agg_float = agg_float_map[key];
+              agg_float = float_iter->second;
               if (value < agg_float) {
-                agg_float_map[key] = value;
+                float_iter->second = value;
               }
             }
           }
@@ -860,9 +861,9 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
           for(string_iter=agg_string_map.begin(); string_iter!=agg_string_map.end(); string_iter++) {
             if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,string_iter->first) == 0) {
               flag = 1;
-              agg_string = agg_string_map[key];
+              agg_string = string_iter->second;
               if (strcmp(value,agg_string.c_str()) < 0) {
-                agg_string_map[key] = value;
+                string_iter->second = value;
               }
             }
           }
@@ -883,13 +884,13 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
           int value = *(int*)(record + agg_field_meta->offset());
           float agg_float;
           int flag = 0;
-          for(int_iter=agg_int_map.begin(); int_iter!=agg_int_map.end(); int_iter++) {
-            if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter->first) == 0) {
+          for(float_iter=agg_float_map.begin(); float_iter!=agg_float_map.end(); float_iter++) {
+            if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0) {
               flag = 1;
-              agg_float = agg_float_map[key];
-              if (value < agg_float) {
-                agg_float_map[key] += (float)value;
-              }
+              agg_float = float_iter->second;
+
+              float_iter->second += (float)value;
+
             }
           }
           if (flag == 0) {
@@ -903,10 +904,10 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
           for(float_iter=agg_float_map.begin(); float_iter!=agg_float_map.end(); float_iter++) {
             if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0) {
               flag = 1;
-              agg_float = agg_float_map[key];
-              if (value < agg_float) {
-                agg_float_map[key] += value;
-              }
+              agg_float = float_iter->second;
+
+              float_iter->second += value;
+
             }
           }
           if (flag == 0) {

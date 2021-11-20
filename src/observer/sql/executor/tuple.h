@@ -27,6 +27,8 @@ See the Mulan PSL v2 for more details. */
 
 class Table;
 
+int CompAttrs2(AttrType attr_type[], int attr_length[], int len, char *p1, char *p2);
+
 class Tuple {
 public:
   Tuple() = default;
@@ -219,12 +221,12 @@ public:
         }
     };
     void group_record(const char *record);
-    std::map<char *,int> count_map;
-    std::map<char *,int> agg_int_map;
-    std::map<char *,float> agg_float_map;
-    std::map<char *,std::string> agg_string_map;
+    std::unordered_map<char *,int> count_map;
+    std::unordered_map<char *,int> agg_int_map;
+    std::unordered_map<char *,float> agg_float_map;
+    std::unordered_map<char *,std::string> agg_string_map;
     std::vector<char *> keys;
-    int iterComp(std::map<char *, int>::iterator iter,AttrType attr_type[], char *p1, int attr_length[], int len);
+    int iterComp(std::unordered_map<char *, int>::iterator iter,AttrType attr_type[], char *p1, int attr_length[], int len);
     int count() { return count_; }
     AttrType type;
 private:

@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details. */
 #include "sql/executor/execution_node.h"
 #include "storage/common/table.h"
 #include "common/log/log.h"
+#include "tuple.h"
 
 SelectExeNode::SelectExeNode() : table_(nullptr) {
 }
@@ -137,42 +138,105 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
                                tuple_set, aggregateOps[i], aggregation_field,group_schema_);
         RC rc = table_->scan_record(trx_, &condition_filter, -1, (void *)&converter, record_group_aggregate);
         if (rc != RC::SUCCESS) return rc;
-        std::map<char * ,int>::iterator int_iter2 = converter.count_map.begin();
-        std::map<char *,int>::iterator int_iter1 = converter.agg_int_map.begin();
-        std::map<char *,float>::iterator float_iter = converter.agg_float_map.begin();
-        std::map<char *,std::string>::iterator string_iter = converter.agg_string_map.begin();
+        std::unordered_map<char * ,int>::iterator int_iter2;
+        std::unordered_map<char *,int>::iterator int_iter1;
+        std::unordered_map<char *,float>::iterator float_iter;
+        std::unordered_map<char *,std::string>::iterator string_iter;
         std::string field_name;
         for (int j = 0; j < converter.count(); ++j) {
+
           Tuple tuple = group_tupleSet.tuples()[j];
+          int total_length=0;
+
+          int offset = 0;
+          AttrType ts[group_schema_.fields().size()];
+          int tns[group_schema_.fields().size()];
+          for (int ii = group_schema_.fields().size() - 1; ii >= 0; --ii) {
+            const FieldMeta *field_meta = table_meta.field(group_schema_.field(ii).field_name());
+            total_length += field_meta->len();
+            ts[ii] = field_meta->type();
+            tns[ii] = field_meta->len();
+          }
+          char *key = (char *)malloc(total_length);
+          for (int ii = group_schema_.fields().size() - 1; ii >= 0; --ii) {
+            const FieldMeta *field_meta = table_meta.field(group_schema_.field(ii).field_name());
+            memcpy(key + offset, converter.keys[j] + offset, field_meta->len());
+            offset += field_meta->len();
+          }
           switch (aggregateOps[i]) {
             case MAX_OP:
               field_name = "MAX(" + (std::string)aggregation_field + ")";
-              if (converter.type == INTS) tuple.add(int_iter1->second);
-              if (converter.type == FLOATS) tuple.add(float_iter->second);
-              if (converter.type == CHARS) tuple.add(string_iter->second.c_str(), strlen(string_iter->second.c_str()));
+              if (converter.type == INTS) {
+                for(int_iter1=converter.agg_int_map.begin(); int_iter1!=converter.agg_int_map.end(); int_iter1++){
+                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter1->first) == 0){
+                    tuple.add(int_iter1->second);
+                    break;
+                  }
+                }
+              }
+              if (converter.type == FLOATS) {
+                for(float_iter=converter.agg_float_map.begin(); float_iter!=converter.agg_float_map.end(); float_iter++){
+                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0){
+                    tuple.add(float_iter->second);
+                  }
+                }
+              }
+              if (converter.type == CHARS) {
+                for(string_iter=converter.agg_string_map.begin(); string_iter!=converter.agg_string_map.end(); string_iter++){
+                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,string_iter->first) == 0){
+                    tuple.add(string_iter->second.c_str(), strlen(string_iter->second.c_str()));
+                  }
+                }
+              }
               if (converter.type == DATES) {
-                int value = int_iter1->second;
-                int y = value/10000;
-                int m = (value-y*10000)/100;
-                int d = value-y*10000-m*100;
-                char s[20];
-                int n = sprintf(s, "%d-%02d-%02d", y, m, d);
-                tuple.add(s, strlen(s));
+                for(int_iter1=converter.agg_int_map.begin(); int_iter1!=converter.agg_int_map.end(); int_iter1++){
+                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter1->first) == 0){
+                    int value = int_iter1->second;
+                    int y = value/10000;
+                    int m = (value-y*10000)/100;
+                    int d = value-y*10000-m*100;
+                    char s[20];
+                    int n = sprintf(s, "%d-%02d-%02d", y, m, d);
+                    tuple.add(s, strlen(s));
+                  }
+                }
               }
               break;
             case MIN_OP:
               field_name = "MIN(" + (std::string)aggregation_field + ")";
-              if (converter.type == INTS) tuple.add(int_iter1->second);
-              if (converter.type == FLOATS) tuple.add(float_iter->second);
-              if (converter.type == CHARS) tuple.add(string_iter->second.c_str(), strlen(string_iter->second.c_str()));
+              if (converter.type == INTS) {
+                for(int_iter1=converter.agg_int_map.begin(); int_iter1!=converter.agg_int_map.end(); int_iter1++){
+                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter1->first) == 0){
+                    tuple.add(int_iter1->second);
+                  }
+                }
+              }
+              if (converter.type == FLOATS) {
+                for(float_iter=converter.agg_float_map.begin(); float_iter!=converter.agg_float_map.end(); float_iter++){
+                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0){
+                    tuple.add(float_iter->second);
+                  }
+                }
+              }
+              if (converter.type == CHARS) {
+                for(string_iter=converter.agg_string_map.begin(); string_iter!=converter.agg_string_map.end(); string_iter++){
+                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,string_iter->first) == 0){
+                    tuple.add(string_iter->second.c_str(), strlen(string_iter->second.c_str()));
+                  }
+                }
+              }
               if (converter.type == DATES) {
-                int value = int_iter1->second;
-                int y = value/10000;
-                int m = (value-y*10000)/100;
-                int d = value-y*10000-m*100;
-                char s[20];
-                int n = sprintf(s, "%d-%02d-%02d", y, m, d);
-                tuple.add(s,strlen(s));
+                for(int_iter1=converter.agg_int_map.begin(); int_iter1!=converter.agg_int_map.end(); int_iter1++){
+                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter1->first) == 0){
+                    int value = int_iter1->second;
+                    int y = value/10000;
+                    int m = (value-y*10000)/100;
+                    int d = value-y*10000-m*100;
+                    char s[20];
+                    int n = sprintf(s, "%d-%02d-%02d", y, m, d);
+                    tuple.add(s, strlen(s));
+                  }
+                }
               }
               break;
             case COUNT_OP:
@@ -182,17 +246,21 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
             case AVG_OP:
               if (converter.type == INTS || converter.type == FLOATS){
                 field_name = "AVG(" + (std::string)aggregation_field + ")";
-                tuple.add(float_iter->second/int_iter2->second);
+                for(float_iter=converter.agg_float_map.begin(); float_iter!=converter.agg_float_map.end(); float_iter++){
+                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0){
+                    tuple.add(float_iter->second/int_iter2->second);
+                  }
+                }
               }
               break;
             default:
               return RC::INVALID_ARGUMENT;
           }
           tupleSet_.add(std::move(tuple));
-          if(int_iter1!=converter.agg_int_map.end()) int_iter1++;
-          if(int_iter2!=converter.count_map.end()) int_iter2++;
-          if(float_iter!=converter.agg_float_map.end()) float_iter++;
-          if(string_iter!=converter.agg_string_map.end()) string_iter++;
+//          if(int_iter1!=converter.agg_int_map.end()) int_iter1++;
+//          if(int_iter2!=converter.count_map.end()) int_iter2++;
+//          if(float_iter!=converter.agg_float_map.end()) float_iter++;
+//          if(string_iter!=converter.agg_string_map.end()) string_iter++;
 
         }
         if (aggregateOps[i] == AVG_OP){

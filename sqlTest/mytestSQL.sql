@@ -193,7 +193,27 @@ insert into person values(3, 1.83, 't4', '2001-08-11');
 
 select avg(height) from person group by id;
 select id,avg(height) from person group by id;
-select name,avg(height) from person group by id,name;
+select id,name,avg(height) from person group by id,name;
+
+create index id_index on person(id);
+select * from person;
+select id,name,max(height) from person group by id,name;
+
+name | AVG(height)
+t1 | 1.73
+t2 | 0.96
+t4 | 1.78
+t4 | 0
+
+3. PRIMARY GROUP BY
+SELECT ID, AVG(SCORE) FROM T_GROUP_BY GROUP BY ID;
+-1 | 3
+-3 | 0.2
+-4 | 2
++1 | 2
++3 | 2.4
++4 | 3
+ ID | AVG(SCORE)
 
 -- inner join
 create table t1(id int, col1 int, feat1 float);
