@@ -192,6 +192,8 @@ insert into person values(2, 1.21, 't4', '1999-06-27');
 insert into person values(3, 1.83, 't4', '2001-08-11');
 
 select avg(height) from person group by id;
+select id,avg(height) from person group by id;
+select name,avg(height) from person group by id,name;
 
 -- inner join
 create table t1(id int, col1 int, feat1 float);

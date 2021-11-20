@@ -83,6 +83,11 @@ void TupleSchema::add(AttrType type, const char *table_name, const char *field_n
   fields_.emplace_back(type, table_name, field_name);
 }
 
+void TupleSchema::add(AttrType type, const char *table_name, const char *field_name,int isAgg) {
+  fields_.emplace_back(type, table_name, field_name,isAgg);
+}
+
+
 void TupleSchema::add_if_not_exists(AttrType type, const char *table_name, const char *field_name) {
   for (const auto &field: fields_) {
     if (0 == strcmp(field.table_name(), table_name) &&
@@ -241,8 +246,14 @@ void TupleSet::print(std::ostream &os, const Selects selects) const {
   }
   std::vector<int> is_show;
   for (int i = 0; i < schema_.fields().size(); ++i) {
+    if (schema_.field(i).isAgg()){
+      is_show.push_back(1);
+    } else {
+
+    }
     is_show.push_back(0);
   }
+
   for (size_t i = 0; i < selects.relation_num; i++) {
     const char *table_name = selects.relations[i];
     for (int i = 0; i < selects.attr_num; i++) {
@@ -583,10 +594,334 @@ void TupleRecordAggregateConverter::aggregate_record(const char *record) {
 //  tuple_set_.add(std::move(tuple));
 }
 
-std::string TupleRecordAggregateGroupByConverter::group_field_to_key(const char *record) {
-  std::string key;
-  for (int i = 0; i < group_field_names_.size(); ++i) {
-    key += group_field_names_[i];
+TupleRecordAggregateGroupByConverter::TupleRecordAggregateGroupByConverter(Table *table, TupleSet &tuple_set,
+             AggregateOp aggregateOp,const char *field_name,TupleSchema group_schema) :
+  table_(table), tuple_set_(tuple_set), aggregateOp_(aggregateOp),field_name_(field_name), group_schema_(group_schema),count_(0) {
+}
+
+TupleRecordAggregateGroupByConverter::TupleRecordAggregateGroupByConverter(Table *table, TupleSet &tuple_set,
+                                                                           TupleSchema group_schema) :
+        table_(table), tuple_set_(tuple_set), aggregateOp_(NO_AG_OP),field_name_(nullptr), group_schema_(group_schema),count_(0) {
+}
+
+int float_compare2(float f1, float f2) {
+  float result = f1 - f2;
+  if (result < 1e-6 && result > -1e-6) {
+    return 0;
   }
-  return key;
+  return result > 0 ? 1 : -1;
+}
+
+int CompareKey2(const char *pdata, const char *pkey, AttrType attr_type, int attr_length) { // 简化
+  int i1, i2;
+  float f1, f2;
+  const char *s1, *s2;
+  switch (attr_type) {
+    case DATES:
+    case INTS: {
+      i1 = *(int *) pdata;
+      i2 = *(int *) pkey;
+      if (i1 > i2)
+        return 1;
+      if (i1 < i2)
+        return -1;
+      if (i1 == i2)
+        return 0;
+    }
+      break;
+    case FLOATS: {
+      f1 = *(float *) pdata;
+      f2 = *(float *) pkey;
+      return float_compare2(f1, f2);
+    }
+      break;
+    case CHARS: {
+      s1 = pdata;
+      s2 = pkey;
+      return strncmp(s1, s2, attr_length);
+    }
+      break;
+    default: {
+      LOG_PANIC("Unknown attr type: %d", attr_type);
+    }
+  }
+  return -2;//This means error happens
+}
+
+int CompAttrs2(AttrType attr_type[], int attr_length[], int len, char *p1, char *p2){
+  for(int i = 0; i < len; i++){
+    int result = CompareKey2(p1, p2, attr_type[i], attr_length[i]);
+    if(result != 0){
+      return result;
+    }
+    p1 += attr_length[i];
+    p2 += attr_length[i];
+  }
+  return 0;
+}
+
+int TupleRecordAggregateGroupByConverter::iterComp(std::map<char *, int>::iterator iter,AttrType attr_type[], char *p1, int attr_length[], int len){
+  int flag = 0;
+  for(iter=count_map.begin(); iter!=count_map.end(); iter++) {
+    if (CompAttrs2(attr_type,attr_length,group_schema_.fields().size(),p1,iter->first) == 0) {
+      flag = 1;
+      break;
+    }
+  }
+}
+
+void TupleRecordAggregateGroupByConverter::group_record(const char *record){
+  const TableMeta &table_meta = table_->table_meta();
+  int total_length = 0;
+  AttrType ts[group_schema_.fields().size()];
+  int tns[group_schema_.fields().size()];
+  for (int i = 0; i < group_schema_.fields().size(); ++i) {
+    const FieldMeta *field_meta = table_meta.field(group_schema_.field(i).field_name());
+    total_length += field_meta->len();
+    ts[i] = field_meta->type();
+    tns[i] = field_meta->len();
+  }
+  char *key = (char *)malloc(total_length);
+  int offset = 0;
+  for (int i = group_schema_.fields().size()-1; i >=0; --i) {
+    const FieldMeta *field_meta = table_meta.field(group_schema_.field(i).field_name());
+    memcpy(key + offset, record + field_meta->offset(), field_meta->len());
+    offset += field_meta->len();
+  }
+  std::map<char *, int>::iterator iter;
+  int flag = 0;
+  for(iter=count_map.begin(); iter!=count_map.end(); iter++) {
+    if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,iter->first) == 0) {
+      flag = 1;
+      iter->second += 1;
+    }
+  }
+  if (flag == 0) {
+    count_map[key] = 1;
+    count_ += 1;
+    keys.push_back(key);
+  }
+}
+
+void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *record) {
+
+  const TableMeta &table_meta = table_->table_meta();
+  const FieldMeta *agg_field_meta = table_meta.field(field_name_);
+  type = agg_field_meta->type();
+
+  int total_length = 0;
+  AttrType ts[group_schema_.fields().size()];
+  int tns[group_schema_.fields().size()];
+  for (int i = 0; i < group_schema_.fields().size(); ++i) {
+    const FieldMeta *field_meta = table_meta.field(group_schema_.field(i).field_name());
+    total_length += field_meta->len();
+    ts[i] = field_meta->type();
+    tns[i] = field_meta->len();
+  }
+  char *key = (char *)malloc(total_length);
+  int offset = 0;
+  for (int i = group_schema_.fields().size()-1; i >=0; --i) {
+    const FieldMeta *field_meta = table_meta.field(group_schema_.field(i).field_name());
+    memcpy(key + offset, record + field_meta->offset(), field_meta->len());
+    offset += field_meta->offset();
+  }
+//  std::string key_ = (std::string) key;
+
+  std::map<char *, int>::iterator iter;
+  int flag = 0;
+  for(iter=count_map.begin(); iter!=count_map.end(); iter++) {
+    if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,iter->first) == 0) {
+      flag = 1;
+      iter->second += 1;
+    }
+  }
+  if (flag == 0) {
+    count_map[key] = 1;
+    count_ += 1;
+    keys.push_back(key);
+  }
+
+  std::map<char *,int>::iterator int_iter;
+  std::map<char *,float>::iterator float_iter;
+  std::map<char *,std::string>::iterator string_iter;
+//  if (count_map.find(key) != count_map.end()) {
+//    count_map[key] += 1;
+//  } else {
+//    count_map[key] = 1;
+//    count_ += 1;
+//    keys.push_back(key);
+//  }
+  switch (aggregateOp_) {
+    case MAX_OP: {
+      switch (agg_field_meta->type()) {
+        case INTS:
+        case DATES: {
+          int value = *(int*)(record + agg_field_meta->offset());
+          int agg_int;
+          int flag = 0;
+          for(int_iter=agg_int_map.begin(); int_iter!=agg_int_map.end(); int_iter++) {
+            if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter->first) == 0) {
+              flag = 1;
+              agg_int = agg_int_map[key];
+              if (value > agg_int) {
+                agg_int_map[key] = value;
+              }
+            }
+          }
+          if (flag == 0) {
+            agg_int_map[key] = value;
+          }
+        }
+          break;
+        case FLOATS: {
+          float value = *(float *)(record + agg_field_meta->offset());
+          float agg_float;
+          int flag = 0;
+          for(float_iter=agg_float_map.begin(); float_iter!=agg_float_map.end(); float_iter++) {
+            if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0) {
+              flag = 1;
+              agg_float = agg_float_map[key];
+              if (value > agg_float) {
+                agg_float_map[key] = value;
+              }
+            }
+          }
+          if (flag == 0) {
+            agg_float_map[key] = value;
+          }
+        }
+          break;
+        case CHARS:{
+          char *value = (char *)record + agg_field_meta->offset();
+          std::string agg_string = agg_string_map[key];
+          int flag = 0;
+          for(string_iter=agg_string_map.begin(); string_iter!=agg_string_map.end(); string_iter++) {
+            if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,string_iter->first) == 0) {
+              flag = 1;
+              agg_string = agg_string_map[key];
+              if (strcmp(value,agg_string.c_str()) > 0) {
+                agg_string_map[key] = value;
+              }
+            }
+          }
+          if (flag == 0) {
+            agg_string_map[key] = value;
+          }
+        }
+          break;
+        default: {
+          return;
+        }
+      }
+    }
+      break;
+    case MIN_OP: {
+      switch (agg_field_meta->type()) {
+        case INTS:
+        case DATES: {
+          int value = *(int*)(record + agg_field_meta->offset());
+          int agg_int;
+          int flag = 0;
+          for(int_iter=agg_int_map.begin(); int_iter!=agg_int_map.end(); int_iter++) {
+            if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter->first) == 0) {
+              flag = 1;
+              agg_int = agg_int_map[key];
+              if (value < agg_int) {
+                agg_int_map[key] = value;
+              }
+            }
+          }
+          if (flag == 0) {
+            agg_int_map[key] = value;
+          }
+        }
+          break;
+        case FLOATS: {
+          float value = *(float *)(record + agg_field_meta->offset());
+          float agg_float;
+          for(float_iter=agg_float_map.begin(); float_iter!=agg_float_map.end(); float_iter++) {
+            if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0) {
+              flag = 1;
+              agg_float = agg_float_map[key];
+              if (value < agg_float) {
+                agg_float_map[key] = value;
+              }
+            }
+          }
+          if (flag == 0) {
+            agg_float_map[key] = value;
+          }
+        }
+          break;
+        case CHARS:{
+          char *value = (char *)record + agg_field_meta->offset();
+          std::string agg_string = agg_string_map[key];
+          int flag = 0;
+          for(string_iter=agg_string_map.begin(); string_iter!=agg_string_map.end(); string_iter++) {
+            if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,string_iter->first) == 0) {
+              flag = 1;
+              agg_string = agg_string_map[key];
+              if (strcmp(value,agg_string.c_str()) < 0) {
+                agg_string_map[key] = value;
+              }
+            }
+          }
+          if (flag == 0) {
+            agg_string_map[key] = value;
+          }
+        }
+          break;
+        default: {
+          return;
+        }
+      }
+    }
+      break;
+    case AVG_OP: {
+      switch (agg_field_meta->type()) {
+        case INTS: {
+          int value = *(int*)(record + agg_field_meta->offset());
+          float agg_float;
+          int flag = 0;
+          for(int_iter=agg_int_map.begin(); int_iter!=agg_int_map.end(); int_iter++) {
+            if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter->first) == 0) {
+              flag = 1;
+              agg_float = agg_float_map[key];
+              if (value < agg_float) {
+                agg_float_map[key] += (float)value;
+              }
+            }
+          }
+          if (flag == 0) {
+            agg_float_map[key] = (float)value;
+          }
+        }
+          break;
+        case FLOATS: {
+          float value = *(float*)(record + agg_field_meta->offset());
+          float agg_float;
+          for(float_iter=agg_float_map.begin(); float_iter!=agg_float_map.end(); float_iter++) {
+            if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0) {
+              flag = 1;
+              agg_float = agg_float_map[key];
+              if (value < agg_float) {
+                agg_float_map[key] += value;
+              }
+            }
+          }
+          if (flag == 0) {
+            agg_float_map[key] = value;
+          }
+        }
+          break;
+        default: {
+          return;
+        }
+      }
+    }
+      break;
+    default: {
+      return;
+    }
+  }
 }

@@ -33,8 +33,9 @@ public:
 class SelectExeNode : public ExecutionNode {
 public:
   SelectExeNode();
-  AggregateOp aggregateOps[MAX_NUM];
-  int aggregateOp_num = 0;
+//  AggregateOp aggregateOps[MAX_NUM];
+  std::vector<AggregateOp> aggregateOps;
+//  int aggregateOp_num = 0;
   virtual ~SelectExeNode();
 
   RC init(Trx *trx, Table *table, TupleSchema && tuple_schema, std::vector<DefaultConditionFilter *> &&condition_filters);

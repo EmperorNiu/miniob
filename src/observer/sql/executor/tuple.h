@@ -18,7 +18,9 @@ See the Mulan PSL v2 for more details. */
 #include <memory>
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <storage/common/condition_filter.h>
+#include <storage/common/table_meta.h>
 
 #include "sql/parser/parse.h"
 #include "sql/executor/value.h"
@@ -65,11 +67,18 @@ private:
 class TupleField {
 public:
   TupleField(AttrType type, const char *table_name, const char *field_name) :
-          type_(type), table_name_(table_name), field_name_(field_name){
+          type_(type), table_name_(table_name), field_name_(field_name), is_agg_field_(0){
+  }
+  TupleField(AttrType type, const char *table_name, const char *field_name, int isAgg) :
+          type_(type), table_name_(table_name), field_name_(field_name), is_agg_field_(isAgg){
   }
 
   AttrType  type() const{
     return type_;
+  }
+
+  int isAgg() const{
+    return is_agg_field_;
   }
 
   const char *table_name() const {
@@ -84,6 +93,7 @@ private:
   AttrType  type_;
   std::string table_name_;
   std::string field_name_;
+  int is_agg_field_;
 };
 
 class TupleSchema {
@@ -92,6 +102,7 @@ public:
   ~TupleSchema() = default;
 
   void add(AttrType type, const char *table_name, const char *field_name);
+  void add(AttrType type, const char *table_name, const char *field_name, int isAgg);
   void add_if_not_exists(AttrType type, const char *table_name, const char *field_name);
   // void merge(const TupleSchema &other);
   void append(const TupleSchema &other);
@@ -195,20 +206,35 @@ private:
 
 class TupleRecordAggregateGroupByConverter {
 public:
-    TupleRecordAggregateGroupByConverter(Table *table, TupleSet &tuple_set, AggregateOp aggregateOp,const char *field_name);
+    TupleRecordAggregateGroupByConverter(Table *table, TupleSet &tuple_set,AggregateOp aggregateOp,
+                            const char *field_name,TupleSchema group_schema);
+    TupleRecordAggregateGroupByConverter(Table *table, TupleSet &tuple_set,TupleSchema group_schema);
     void aggregate_group_record(const char *record);
-    std::string group_field_to_key(const char *record);
-    std::map<std::string,int> count;
-    std::map<std::string,int> agg_int;
-    std::map<std::string,float> agg_float;
-    std::map<std::string,std::string> agg_string;
+    int cmpKey(std::string s1,std::string s2);
+    struct cmp_str
+    {
+        bool operator()(char const *a, char const *b) const
+        {
+          return strcmp(a, b) < 0;
+        }
+    };
+    void group_record(const char *record);
+    std::map<char *,int> count_map;
+    std::map<char *,int> agg_int_map;
+    std::map<char *,float> agg_float_map;
+    std::map<char *,std::string> agg_string_map;
+    std::vector<char *> keys;
+    int iterComp(std::map<char *, int>::iterator iter,AttrType attr_type[], char *p1, int attr_length[], int len);
+    int count() { return count_; }
     AttrType type;
 private:
+
     Table *table_;
+    int count_;
     TupleSet &tuple_set_;
     AggregateOp aggregateOp_; // aggregate operator
     const char *field_name_;  // aggregated field name
-    std::vector<std::string> group_field_names_; // grouped  field names
+    TupleSchema group_schema_;
 };
 
 #endif //__OBSERVER_SQL_EXECUTOR_TUPLE_H_

@@ -56,35 +56,164 @@ void record_aggregate(const char *data, void *context) {
   converter->aggregate_record(data);
 }
 
+void record_group_aggregate(const char *data, void *context) {
+  TupleRecordAggregateGroupByConverter *converter = (TupleRecordAggregateGroupByConverter *)context;
+  converter->aggregate_group_record(data);
+}
+
+void record_group(const char *data, void *context) {
+  TupleRecordAggregateGroupByConverter *converter = (TupleRecordAggregateGroupByConverter *)context;
+  converter->group_record(data);
+}
 
 RC SelectExeNode::execute(TupleSet &tuple_set) {
   CompositeConditionFilter condition_filter;
   condition_filter.init((const ConditionFilter **)condition_filters_.data(), condition_filters_.size());
   tuple_set.clear();
-
+  int aggregateOp_num = aggregateOps.size();
   if (aggregateOp_num == 0) {
     tuple_set.set_schema(tuple_schema_);
     TupleRecordConverter converter(table_, tuple_set);
     return table_->scan_record(trx_, &condition_filter, -1, (void *)&converter, record_reader);
   } else {
-    tuple_set.set_schema(aggregate_schema_);
+    // tuple_set.set_schema(aggregate_schema_);
     TupleSchema schema;
-    Tuple tuple = Tuple();
+
     if (group_schema_.fields().size() > 0){
-      std::string combine_key = "";
-      for (int i = 0; i < group_schema_.fields().size(); ++i) {
-        combine_key += group_schema_.field(i).field_name();
+      TupleSet group_tupleSet;
+      const TableMeta &table_meta = table_->table_meta();
+      // 添加 group 列
+      for (int i = group_schema_.fields().size()-1; i >=0; --i) {
+        schema.add(group_schema_.field(i).type(),
+                   group_schema_.field(i).table_name(),group_schema_.field(i).field_name());
       }
+      TupleRecordAggregateGroupByConverter group_converter(table_,tuple_set,group_schema_);
+      RC rc = table_->scan_record(trx_, &condition_filter, -1, (void *)&group_converter, record_group);
+      if (rc != RC::SUCCESS) return rc;
+      for (int j = 0; j < group_converter.count(); ++j) {
+        Tuple tuple = Tuple();
+        int offset = 0;
+        for (int k = group_schema_.fields().size()-1; k >=0; --k) {
+          const FieldMeta *field_meta = table_meta.field(group_schema_.field(k).field_name());
+
+          switch (field_meta->type()) {
+            case INTS: {
+              int value = *(int *)(group_converter.keys[j] + offset);
+              tuple.add(value);
+              break;
+            }
+            case FLOATS: {
+              float value = *(float *)(group_converter.keys[j] + offset);
+              tuple.add(value);
+              break;
+            }
+            case DATES: {
+              int value = *(int *)(group_converter.keys[j] + offset);
+              int y = value/10000;
+              int m = (value-y*10000)/100;
+              int d = value-y*10000-m*100;
+              char s[20];
+              int n = sprintf(s, "%d-%02d-%02d", y, m, d);
+              tuple.add(s,strlen(s));
+              break;
+            }
+            case CHARS: {
+              char *value = (char *)(group_converter.keys[j] + offset);
+              tuple.add(value, strlen(value));
+              break;
+            }
+          }
+          offset += field_meta->len();
+        }
+        group_tupleSet.add(std::move(tuple));
+      }
+
+
+      // 添加 agg 列
+      for (int i = 0; i < aggregateOp_num; ++i) {
+        TupleSet tupleSet_;
+        const char *aggregation_field = aggregate_schema_.field(i).field_name();
+        TupleRecordAggregateGroupByConverter converter(table_,
+                               tuple_set, aggregateOps[i], aggregation_field,group_schema_);
+        RC rc = table_->scan_record(trx_, &condition_filter, -1, (void *)&converter, record_group_aggregate);
+        if (rc != RC::SUCCESS) return rc;
+        std::map<char * ,int>::iterator int_iter2 = converter.count_map.begin();
+        std::map<char *,int>::iterator int_iter1 = converter.agg_int_map.begin();
+        std::map<char *,float>::iterator float_iter = converter.agg_float_map.begin();
+        std::map<char *,std::string>::iterator string_iter = converter.agg_string_map.begin();
+        std::string field_name;
+        for (int j = 0; j < converter.count(); ++j) {
+          Tuple tuple = group_tupleSet.tuples()[j];
+          switch (aggregateOps[i]) {
+            case MAX_OP:
+              field_name = "MAX(" + (std::string)aggregation_field + ")";
+              if (converter.type == INTS) tuple.add(int_iter1->second);
+              if (converter.type == FLOATS) tuple.add(float_iter->second);
+              if (converter.type == CHARS) tuple.add(string_iter->second.c_str(), strlen(string_iter->second.c_str()));
+              if (converter.type == DATES) {
+                int value = int_iter1->second;
+                int y = value/10000;
+                int m = (value-y*10000)/100;
+                int d = value-y*10000-m*100;
+                char s[20];
+                int n = sprintf(s, "%d-%02d-%02d", y, m, d);
+                tuple.add(s, strlen(s));
+              }
+              break;
+            case MIN_OP:
+              field_name = "MIN(" + (std::string)aggregation_field + ")";
+              if (converter.type == INTS) tuple.add(int_iter1->second);
+              if (converter.type == FLOATS) tuple.add(float_iter->second);
+              if (converter.type == CHARS) tuple.add(string_iter->second.c_str(), strlen(string_iter->second.c_str()));
+              if (converter.type == DATES) {
+                int value = int_iter1->second;
+                int y = value/10000;
+                int m = (value-y*10000)/100;
+                int d = value-y*10000-m*100;
+                char s[20];
+                int n = sprintf(s, "%d-%02d-%02d", y, m, d);
+                tuple.add(s,strlen(s));
+              }
+              break;
+            case COUNT_OP:
+              field_name = "COUNT(" + (std::string)aggregation_field + ")";
+              tuple.add(int_iter2->second);
+              break;
+            case AVG_OP:
+              if (converter.type == INTS || converter.type == FLOATS){
+                field_name = "AVG(" + (std::string)aggregation_field + ")";
+                tuple.add(float_iter->second/int_iter2->second);
+              }
+              break;
+            default:
+              return RC::INVALID_ARGUMENT;
+          }
+          tupleSet_.add(std::move(tuple));
+          if(int_iter1!=converter.agg_int_map.end()) int_iter1++;
+          if(int_iter2!=converter.count_map.end()) int_iter2++;
+          if(float_iter!=converter.agg_float_map.end()) float_iter++;
+          if(string_iter!=converter.agg_string_map.end()) string_iter++;
+
+        }
+        if (aggregateOps[i] == AVG_OP){
+          schema.add(FLOATS,aggregate_schema_.field(i).table_name(),field_name.c_str(),1);
+        } else {
+          schema.add(aggregate_schema_.field(i).type(),aggregate_schema_.field(i).table_name(),field_name.c_str(),1);
+        }
+        group_tupleSet = TupleSet(std::move(tupleSet_));
+        tupleSet_.tuple_clear();
+      }
+      tuple_set = TupleSet(std::move(group_tupleSet));
+      tuple_set.set_schema(schema);
       return RC::SUCCESS;
     }
-
+    Tuple tuple = Tuple();
     for (int i = 0; i < aggregateOp_num; ++i) {
       const char *field_name2 = aggregate_schema_.field(i).field_name();
       TupleRecordAggregateConverter converter(table_, tuple_set, aggregateOps[i], field_name2);
       RC rc = table_->scan_record(trx_, &condition_filter, -1, (void *)&converter, record_aggregate);
-      if (rc != RC::SUCCESS) {
-        return rc;
-      }
+      if (rc != RC::SUCCESS) return rc;
+
       std::string field_name;
       switch (aggregateOps[i]) {
         case MAX_OP:
@@ -131,9 +260,9 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
           return RC::INVALID_ARGUMENT;
       }
       if (aggregateOps[i] == AVG_OP){
-        schema.add(FLOATS,aggregate_schema_.field(i).table_name(),field_name.c_str());
+        schema.add(FLOATS,aggregate_schema_.field(i).table_name(),field_name.c_str(),1);
       } else {
-        schema.add(aggregate_schema_.field(i).type(),aggregate_schema_.field(i).table_name(),field_name.c_str());
+        schema.add(aggregate_schema_.field(i).type(),aggregate_schema_.field(i).table_name(),field_name.c_str(),1);
       }
     }
     tuple_set.set_schema(schema);
