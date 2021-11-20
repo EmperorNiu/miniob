@@ -689,7 +689,7 @@ void TupleRecordAggregateGroupByConverter::group_record(const char *record){
   int flag = 0;
   for(iter=count_map.begin(); iter!=count_map.end(); iter++) {
     if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,iter->first) == 0) {
-      flag = 1;
+//      flag = 1;
       iter->second += 1;
       break;
     }
