@@ -701,9 +701,9 @@ RC create_selection_executor(Trx *trx, Selects &selects, const char *db, const c
     return RC::SCHEMA_TABLE_NOT_EXIST;
   }
   // 添加聚合操作的信息
-  for (int j = selects.aggregateOp_num-1; j >= 0; --j) {
+
 //  for (int j = 0; j < selects.aggregateOp_num; ++j) {
-//  for (int j = selects.aggregateOp_num - 1; j >= 0; --j) {
+  for (int j = selects.aggregateOp_num - 1; j >= 0; --j) {
     // select_node.aggregateOps[select_node.aggregateOp_num++] = selects.aggregateOp[j];
     select_node.aggregateOps.push_back(selects.aggregateOp[j]);
     if (0 != strcmp("*",selects.attributes[j].attribute_name)){

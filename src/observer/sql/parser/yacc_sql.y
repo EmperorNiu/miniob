@@ -422,49 +422,6 @@ join:
     	selects_append_relation(&CONTEXT->ssql->sstr.selection, $2);
     }
 
-aggregate_attr:
-    MAX LBRACE ID RBRACE {
-			RelAttr attr;
-			relation_attr_init(&attr, NULL, $3);
-			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-    			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 1);
-    }
-    | MIN LBRACE ID RBRACE {
-    			RelAttr attr;
-    			relation_attr_init(&attr, NULL, $3);
-    			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-    			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 2);
-    }
-    | AVG LBRACE ID RBRACE {
-        		RelAttr attr;
-        		relation_attr_init(&attr, NULL, $3);
-        		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-    			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 3);
-    }
-    | COUNT LBRACE count_attr RBRACE {
-    			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 4);
-    }
-    | MAX LBRACE ID DOT ID RBRACE {
-			RelAttr attr;
-			relation_attr_init(&attr, $3, $5);
-			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-    			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 1);
-    }
-    | MIN LBRACE ID DOT ID RBRACE {
-    			RelAttr attr;
-    			relation_attr_init(&attr, $3, $5);
-    			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-    			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 2);
-    }
-    | AVG LBRACE ID DOT ID RBRACE {
-        		RelAttr attr;
-        		relation_attr_init(&attr,$3, $5);
-        		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-    			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 3);
-    }
-    ;
-
-
 count_attr:
     ID {
     	            	RelAttr attr;
@@ -503,8 +460,45 @@ select_attr:
 			relation_attr_init(&attr, $1, $3);
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 		}
-    | aggregate_attr attr_list{
-    }
+    |   MAX LBRACE ID RBRACE attr_list{
+      			RelAttr attr;
+      			relation_attr_init(&attr, NULL, $3);
+      			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+          			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 1);
+          }
+          | MIN LBRACE ID RBRACE attr_list{
+          			RelAttr attr;
+          			relation_attr_init(&attr, NULL, $3);
+          			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+          			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 2);
+          }
+          | AVG LBRACE ID RBRACE attr_list{
+              		RelAttr attr;
+              		relation_attr_init(&attr, NULL, $3);
+              		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+          			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 3);
+          }
+          | COUNT LBRACE count_attr RBRACE attr_list{
+          			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 4);
+          }
+          | MAX LBRACE ID DOT ID RBRACE attr_list{
+      			RelAttr attr;
+      			relation_attr_init(&attr, $3, $5);
+      			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+          			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 1);
+          }
+          | MIN LBRACE ID DOT ID RBRACE attr_list{
+          			RelAttr attr;
+          			relation_attr_init(&attr, $3, $5);
+          			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+          			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 2);
+          }
+          | AVG LBRACE ID DOT ID RBRACE attr_list{
+              		RelAttr attr;
+              		relation_attr_init(&attr,$3, $5);
+              		selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+          			selects_append_aggregation_op(&CONTEXT->ssql->sstr.selection, 3);
+          }
     ;
 
 attr_list:
