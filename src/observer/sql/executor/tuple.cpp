@@ -615,6 +615,7 @@ int float_compare2(float f1, float f2) {
 int CompareKey2(const char *pdata, const char *pkey, AttrType attr_type, int attr_length) {
   int i1, i2;
   float f1, f2;
+  std::string s1,s2;
   switch (attr_type) {
     case DATES:
     case INTS: {
@@ -635,7 +636,15 @@ int CompareKey2(const char *pdata, const char *pkey, AttrType attr_type, int att
     }
       break;
     case CHARS: {
-      return strncmp(pdata, pkey, attr_length);
+      s1 = pdata;
+      s2 = pkey;
+      if (s1 > s2)
+        return 1;
+      if (s1 < s2)
+        return -1;
+      if (s1 == s2)
+        return 0;
+//      return strncmp(pdata, pkey, attr_length);
     }
       break;
     default: {
@@ -678,8 +687,8 @@ void TupleRecordAggregateGroupByConverter::group_record(const char *record){
     ts[i] = field_meta->type();
     tns[i] = field_meta->len();
   }
-  char key[total_length];
-//  char *key = (char *)malloc(total_length);
+//  char key[total_length];
+  char *key = (char *)malloc(total_length);
   int offset = 0;
   for (int i = group_schema_.fields().size()-1; i >=0; --i) {
     const FieldMeta *field_meta = table_meta.field(group_schema_.field(i).field_name());
@@ -717,8 +726,8 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
     ts[i] = field_meta->type();
     tns[i] = field_meta->len();
   }
-  char key[total_length];
-//  char *key = (char *)malloc(total_length);
+//  char key[total_length];
+  char *key = (char *)malloc(total_length);
   int offset = 0;
   for (int i = group_schema_.fields().size()-1; i >=0; --i) {
     const FieldMeta *field_meta = table_meta.field(group_schema_.field(i).field_name());
