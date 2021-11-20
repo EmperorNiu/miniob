@@ -208,13 +208,16 @@ SELECT id,name, AVG(height) FROM person GROUP BY id,name;
 select id,name,max(height) from person group by id,name;
 
 create table gr(id int, name char, col2 int);
+create index id_index on gr(id);
+create index name_index on gr(name);
+create index col_index on gr(col2);
 insert into gr values(1, 'A', 2),(1, 'A', 14);
 insert into gr values(1, 'B', 12),(2, 'A', 11);
 insert into gr values(2, 'A', 14),(2, 'C', 19);
-insert into gr values(3, 'C', 2),(3, 'C', 14);
+insert into gr values(3, 'C', 17),(3, 'C', 14);
 insert into gr values(3, 'B', 12),(3, 'A', 11);
 insert into gr values(2, 'C', 17),(2, 'A', 29);
-select id,name,avg(col2) from gr group by id,name;
+select id,name,avg(col2) from gr GROUP BY id,name;
 
 
 3. PRIMARY GROUP BY
