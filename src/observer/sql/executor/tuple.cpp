@@ -689,7 +689,7 @@ void TupleRecordAggregateGroupByConverter::group_record(const char *record){
   int flag = 0;
   for(iter=count_map.begin(); iter!=count_map.end(); iter++) {
     if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,iter->first) == 0) {
-//      flag = 1;
+      flag = 1;
       iter->second += 1;
       break;
     }
@@ -765,6 +765,7 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
               if (value > agg_int) {
                 int_iter->second = value;
               }
+              break;
             }
           }
           if (flag == 0) {
@@ -802,6 +803,7 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
               if (strcmp(value,agg_string.c_str()) > 0) {
                 string_iter->second = value;
               }
+              break;
             }
           }
           if (flag == 0) {
@@ -829,6 +831,7 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
               if (value < agg_int) {
                 int_iter->second = value;
               }
+              break;
             }
           }
           if (flag == 0) {
@@ -846,6 +849,7 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
               if (value < agg_float) {
                 float_iter->second = value;
               }
+              break;
             }
           }
           if (flag == 0) {
@@ -864,6 +868,7 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
               if (strcmp(value,agg_string.c_str()) < 0) {
                 string_iter->second = value;
               }
+              break;
             }
           }
           if (flag == 0) {
@@ -886,10 +891,8 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
           for(float_iter=agg_float_map.begin(); float_iter!=agg_float_map.end(); float_iter++) {
             if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0) {
               flag = 1;
-              agg_float = float_iter->second;
-
               float_iter->second += (float)value;
-
+              break;
             }
           }
           if (flag == 0) {
@@ -903,10 +906,8 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
           for(float_iter=agg_float_map.begin(); float_iter!=agg_float_map.end(); float_iter++) {
             if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0) {
               flag = 1;
-              agg_float = float_iter->second;
-
               float_iter->second += value;
-
+              break;
             }
           }
           if (flag == 0) {
