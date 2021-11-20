@@ -198,6 +198,7 @@ insert into person values(3, 1.83, 't4', '2001-08-11');
 select avg(height) from person group by id;
 select id,avg(height) from person group by id;
 select id,name,avg(height) from person group by id,name;
+select name,min(id),max(height),avg(height) from person group by name;
 select id,name,min(height),max(height),avg(height) from person group by id,name;
 
 create index id_index on person(id);
@@ -220,6 +221,7 @@ insert into gr values(3, 'C', 17),(3, 'C', 14);
 insert into gr values(3, 'B', 12),(3, 'A', 11);
 insert into gr values(2, 'C', 17),(2, 'A', 29);
 select id,avg(col2) from gr GROUP BY id;
+select name,min(id),max(col2) from gr GROUP BY name;
 select id,name,avg(col2) from gr GROUP BY name,id;
 
 group-by: result file difference(`-` is yours and `+` is base)
