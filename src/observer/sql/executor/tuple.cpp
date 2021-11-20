@@ -612,7 +612,7 @@ int float_compare2(float f1, float f2) {
   return result > 0 ? 1 : -1;
 }
 
-int CompareKey2(const char *pdata, const char *pkey, AttrType attr_type, int attr_length) { // 简化
+int CompareKey2(const char *pdata, const char *pkey, AttrType attr_type, int attr_length) {
   int i1, i2;
   float f1, f2;
   const char *s1, *s2;
@@ -694,6 +694,7 @@ void TupleRecordAggregateGroupByConverter::group_record(const char *record){
     if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,iter->first) == 0) {
       flag = 1;
       iter->second += 1;
+      break;
     }
   }
   if (flag == 0) {
@@ -733,6 +734,7 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
     if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,iter->first) == 0) {
       flag = 1;
       iter->second += 1;
+      break;
     }
   }
   if (flag == 0) {

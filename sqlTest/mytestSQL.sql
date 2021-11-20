@@ -188,7 +188,11 @@ create table person(id int, height float, name char, birthday date);
 insert into person values(0, 1.73, 't1', '1999-01-13'),(1, 1.78, 't2', '1999-03-15');
 insert into person values(1, 1.93, 't2', '1999-03-25'),(1, 1.51, 't4', '1899-03-17');
 insert into person values(2, 1.51, 't4', '1899-03-17'),(2, 1.61, 't4', '1999-06-19');
-insert into person values(2, 1.21, 't4', '1999-06-27');
+insert into person values(2, 1.21, 't4', '1999-06-27'),(0, 1.83, 't4', '2001-08-11');
+insert into person values(3, 1.21, 'C', '1999-06-27'),(3, 1.83, 'C', '2001-08-11');
+insert into person values(3, 1.21, 'C', '1999-06-27'),(3, 1.83, 'C', '2001-08-11');
+insert into person values(3, 1.21, 'C', '1999-06-27'),(3, 1.83, 'C', '2001-08-11');
+insert into person values(3, 1.21, 'C', '1999-06-27'),(3, 1.83, 'C', '2001-08-11');
 insert into person values(3, 1.83, 't4', '2001-08-11');
 
 select avg(height) from person group by id;
@@ -196,17 +200,22 @@ select id,avg(height) from person group by id;
 select id,name,avg(height) from person group by id,name;
 
 create index id_index on person(id);
+create index name_index on person(name);
 select * from person;
 select id,avg(height) from person group by id;
-SELECT name, MIN(id), MAX(height) FROM person GROUP BY name;
+SELECT id,name, AVG(height) FROM person GROUP BY id,name;
 
 select id,name,max(height) from person group by id,name;
 
-name | AVG(height)
-t1 | 1.73
-t2 | 0.96
-t4 | 1.78
-t4 | 0
+create table gr(id int, name char, col2 int);
+insert into gr values(1, 'A', 2),(1, 'A', 14);
+insert into gr values(1, 'B', 12),(2, 'A', 11);
+insert into gr values(2, 'A', 14),(2, 'C', 19);
+insert into gr values(3, 'C', 2),(3, 'C', 14);
+insert into gr values(3, 'B', 12),(3, 'A', 11);
+insert into gr values(2, 'C', 17),(2, 'A', 29);
+select id,name,avg(col2) from gr group by id,name;
+
 
 3. PRIMARY GROUP BY
 SELECT ID, AVG(SCORE) FROM T_GROUP_BY GROUP BY ID;

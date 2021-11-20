@@ -253,7 +253,6 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
                       break;
                     }
                   }
-
                 }
               }
               break;
