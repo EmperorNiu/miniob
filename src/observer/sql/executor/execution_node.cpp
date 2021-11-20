@@ -167,7 +167,8 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
               field_name = "MAX(" + (std::string)aggregation_field + ")";
               if (converter.type == INTS) {
                 for(int_iter1=converter.agg_int_map.begin(); int_iter1!=converter.agg_int_map.end(); int_iter1++){
-                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter1->first) == 0){
+                  if(memcmp(key,int_iter1->first,total_length) == 0){
+//                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter1->first) == 0){
                     tuple.add(int_iter1->second);
                     break;
                   }
@@ -175,7 +176,8 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
               }
               if (converter.type == FLOATS) {
                 for(float_iter=converter.agg_float_map.begin(); float_iter!=converter.agg_float_map.end(); float_iter++){
-                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0){
+                  if(memcmp(key,float_iter->first,total_length) == 0){
+//                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0){
                     tuple.add(float_iter->second);
                     break;
                   }
@@ -183,7 +185,8 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
               }
               if (converter.type == CHARS) {
                 for(string_iter=converter.agg_string_map.begin(); string_iter!=converter.agg_string_map.end(); string_iter++){
-                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,string_iter->first) == 0){
+                  if(memcmp(key,string_iter->first,total_length) == 0){
+//                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,string_iter->first) == 0){
                     tuple.add(string_iter->second.c_str(), strlen(string_iter->second.c_str()));
                     break;
                   }
@@ -191,7 +194,8 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
               }
               if (converter.type == DATES) {
                 for(int_iter1=converter.agg_int_map.begin(); int_iter1!=converter.agg_int_map.end(); int_iter1++){
-                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter1->first) == 0){
+                  if(memcmp(key,int_iter1->first,total_length) == 0){
+//                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter1->first) == 0){
                     int value = int_iter1->second;
                     int y = value/10000;
                     int m = (value-y*10000)/100;
@@ -208,21 +212,24 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
               field_name = "MIN(" + (std::string)aggregation_field + ")";
               if (converter.type == INTS) {
                 for(int_iter1=converter.agg_int_map.begin(); int_iter1!=converter.agg_int_map.end(); int_iter1++){
-                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter1->first) == 0){
+                  if(memcmp(key,int_iter1->first,total_length) == 0){
+//                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter1->first) == 0){
                     tuple.add(int_iter1->second);
                   }
                 }
               }
               if (converter.type == FLOATS) {
                 for(float_iter=converter.agg_float_map.begin(); float_iter!=converter.agg_float_map.end(); float_iter++){
-                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0){
+                  if(memcmp(key,float_iter->first,total_length) == 0){
+//                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0){
                     tuple.add(float_iter->second);
                   }
                 }
               }
               if (converter.type == CHARS) {
                 for(string_iter=converter.agg_string_map.begin(); string_iter!=converter.agg_string_map.end(); string_iter++){
-                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,string_iter->first) == 0){
+                  if(memcmp(key,string_iter->first,total_length) == 0){
+//                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,string_iter->first) == 0){
                     tuple.add(string_iter->second.c_str(), strlen(string_iter->second.c_str()));
                     break;
                   }
@@ -230,7 +237,8 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
               }
               if (converter.type == DATES) {
                 for(int_iter1=converter.agg_int_map.begin(); int_iter1!=converter.agg_int_map.end(); int_iter1++){
-                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter1->first) == 0){
+                  if(memcmp(key,int_iter1->first,total_length) == 0){
+//                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter1->first) == 0){
                     int value = int_iter1->second;
                     int y = value/10000;
                     int m = (value-y*10000)/100;
@@ -245,7 +253,8 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
             case COUNT_OP:
               field_name = "COUNT(" + (std::string)aggregation_field + ")";
               for(int_iter2=converter.count_map.begin(); int_iter2!=converter.count_map.end(); int_iter2++){
-                if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter2->first) == 0){
+                if(memcmp(key,int_iter2->first,total_length) == 0){
+//                if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter2->first) == 0){
                   tuple.add(int_iter2->second);
                   break;
                 }
@@ -256,8 +265,9 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
                 field_name = "AVG(" + (std::string)aggregation_field + ")";
                 for(float_iter=converter.agg_float_map.begin(); float_iter!=converter.agg_float_map.end(); float_iter++){
                   for(int_iter2=converter.count_map.begin(); int_iter2!=converter.count_map.end(); int_iter2++){
-                    if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0
-                        && CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter2->first) == 0){
+                    if(memcmp(key,float_iter->first,total_length) == 0 && memcmp(key,int_iter2->first,total_length)){
+//                    if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0
+//                        && CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter2->first) == 0){
                       tuple.add(float_iter->second/int_iter2->second);
                       break;
                     }
