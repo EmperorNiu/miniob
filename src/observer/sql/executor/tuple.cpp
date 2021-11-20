@@ -678,7 +678,8 @@ void TupleRecordAggregateGroupByConverter::group_record(const char *record){
     ts[i] = field_meta->type();
     tns[i] = field_meta->len();
   }
-  char *key = (char *)malloc(total_length);
+  char key[total_length];
+//  char *key = (char *)malloc(total_length);
   int offset = 0;
   for (int i = group_schema_.fields().size()-1; i >=0; --i) {
     const FieldMeta *field_meta = table_meta.field(group_schema_.field(i).field_name());
@@ -716,7 +717,8 @@ void TupleRecordAggregateGroupByConverter::aggregate_group_record(const char *re
     ts[i] = field_meta->type();
     tns[i] = field_meta->len();
   }
-  char *key = (char *)malloc(total_length);
+  char key[total_length];
+//  char *key = (char *)malloc(total_length);
   int offset = 0;
   for (int i = group_schema_.fields().size()-1; i >=0; --i) {
     const FieldMeta *field_meta = table_meta.field(group_schema_.field(i).field_name());

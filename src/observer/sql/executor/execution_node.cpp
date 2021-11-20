@@ -155,7 +155,8 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
             ts[ii] = field_meta->type();
             tns[ii] = field_meta->len();
           }
-          char *key = (char *)malloc(total_length);
+          char key[total_length];
+//          char *key = (char *)malloc(total_length);
           for (int ii = group_schema_.fields().size() - 1; ii >= 0; --ii) {
             const FieldMeta *field_meta = table_meta.field(group_schema_.field(ii).field_name());
             memcpy(key + offset, converter.keys[j] + offset, field_meta->len());
