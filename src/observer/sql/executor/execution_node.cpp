@@ -247,9 +247,14 @@ RC SelectExeNode::execute(TupleSet &tuple_set) {
               if (converter.type == INTS || converter.type == FLOATS){
                 field_name = "AVG(" + (std::string)aggregation_field + ")";
                 for(float_iter=converter.agg_float_map.begin(); float_iter!=converter.agg_float_map.end(); float_iter++){
-                  if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0){
-                    tuple.add(float_iter->second/int_iter2->second);
+                  for(int_iter2=converter.count_map.begin(); int_iter2!=converter.count_map.end(); int_iter2++){
+                    if (CompAttrs2(ts,tns,group_schema_.fields().size(),key,float_iter->first) == 0
+                        && CompAttrs2(ts,tns,group_schema_.fields().size(),key,int_iter2->first) == 0){
+                      tuple.add(float_iter->second/int_iter2->second);
+                      break;
+                    }
                   }
+
                 }
               }
               break;
